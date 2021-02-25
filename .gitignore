@@ -1,0 +1,26 @@
+# CMake files
+*.stamp
+*.depend
+*.check_cache
+*.list
+TargetDirectories.txt
+*.cmake
+*.vcxproj
+VCTargetsPath.txt
+*.tlog
+*.lastbuildstate
+*.bin
+*.exe
+CMakeCXXCompilerId.cpp
+CMakeFiles/*
+Debug
+*.filters
+*.pdb
+*.ilk
+*.lib
+CMakeCache.txt
+*.sln
+Wi32/*
+
+# Misc
+*.log
