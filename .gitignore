@@ -4,7 +4,6 @@
 *.check_cache
 *.list
 TargetDirectories.txt
-*.cmake
 *.vcxproj
 VCTargetsPath.txt
 *.tlog
@@ -20,7 +19,8 @@ Debug
 *.lib
 CMakeCache.txt
 *.sln
-Wi32/*
+Win32/*
+cmake_install.cmake
 
 # Misc
 *.log
