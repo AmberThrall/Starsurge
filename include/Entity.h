@@ -1,4 +1,5 @@
 #pragma once
+#include "Vector.h"
 
 namespace Starsurge {
     class Entity {
@@ -8,6 +9,9 @@ namespace Starsurge {
     private:
         std::string name;
         bool enabled;
-        // transform
+
+        Vector3 position;
+        Vector3 rotation;
+        Vector3 scaling;
     };
 }
