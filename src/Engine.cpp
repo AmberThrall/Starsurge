@@ -8,6 +8,10 @@ void Starsurge::Log(std::string message) {
     std::cout << message << std::endl;
 }
 
+void Starsurge::Error(std::string message) {
+    std::cout << "[Error] " <<  message << std::endl;
+}
+
 void Starsurge::FatalError(std::string message) {
     std::cout << "[FATAL] " <<  message << std::endl;
 }
