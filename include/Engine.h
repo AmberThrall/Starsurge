@@ -1,14 +1,14 @@
 #pragma once
 #include <iostream>
 #include <string>
-
-namespace Starsurge {
-    std::string GetVersion();
-    void Log(std::string message);
-    void Error(std::string message);
-    void FatalError(std::string message);
-}
-
+#include <initializer_list>
+#include <vector>
+#include "Logging.h"
 #include "Game.h"
 #include "Scene.h"
+#include "Entity.h"
+#include "Component.h"
+#include "Mesh.h"
+#include "MeshRenderer.h"
 #include "Vector.h"
+#include "Color.h"

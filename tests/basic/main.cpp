@@ -7,26 +7,24 @@ public:
     ~BasicGame() { }
 protected:
     void OnInitialize() {
-        Vector3 v1 = {1,2,3};
-        Vector3 v2 = {4,5,6};
-        Vector3 v3 = v1 + v2;
-        Vector3 v4 = v3 - v2;
-        Vector<4> v5 = v1.Resize<4>();
-        Vector3 v6 = v1.Unit();
-        Vector3 v7 = Vector3::CrossProduct(v1, v2);
-        Log(v1.ToString()+"+"+v2.ToString()+"="+v3.ToString());
-        Log(v3.ToString()+"-"+v2.ToString()+"="+v4.ToString());
-        Log(v1.ToString()+"=="+v1.ToString()+"? "+std::string((v1==v1) ? "True" : "False"));
-        Log(v1.ToString()+"!="+v5.ToString()+"? "+std::string((v1!=v6) ? "True" : "False"));
-        Log(v1.ToString()+" dot "+v6.ToString()+"="+std::to_string(Vector3::Dot(v1,v6)));
-        Log("|"+v1.ToString()+"| = "+std::to_string(v1.Magnitude()));
-        Log("|"+v6.ToString()+"| = "+std::to_string(v6.Magnitude()));
-        Log(v1.ToString()+"x"+v2.ToString()+"="+v7.ToString());
+        Scene * scene = new Scene();
+        SetScene(scene);
+        scene->SetBgColor(Color(51,76,76,255));
+
+        Entity * triangle = new Entity("Triangle");
+        triangle_mesh = Mesh::Triangle(Vector3(-0.5f, -0.5f, 0.0f), Vector3(0.5f, -0.5f, 0.0f), Vector3(0.0f, 0.5f, 0.0f));
+        triangle_mat = Material(&Shaders::BasicShader);
+        triangle->AddComponent<MeshRenderer>(new MeshRenderer(&triangle_mesh, &triangle_mat));
+
+        scene->AddEntity(triangle);
     }
 
     void OnUpdate() {
 
     }
+private:
+    Mesh triangle_mesh;
+    Material triangle_mat;
 };
 
 void main() {

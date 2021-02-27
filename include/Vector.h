@@ -1,9 +1,7 @@
 #pragma once
-#include <initializer_list>
-#include <vector>
-#include <iostream>
 #include <string>
-#include "Engine.h"
+#include <initializer_list>
+#include "Logging.h"
 
 namespace Starsurge {
     template<size_t N>

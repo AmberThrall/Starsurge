@@ -1,5 +1,6 @@
 #pragma once
 #include <GLFW/glfw3.h>
+#include "Scene.h"
 
 namespace Starsurge {
     class Game {
@@ -7,6 +8,8 @@ namespace Starsurge {
         Game(std::string t_gamename);
         ~Game();
         void Run();
+
+        void SetScene(Scene * t_scene);
     protected:
         virtual void OnInitialize() = 0;
         virtual void OnUpdate() = 0;
@@ -15,5 +18,6 @@ namespace Starsurge {
     private:
         void GameLoop();
         GLFWwindow * gameWindow;
+        Scene * activeScene;
     };
 }
