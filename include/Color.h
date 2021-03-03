@@ -9,4 +9,8 @@ namespace Starsurge {
 
         Color ToOpenGLFormat();
     };
+
+    namespace Colors {
+        const Color WHITE = Color(255, 255, 255, 255);
+    }
 }

@@ -1,12 +1,14 @@
 #pragma once
 #include <vector>
 #include "Vector.h"
+#include "Color.h"
 
 namespace Starsurge {
     struct Vertex {
         Vector3 Position;
         Vector3 Normal;
         Vector2 UV;
+        Color Color;
     };
 
     class Mesh {

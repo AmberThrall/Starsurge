@@ -8,7 +8,7 @@ const char * source =
     "}\n"
     "\n"
     "vec4 fragment() {\n"
-    "   return color;\n"
+    "   return vertexColor;\n"
     "}\0";
 
 Starsurge::Shader Starsurge::Shaders::BasicShader(source);

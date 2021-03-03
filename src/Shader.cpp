@@ -53,24 +53,41 @@ void Starsurge::Shader::Compile() {
 
     std::string vert_code = "#version 330 core\n"
         "layout (location = 0) in vec3 _internal_Position;\n"
+        "layout (location = 1) in vec3 _internal_Normal;\n"
+        "layout (location = 2) in vec2 _internal_UV;\n"
+        "layout (location = 3) in vec4 _internal_Color;\n"
+        "\n"
+        "out vec4 vertexColor;\n"
         "\n"
         "struct VertexData {\n"
         "   vec3 Position;\n"
+        "   vec3 Normal;\n"
+        "   vec2 UV;\n"
+        "   vec4 Color;\n"
         "};\n\n\0";
     vert_code += this->code;
     vert_code += "\n"
         "void main() {\n"
         "   VertexData vertexData;\n"
         "   vertexData.Position = _internal_Position;\n"
+        "   vertexData.Normal = _internal_Normal;\n"
+        "   vertexData.UV = _internal_UV;\n"
+        "   vertexData.Color = _internal_Color;\n"
         "   gl_Position = vertex(vertexData);\n"
+        "   vertexColor = _internal_Color;\n"
         "}\0";
     const char * vert_code_c_str = vert_code.c_str();
 
     std::string frag_code = "#version 330 core\n"
         "out vec4 FragColor;\n"
         "\n"
+        "in vec4 vertexColor;\n"
+        "\n"
         "struct VertexData {\n"
         "   vec3 Position;\n"
+        "   vec3 Normal;\n"
+        "   vec2 UV;\n"
+        "   vec4 Color;\n"
         "};\n\n\0";
     frag_code += this->code;
     frag_code += "void main() {\n"
