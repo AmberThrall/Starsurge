@@ -11,20 +11,21 @@ protected:
         SetScene(scene);
         scene->SetBgColor(Color(51,76,76,255));
 
-        Entity * triangle = new Entity("Triangle");
-        triangle_mesh = Mesh::Triangle(Vector3(-0.5f, -0.5f, 0.0f), Vector3(0.5f, -0.5f, 0.0f), Vector3(0.0f, 0.5f, 0.0f));
-        triangle_mat = Material(&Shaders::BasicShader);
-        triangle->AddComponent<MeshRenderer>(new MeshRenderer(&triangle_mesh, &triangle_mat));
+        Entity * square = new Entity("Triangle");
+        square_mesh = Mesh::Quad(Vector3(0.5, 0.5, 0.0), Vector3(0.5, -0.5, 0), Vector3(-0.5, -0.5, 0.0), Vector3(-0.5, 0.5, 0.0));
+        square_mat = Material(&Shaders::BasicShader);
+        square->AddComponent<MeshRenderer>(new MeshRenderer(&square_mesh, &square_mat));
 
-        scene->AddEntity(triangle);
+        scene->AddEntity(square);
     }
 
     void OnUpdate() {
-
+        MaterialData * uniform_color = square_mat.GetUniform("color");
+        uniform_color->SetData(Color(0,255.0f*(sin(glfwGetTime()) / 2.0 + 0.5f),0,255));
     }
 private:
-    Mesh triangle_mesh;
-    Material triangle_mat;
+    Mesh square_mesh;
+    Material square_mat;
 };
 
 void main() {

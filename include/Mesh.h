@@ -17,14 +17,18 @@ namespace Starsurge {
 
         unsigned int GetVAO();
         unsigned int GetVBO();
+        unsigned int GetEBO();
         unsigned int NumberOfVertices();
+        unsigned int NumberOfIndices();
 
         static Mesh Triangle(Vector3 pt1, Vector3 pt2, Vector3 pt3);
+        static Mesh Quad(Vector3 pt1, Vector3 pt2, Vector3 pt3, Vector3 pt4);
     private:
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
 
         unsigned int VAO;
         unsigned int VBO;
+        unsigned int EBO;
     };
 }

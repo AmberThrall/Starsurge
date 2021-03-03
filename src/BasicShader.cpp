@@ -1,15 +1,14 @@
 #include "../include/Shader.h"
 
 const char * source =
-    "vertex {"
-    "   vec4 vertex() {\n"
-    "       return vec4(VERTEX.x, VERTEX.y, VERTEX.z, 1.0f);\n"
-    "   }\n"
+    "uniform vec4 color;\n"
+    "\n"
+    "vec4 vertex(VertexData v) {\n"
+    "   return vec4(v.Position.x, v.Position.y, v.Position.z, 1.0f);\n"
     "}\n"
-    "fragment {"
-    "   vec4 fragment() {\n"
-    "       return vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "   }\n"
+    "\n"
+    "vec4 fragment() {\n"
+    "   return color;\n"
     "}\0";
 
 Starsurge::Shader Starsurge::Shaders::BasicShader(source);
