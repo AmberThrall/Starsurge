@@ -8,9 +8,11 @@ Starsurge::MeshRenderer::MeshRenderer(Mesh * t_mesh, Material * t_mat) : Compone
 }
 
 void Starsurge::MeshRenderer::Render() {
-    this->material->Apply();
-    glBindVertexArray(this->mesh->GetVAO());
-    //glDrawArrays(GL_TRIANGLES, 0, this->mesh->NumberOfVertices());
-    glDrawElements(GL_TRIANGLES, this->mesh->NumberOfIndices(), GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
+    for (unsigned int i = 0; i < this->material->GetShader()->NumberOfPasses(); ++i) {
+        this->material->Apply(i);
+        glBindVertexArray(this->mesh->GetVAO());
+        //glDrawArrays(GL_TRIANGLES, 0, this->mesh->NumberOfVertices());
+        glDrawElements(GL_TRIANGLES, this->mesh->NumberOfIndices(), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+    }
 }

@@ -5,6 +5,7 @@
 #include <functional>
 #include <cctype>
 #include <locale>
+#include <regex>
 #include "../include/Logging.h"
 
 std::vector<std::string> Starsurge::Explode(std::string const & str, char delim, bool include_empty) {
@@ -59,4 +60,76 @@ std::string Starsurge::RTrim(std::string const str) {
 std::string Starsurge::Trim(std::string const str) {
     //https://stackoverflow.com/a/25385766
     return LTrim(RTrim(str));
+}
+
+std::string Starsurge::Replace(std::string const str, std::string rgx, const std::string & to) {
+    std::string res = str;
+    res = std::regex_replace(str, std::regex(rgx), to);
+    return res;
+}
+
+void Starsurge::PrintCode(std::string code) {
+    std::vector<std::string> lines = Explode(code, '\n', true);
+    std::string whitespace = "";
+    float nlines = lines.size();
+    while (nlines >= 10) {
+        whitespace += " ";
+        nlines /= 10.0;
+    }
+
+    for (unsigned int i = 0; i < lines.size(); ++i) {
+        float curLine = i+1;
+        std::string newwhitespace = whitespace;
+        while (curLine >= 10) {
+            newwhitespace = newwhitespace.substr(1);
+            curLine /= 10.0;
+        }
+        std::cout << (i+1) << newwhitespace << "| " << lines[i] << std::endl;
+    }
+}
+
+std::vector<Starsurge::Match> Starsurge::FindSubstrings(std::string str, std::string regex) {
+    std::smatch m;
+    std::vector<Match> ret;
+    while (std::regex_search(str, m, std::regex(regex))) {
+        if (m.size() == 0) {
+            break;
+        }
+
+        Match newMatch;
+        newMatch.position = m.position();
+        newMatch.prefix = m.prefix();
+        newMatch.suffix = m.suffix();
+        for (unsigned int i = 0; i < m.size(); ++i) {
+            newMatch.matches.push_back(m[i]);
+        }
+        ret.push_back(newMatch);
+
+        str = m.suffix();
+    }
+    return ret;
+}
+
+Starsurge::Match Starsurge::FindFirstSubstrings(std::string str, std::string regex) {
+    std::vector<Match> matches = FindSubstrings(str, regex);
+    if (matches.size() == 0) {
+        Match newMatch;
+        newMatch.position = 0;
+        newMatch.prefix = "";
+        newMatch.suffix = "";
+        return newMatch;
+    }
+    return matches[0];
+}
+
+Starsurge::Match Starsurge::FindLastSubstrings(std::string str, std::string regex) {
+    std::vector<Match> matches = FindSubstrings(str, regex);
+    if (matches.size() == 0) {
+        Match newMatch;
+        newMatch.position = 0;
+        newMatch.prefix = "";
+        newMatch.suffix = "";
+        return newMatch;
+    }
+    return matches[matches.size()-1];
 }

@@ -20,8 +20,8 @@ protected:
     }
 
     void OnUpdate() {
-        MaterialData * uniform_color = square_mat.GetUniform("color");
-    //    uniform_color->SetData(Color(0,255.0f*(sin(glfwGetTime()) / 2.0 + 0.5f),0,255));
+        Uniform * uniform_color = square_mat.GetUniform("fragColor");
+        uniform_color->SetData(Color(0,255.0f*(sin(glfwGetTime()) / 2.0 + 0.5f),0,255));
     }
 private:
     Mesh square_mesh;

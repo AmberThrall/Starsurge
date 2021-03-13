@@ -4,135 +4,137 @@
 #include "../include/Shader.h"
 #include "../include/Logging.h"
 #include "../include/Utils.h"
+#include "../include/ShaderCompiler/Compiler.h"
 
-Starsurge::Shader::Shader(std::string source_code) : code(source_code) {
+Starsurge::Uniform::Uniform(std::string t_name, std::string t_type) : name(t_name), type(t_type) {
+    // Set the default value.
+    if (type == "bool") { SetData(false); }
+    else if (type == "int") { SetData((int)0); }
+    else if (type == "uint") { SetData((unsigned int)0); }
+    else if (type == "float") { SetData(0.0f); }
+    else if (type == "vec2" || type == "ivec2") { SetData(Vector2(0,0)); }
+    else if (type == "vec3" || type == "ivec3") { SetData(Vector3(0,0,0)); }
+    else if (type == "vec4" || type == "ivec4") { SetData(Vector4(0,0,0,0)); }
+    else if (type == "color") { SetData(Colors::WHITE); }
+}
+
+std::string Starsurge::Uniform::GetName() {
+    return this->name;
+}
+
+std::string Starsurge::Uniform::GetType() {
+    return this->type;
+}
+
+void Starsurge::Uniform::SetData(bool val) {
+    if (GetType() != "bool") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type bool.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(int val) {
+    if (GetType() != "int") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type int.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(unsigned int val) {
+    if (GetType() != "uint") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type uint.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(float val) {
+    if (GetType() != "float") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type float.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(Vector2 val) {
+    if (GetType() != "vec2") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type vec2.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(Vector3 val) {
+    if (GetType() != "vec3") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type vec3.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(Vector4 val) {
+    if (GetType() != "vec4") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type vec4.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(Color val) {
+    if (GetType() != "color") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type color.");
+    }
+    this->data = val;
+}
+
+Starsurge::Shader::Shader(std::string source_code) {
+    SetCode(source_code);
+}
+
+void Starsurge::Shader::SetCode(std::string source_code) {
+    this->code = source_code;
+    this->passes.clear();
     this->needs_recompiling = true;
-    ParseUniforms();
 }
 
 Starsurge::Shader::~Shader() {
-    glDeleteShader(this->vertexShader);
-    glDeleteShader(this->fragmentShader);
+    for (unsigned int i = 0; i < passes.size(); ++i) {
+        glDeleteShader(passes[i].vertex);
+        glDeleteShader(passes[i].fragment);
+    }
+    passes.clear();
 }
 
-const std::map<std::string, std::string> Starsurge::Shader::GetUniforms() {
+unsigned int Starsurge::Shader::NumberOfPasses() {
+    return passes.size();
+}
+
+unsigned int Starsurge::Shader::GetProgram(unsigned int i) {
+    return passes[i].program;
+}
+
+std::vector<Starsurge::Uniform> Starsurge::Shader::GetUniforms() {
     return this->uniforms;
 }
 
-void Starsurge::Shader::ParseUniforms() {
-    this->uniforms.clear();
-    //TODO: Arrays, Blocks
-
-    std::vector<std::string> commands = Explode(this->code, ';');
-    for (unsigned int i = 0; i < commands.size(); ++i) {
-        std::string ltrimmedCommand = LTrim(commands[i]);
-        if (ltrimmedCommand.substr(0,7) == "uniform") {
-            std::vector<std::string> command_exploded = ExplodeWhitespace(ltrimmedCommand, false);
-            // There should be three parts uniform <type> <name>
-            if (command_exploded.size() != 3) {
-                ShaderError("Unknown uniform command "+ltrimmedCommand);
-                continue;
-            }
-            // Check that it is a valid type
-            if (!ElemOf<const char*>(VALID_UNIFORM_TYPES, VALID_UNIFORM_TYPES_COUNT, command_exploded[1].c_str())) {
-                ShaderError("Unknown or incompatible uniform type '"+command_exploded[1]+"'.");
-                continue;
-            }
-            this->uniforms[command_exploded[2]] = command_exploded[1]; //TODO: Sanity check name.
-        }
-    }
-}
-
-void Starsurge::Shader::Compile() {
+bool Starsurge::Shader::Compile() {
     if (!this->needs_recompiling) {
-        return;
+        return true;
     }
 
-    int success; // Used when getting compilation and link status.
-    char infoLog[512];
-
-    std::string vert_code = "#version 330 core\n"
-        "layout (location = 0) in vec3 _internal_Position;\n"
-        "layout (location = 1) in vec3 _internal_Normal;\n"
-        "layout (location = 2) in vec2 _internal_UV;\n"
-        "layout (location = 3) in vec4 _internal_Color;\n"
-        "\n"
-        "out vec4 vertexColor;\n"
-        "\n"
-        "struct VertexData {\n"
-        "   vec3 Position;\n"
-        "   vec3 Normal;\n"
-        "   vec2 UV;\n"
-        "   vec4 Color;\n"
-        "};\n\n\0";
-    vert_code += this->code;
-    vert_code += "\n"
-        "void main() {\n"
-        "   VertexData vertexData;\n"
-        "   vertexData.Position = _internal_Position;\n"
-        "   vertexData.Normal = _internal_Normal;\n"
-        "   vertexData.UV = _internal_UV;\n"
-        "   vertexData.Color = _internal_Color;\n"
-        "   gl_Position = vertex(vertexData);\n"
-        "   vertexColor = _internal_Color;\n"
-        "}\0";
-    const char * vert_code_c_str = vert_code.c_str();
-
-    std::string frag_code = "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "\n"
-        "in vec4 vertexColor;\n"
-        "\n"
-        "struct VertexData {\n"
-        "   vec3 Position;\n"
-        "   vec3 Normal;\n"
-        "   vec2 UV;\n"
-        "   vec4 Color;\n"
-        "};\n\n\0";
-    frag_code += this->code;
-    frag_code += "void main() {\n"
-        "   FragColor = fragment();\n"
-        "}\0";
-    const char * frag_code_c_str = frag_code.c_str();
-
-    this->vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(this->vertexShader, 1, &vert_code_c_str, NULL);
-    glCompileShader(this->vertexShader);
-    glGetShaderiv(this->vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(this->vertexShader, 512, NULL, infoLog);
-        ShaderError(infoLog);
+    // Get rid of old shader data.
+    for (unsigned int i = 0; i < passes.size(); ++i) {
+        glDeleteShader(passes[i].vertex);
+        glDeleteShader(passes[i].fragment);
     }
+    passes.clear();
+    uniforms.clear();
 
-    this->fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(this->fragmentShader, 1, &frag_code_c_str, NULL);
-    glCompileShader(this->fragmentShader);
-    glGetShaderiv(this->fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(this->fragmentShader, 512, NULL, infoLog);
-        ShaderError(infoLog);
-    }
-
-    this->shaderProgram = glCreateProgram();
-    glAttachShader(this->shaderProgram, this->vertexShader);
-    glAttachShader(this->shaderProgram, this->fragmentShader);
-    glLinkProgram(this->shaderProgram);
-    glGetProgramiv(this->shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(this->shaderProgram, 512, NULL, infoLog);
-        ShaderError(infoLog);
-    }
-
+    GLSL::Compiler compiler(code);
+    bool success = compiler.Compile(this);
     this->needs_recompiling = false;
+
+    return success;
 }
 
-void Starsurge::Shader::Use() {
+void Starsurge::Shader::Use(unsigned int pass) {
     if (this->needs_recompiling) {
         Compile();
     }
-    glUseProgram(this->shaderProgram);
-}
-
-unsigned int Starsurge::Shader::GetProgram() {
-    return this->shaderProgram;
+    glUseProgram(passes[pass].program);
 }

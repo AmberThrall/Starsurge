@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <regex>
 
 namespace Starsurge {
     static char* WHITESPACE = " \t\n\r\f\v"; // Why does static instead of const fix this?
@@ -11,10 +12,24 @@ namespace Starsurge {
     std::string RTrim(std::string const str);
     std::string Trim(std::string const str);
 
+    std::string Replace(std::string const str, std::string regex, const std::string & to);
+    void PrintCode(std::string code);
+
+    struct Match {
+        unsigned int position;
+        std::vector<std::string> matches;
+        std::string prefix;
+        std::string suffix;
+    };
+
+    std::vector<Match> FindSubstrings(std::string str, std::string regex);
+    Match FindFirstSubstrings(std::string str, std::string regex);
+    Match FindLastSubstrings(std::string str, std::string regex);
+
     template<typename T>
-    bool ElemOf(const T array[], const unsigned int arraySize, T query) {
+    bool ElemOf(const T array[], const unsigned int arraySize, const T query) {
         for (unsigned int i = 0; i < arraySize; ++i) {
-            if (std::strcmp(typeid(T).name(), "char const *")==0) {
+            if (std::strcmp(typeid(T).name(), "char const *") == 0) {
                 if (std::strcmp(array[i], query) == 0) {
                     return true;
                 }
@@ -27,8 +42,14 @@ namespace Starsurge {
         }
         return false;
     }
+
     template<typename T>
     bool ElemOf(const std::vector<T> v, T query) {
-        return ElemOf<T>(v.data(), v.size(), query);
+        for (unsigned int i = 0; i < v.size(); ++i) {
+            if (v[i] == query) {
+                return true;
+            }
+        }
+        return false;
     }
 }

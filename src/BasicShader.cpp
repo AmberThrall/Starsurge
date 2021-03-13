@@ -1,14 +1,35 @@
 #include "../include/Shader.h"
 
-const char * source =
-    "uniform vec4 color;\n"
-    "\n"
-    "vec4 vertex(VertexData v) {\n"
-    "   return vec4(v.Position.x, v.Position.y, v.Position.z, 1.0f);\n"
-    "}\n"
-    "\n"
-    "vec4 fragment() {\n"
-    "   return vertexColor;\n"
-    "}\0";
+const char * source = R"(
+    Shader {
+        Uniforms {
+            color fragColor = color(1,0,0,1);
+            sampler2D Texture;
+        }
+        Pass {
+            varying struct VS_OUT {
+                vec3 Position;
+                vec3 Normal;
+                vec2 UV;
+                color Color;
+            } vs_out;
+
+            vec4 vertex(VertexData v) {
+                vs_out.Position = v.Position;
+                vs_out.Normal = v.Normal;
+                vs_out.UV = v.UV;
+                vs_out.Color = v.Color;
+                return vec4(v.Position, 1.0f);
+            }
+
+            color fragment() {
+                return texture(Texture, vs_out.UV);
+                //return fragColor;
+                //return vs_out.Color;
+            }
+        }
+    }
+)";
+
 
 Starsurge::Shader Starsurge::Shaders::BasicShader(source);
