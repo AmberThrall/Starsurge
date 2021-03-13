@@ -19,7 +19,7 @@ Starsurge::Texture::Texture(std::vector<Color> pixels, unsigned int width, unsig
         data[index++] = col[3];
     }
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     SetWrapS(GL_REPEAT);
     SetWrapT(GL_REPEAT);
@@ -41,7 +41,7 @@ void Starsurge::Texture::SetPixels(std::vector<Color> pixels, unsigned int width
         data[index++] = col[3];
     }
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 

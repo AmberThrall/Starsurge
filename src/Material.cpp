@@ -4,8 +4,7 @@
 #include <stdexcept>
 
 Starsurge::Material::Material() {
-    this->shader = &Shaders::BasicShader;
-    SetupData();
+    shader = NULL;
 }
 
 Starsurge::Material::Material(Shader * t_shader) {
@@ -28,6 +27,21 @@ Starsurge::Uniform * Starsurge::Material::GetUniform(std::string name) {
 }
 
 void Starsurge::Material::Apply(unsigned int passno) {
+    // Textures need to bind before we use our shader.
+    unsigned int texNum = 0;
+    for (auto it = this->data.begin(); it != this->data.end(); ++it) {
+        std::string name = it->first;
+        Uniform uniform = it->second;
+        if (uniform.GetType() == "sampler2D") {
+            Texture * data = uniform.GetData<Texture*>();
+            if (data) {
+                data->BindTexture(texNum++);
+            }
+        }
+    }
+
+    // Now we activate the shader and use glUniform*
+    texNum = 0;
     this->shader->Use(passno);
     for (auto it = this->data.begin(); it != this->data.end(); ++it) {
         std::string name = it->first;
@@ -71,6 +85,12 @@ void Starsurge::Material::Apply(unsigned int passno) {
         else if (uniform.GetType() == "ivec4" || uniform.GetType() == "bvec4") {
             Vector4 data = uniform.GetData<Vector4>();
             glUniform4i(loc, (int)std::round(data[0]), (int)std::round(data[1]), (int)std::round(data[2]), (int)std::round(data[3]));
+        }
+        else if (uniform.GetType() == "sampler2D") {
+            Texture * data = uniform.GetData<Texture*>();
+            if (data) {
+                glUniform1i(loc, texNum++);
+            }
         }
     }
 }

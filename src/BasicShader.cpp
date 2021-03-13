@@ -23,7 +23,7 @@ const char * source = R"(
             }
 
             color fragment() {
-                return texture(Texture, vs_out.UV);
+                return texture(Texture, vs_out.UV) * vs_out.Color;
                 //return fragColor;
                 //return vs_out.Color;
             }

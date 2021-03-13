@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "../include/Engine.h"
+#include "../include/stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow * window, int width, int height)
 {
@@ -20,6 +21,7 @@ void Starsurge::Game::SetScene(Scene * t_scene) {
 }
 
 void Starsurge::Game::Run() {
+    stbi_set_flip_vertically_on_load(true);
     Starsurge::Log("Launching GLFW Window...");
 
     // Initialize OpenGL version 3.3

@@ -49,6 +49,7 @@ bool Starsurge::GLSL::Lexer::IsQualifier(std::string str) {
 }
 bool Starsurge::GLSL::Lexer::IsOctal(std::string str) {
     if (str == "") { return false; }
+    if (str == "0") { return false; }
     if (str[0] != '0') { return false; }
     for (unsigned int i = 1; i < str.length(); ++i) {
         if (!(str[i] >= '0' || str[i] <= '7')) {
@@ -150,7 +151,7 @@ bool Starsurge::GLSL::Lexer::Read(Token & token) {
         if (token.type == TOKEN_INT && (Peek() == 'u' || Peek() == 'U')) {
             NextChar();
         }
-        if (IsOctal(num)) {
+        if (token.type == TOKEN_INT && IsOctal(num)) {
             num = std::to_string(std::stoi(num, 0, 8));
         }
         token.data = num;

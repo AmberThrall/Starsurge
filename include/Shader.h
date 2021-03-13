@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Vector.h"
 #include "Color.h"
+#include "Texture.h"
 
 namespace Starsurge {
     namespace GLSL {
@@ -38,10 +39,11 @@ namespace Starsurge {
         void SetData(Vector3 val);
         void SetData(Vector4 val);
         void SetData(Color val);
+        void SetData(Texture * val);
     private:
         std::string name;
         std::string type;
-        std::variant<bool, int, unsigned int, float, Vector2, Vector3, Vector4, Color> data;
+        std::variant<bool, int, unsigned int, float, Vector2, Vector3, Vector4, Color, Texture*> data;
     };
 
     class Shader {

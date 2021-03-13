@@ -1057,7 +1057,8 @@ Starsurge::GLSL::ASTNodeStatement * Starsurge::GLSL::Parser::Statement(ASTNode *
         else if (keyword.type == TOKEN_RETURN) {
             if (!Check(TOKEN_SEMICOLON)) {
                 ASTNodeExpression * expr = Expression(scope);
-                ret->AddChild(expr);
+                if (expr) { ret->AddChild(expr); }
+                else { return NULL; }
             }
         }
 
@@ -2068,8 +2069,11 @@ Starsurge::GLSL::ASTNodeFunctionCall * Starsurge::GLSL::Parser::FunctionCall(AST
             for (unsigned int i = 0; i < genType.size(); ++i) {
                 validOptions.push_back(std::vector<std::string>({genType[i], genType[i], genType[i]}));
                 validOptions.push_back(std::vector<std::string>({genType[i], genType[i], "float"}));
+            }
+            for (unsigned int i = 0; i < genBType.size(); ++i) {
                 validOptions.push_back(std::vector<std::string>({genType[i], genType[i], genBType[i]}));
             }
+            validOptions.push_back(std::vector<std::string>({"color", "color", "bvec4"}));
         }
         else if (f == "step") {
             for (unsigned int i = 0; i < genType.size(); ++i) {
@@ -2639,8 +2643,8 @@ bool Starsurge::GLSL::Parser::CompatibleTypes(std::string in_type1, std::string 
             return true;
         }
 
-        std::string type1 = in_type2;
-        std::string type2 = in_type1;
+        type1 = in_type2;
+        type2 = in_type1;
     }
     return false;
 }

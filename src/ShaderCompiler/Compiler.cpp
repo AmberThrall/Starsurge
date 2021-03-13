@@ -33,6 +33,7 @@ bool Starsurge::GLSL::Compiler::Compile(Shader * shader) {
                 shader->passes.clear();
                 return false;
             }
+
             shaderPass.fragment = CompileFragment(structure.uniforms, structure.codeOffset[i], structure.passes[i]);
             if (errors.size() > 0) {
                 for (unsigned int i = 0; i < errors.size(); ++i) {

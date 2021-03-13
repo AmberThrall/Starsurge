@@ -16,6 +16,7 @@ Starsurge::Uniform::Uniform(std::string t_name, std::string t_type) : name(t_nam
     else if (type == "vec3" || type == "ivec3") { SetData(Vector3(0,0,0)); }
     else if (type == "vec4" || type == "ivec4") { SetData(Vector4(0,0,0,0)); }
     else if (type == "color") { SetData(Colors::WHITE); }
+    else if (type == "sampler2D") { SetData((Texture*)NULL); }
 }
 
 std::string Starsurge::Uniform::GetName() {
@@ -78,6 +79,13 @@ void Starsurge::Uniform::SetData(Vector4 val) {
 void Starsurge::Uniform::SetData(Color val) {
     if (GetType() != "color") {
         throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type color.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(Texture * val) {
+    if (GetType() != "sampler2D") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Texture*.");
     }
     this->data = val;
 }
