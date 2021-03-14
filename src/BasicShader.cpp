@@ -5,6 +5,7 @@ const char * source = R"(
         Uniforms {
             color fragColor = color(1,0,0,1);
             sampler2D Texture;
+            mat4 transform;
         }
         Pass {
             varying struct VS_OUT {
@@ -19,7 +20,7 @@ const char * source = R"(
                 vs_out.Normal = v.Normal;
                 vs_out.UV = v.UV;
                 vs_out.Color = v.Color;
-                return vec4(v.Position, 1.0f);
+                return transform*vec4(v.Position, 1.0f);
             }
 
             color fragment() {

@@ -17,6 +17,9 @@ Starsurge::Uniform::Uniform(std::string t_name, std::string t_type) : name(t_nam
     else if (type == "vec4" || type == "ivec4") { SetData(Vector4(0,0,0,0)); }
     else if (type == "color") { SetData(Colors::WHITE); }
     else if (type == "sampler2D") { SetData((Texture*)NULL); }
+    else if (type == "mat2" || type == "mat2x2") { SetData(Matrix2::Identity()); }
+    else if (type == "mat3" || type == "mat3x3") { SetData(Matrix3::Identity()); }
+    else if (type == "mat4" || type == "mat4x4") { SetData(Matrix4::Identity()); }
 }
 
 std::string Starsurge::Uniform::GetName() {
@@ -86,6 +89,27 @@ void Starsurge::Uniform::SetData(Color val) {
 void Starsurge::Uniform::SetData(Texture * val) {
     if (GetType() != "sampler2D") {
         throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Texture*.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(Matrix2 val) {
+    if (GetType() != "mat2" && GetType() != "mat2x2") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Matrix2.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(Matrix3 val) {
+    if (GetType() != "mat3" && GetType() != "mat3x3") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Matrix3.");
+    }
+    this->data = val;
+}
+
+void Starsurge::Uniform::SetData(Matrix4 val) {
+    if (GetType() != "mat4" && GetType() != "mat4x4") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Matrix4.");
     }
     this->data = val;
 }

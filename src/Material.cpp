@@ -92,6 +92,18 @@ void Starsurge::Material::Apply(unsigned int passno) {
                 glUniform1i(loc, texNum++);
             }
         }
+        else if (uniform.GetType() == "mat2" || uniform.GetType() == "mat2x2") {
+            Matrix2 data = uniform.GetData<Matrix2>();
+            glUniformMatrix2fv(loc, 1, GL_TRUE, data.Ptr());
+        }
+        else if (uniform.GetType() == "mat3" || uniform.GetType() == "mat3x3") {
+            Matrix3 data = uniform.GetData<Matrix3>();
+            glUniformMatrix3fv(loc, 1, GL_TRUE, data.Ptr());
+        }
+        else if (uniform.GetType() == "mat4" || uniform.GetType() == "mat4x4") {
+            Matrix4 data = uniform.GetData<Matrix4>();
+            glUniformMatrix4fv(loc, 1, GL_TRUE, data.Ptr());
+        }
     }
 }
 

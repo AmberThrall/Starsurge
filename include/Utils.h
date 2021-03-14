@@ -4,6 +4,7 @@
 #include <regex>
 
 namespace Starsurge {
+    static float PI = 3.141592653589793238462643383279502884L; /* pi */
     static char* WHITESPACE = " \t\n\r\f\v"; // Why does static instead of const fix this?
 
     std::vector<std::string> Explode(std::string const & str, char delim, bool include_empty = true);
@@ -14,6 +15,9 @@ namespace Starsurge {
 
     std::string Replace(std::string const str, std::string regex, const std::string & to);
     void PrintCode(std::string code);
+
+    float Radians(float deg);
+    float Degrees(float rad);
 
     struct Match {
         unsigned int position;

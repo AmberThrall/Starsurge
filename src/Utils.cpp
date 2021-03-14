@@ -88,6 +88,14 @@ void Starsurge::PrintCode(std::string code) {
     }
 }
 
+float Starsurge::Radians(float deg) {
+    return deg*(PI / 180.0f);
+}
+
+float Starsurge::Degrees(float rad) {
+    return rad*(180.0f / PI);
+}
+
 std::vector<Starsurge::Match> Starsurge::FindSubstrings(std::string str, std::string regex) {
     std::smatch m;
     std::vector<Match> ret;

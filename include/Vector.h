@@ -116,6 +116,14 @@ namespace Starsurge {
             return *this;
         }
         friend Vector<N> operator-(Vector<N> lhs, const Vector<N>& rhs) { return lhs -= rhs; }
+        Vector<N>& operator*=(const float& rhs) {
+            for (size_t i=0; i < N; ++i) {
+                this->data[i] *= rhs;
+            }
+            return *this;
+        }
+        friend Vector<N> operator*(Vector<N> lhs, const float& rhs) { return lhs *= rhs; }
+        friend Vector<N> operator*(const float& lhs, Vector<N> rhs) { return rhs *= lhs; }
         friend bool operator==(const Vector<N>& lhs, const Vector<N>& rhs) { return lhs.data == rhs.data; }
         friend bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) { return !(lhs == rhs); }
     protected:

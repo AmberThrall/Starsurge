@@ -4,6 +4,7 @@
 #include <variant>
 #include "Shader.h"
 #include "Vector.h"
+#include "Matrix.h"
 #include "Color.h"
 #include "Texture.h"
 
@@ -40,10 +41,13 @@ namespace Starsurge {
         void SetData(Vector4 val);
         void SetData(Color val);
         void SetData(Texture * val);
+        void SetData(Matrix2 val);
+        void SetData(Matrix3 val);
+        void SetData(Matrix4 val);
     private:
         std::string name;
         std::string type;
-        std::variant<bool, int, unsigned int, float, Vector2, Vector3, Vector4, Color, Texture*> data;
+        std::variant<bool, int, unsigned int, float, Vector2, Vector3, Vector4, Color, Texture*, Matrix2, Matrix3, Matrix4> data;
     };
 
     class Shader {

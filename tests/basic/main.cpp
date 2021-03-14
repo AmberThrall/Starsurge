@@ -7,7 +7,9 @@ public:
     ~BasicGame() { }
 protected:
     void OnInitialize() {
-        if (!AssetManager::Inst().Load("tests/basic/container.jpg")) {
+        Matrix4 transform = Matrix4::RotateZ(Radians(90))*Matrix4::Scale(Vector3(0.5));
+
+        if (!AssetManager::Inst().Load("tests/basic/awesomeface.png")) {
             Error("Failed to load container.jpg");
             return;
         }
@@ -24,7 +26,10 @@ protected:
         scene->AddEntity(square);
 
         Uniform * uniform_texture0 = square_mat.GetUniform("Texture");
-        uniform_texture0->SetData(AssetManager::Inst().GetTexture("tests/basic/container.jpg"));
+        uniform_texture0->SetData(AssetManager::Inst().GetTexture("tests/basic/awesomeface.png"));
+
+        Uniform * uniform_transform = square_mat.GetUniform("transform");
+        uniform_transform->SetData(transform);
     }
 
     void OnUpdate() {

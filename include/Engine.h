@@ -11,6 +11,7 @@
 #include "Mesh.h"
 #include "MeshRenderer.h"
 #include "Vector.h"
+#include "Matrix.h"
 #include "Color.h"
 #include "Utils.h"
 #include "AssetManager.h"
