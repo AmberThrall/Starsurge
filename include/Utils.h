@@ -4,7 +4,7 @@
 #include <regex>
 
 namespace Starsurge {
-    static float PI = 3.141592653589793238462643383279502884L; /* pi */
+    static long double PI = 3.141592653589793238462643383279502884L; /* pi */
     static char* WHITESPACE = " \t\n\r\f\v"; // Why does static instead of const fix this?
 
     std::vector<std::string> Explode(std::string const & str, char delim, bool include_empty = true);

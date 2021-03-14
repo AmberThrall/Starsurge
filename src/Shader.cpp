@@ -59,29 +59,29 @@ void Starsurge::Uniform::SetData(float val) {
 }
 
 void Starsurge::Uniform::SetData(Vector2 val) {
-    if (GetType() != "vec2") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type vec2.");
+    if (GetType() != "vec2" || GetType() != "ivec2") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Vector2.");
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Vector3 val) {
-    if (GetType() != "vec3") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type vec3.");
+    if (GetType() != "vec3" || GetType() != "ivec3") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Vector3.");
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Vector4 val) {
-    if (GetType() != "vec4") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type vec4.");
+    if (GetType() != "vec4" || GetType() != "ivec4") {
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Vector4.");
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Color val) {
     if (GetType() != "color") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type color.");
+        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Color.");
     }
     this->data = val;
 }
