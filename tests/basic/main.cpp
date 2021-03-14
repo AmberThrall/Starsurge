@@ -7,31 +7,8 @@ public:
     ~BasicGame() { }
 protected:
     void OnInitialize() {
-        Vector4 v = Vector4(0, 0, 0, 0);
-        v.xy = Vector2(3,4);
-        v.xy += Vector2(1,1);
-        Log("v == "+v.ToString());
-        Log("v.xy + [1,1] = "+(Vector2(1,1)+v.xy).ToString());
-        Log("v.xy + v.xy = "+(Vector2(1,1)+v.xy).ToString());
-        v.xy *= 3.0;
-        Log("v == "+v.ToString());
-        Log("v.xy == v.xy? "+std::string(v.xy == v.xy ? "true" : "false"));
-        v.xy += v.xy;
-        Log("v == "+v.ToString());
-        v.xy = v.yx;
-        Log("v == "+v.ToString());
-        v.xy = Vector2(0,1);
-        Log("v == "+v.ToString());
-        v.x = 22;
-        Log("v == "+v.ToString());
-        Log("v.x+2 = "+std::to_string(v.x+2));
-        Log("v.x < 25? "+std::string(v.x < 25 ? "true" : "false"));
-        //v.xy.x;
-        v.y = 2;
-        Log("v == "+v.ToString());
-
-        Matrix4 transform = Matrix4::RotateZ(Radians(90))*Matrix4::Scale(Vector3(0.5));
-        if (!AssetManager::Inst().Load("tests/basic/awesomeface.png")) {
+        Matrix4 transform = Matrix4::RotateZ(Radians(45))*Matrix4::Scale(Vector3(0.5));
+        if (!AssetManager::Inst().Load("tests/basic/container.jpg")) {
             Error("Failed to load container.jpg");
             return;
         }
@@ -40,25 +17,18 @@ protected:
         SetScene(scene);
         scene->SetBgColor(Color(51,76,76,255));
 
-        Log("Scene setup.");
         Entity * square = new Entity("Square");
         square_mesh = Mesh::Quad(Vector3(0.5, 0.5, 0.0), Vector3(0.5, -0.5, 0), Vector3(-0.5, -0.5, 0.0), Vector3(-0.5, 0.5, 0.0));
-        Log("Square added 1.");
         square_mat = Material(&Shaders::BasicShader);
-        Log("Square added 2.");
         square->AddComponent<MeshRenderer>(new MeshRenderer(&square_mesh, &square_mat));
-        Log("Square added 3.");
 
         scene->AddEntity(square);
-        Log("Square added.");
 
         Uniform * uniform_texture0 = square_mat.GetUniform("Texture");
-        uniform_texture0->SetData(AssetManager::Inst().GetTexture("tests/basic/awesomeface.png"));
+        uniform_texture0->SetData(AssetManager::Inst().GetTexture("tests/basic/container.jpg"));
 
         Uniform * uniform_transform = square_mat.GetUniform("transform");
         uniform_transform->SetData(transform);
-
-        Log("End of OnInitialize()");
     }
 
     void OnUpdate() {
@@ -72,16 +42,22 @@ private:
 
 void writeCode(std::string data) {
     int minLevel = data.length();
-    // w = swizzleScalar<3>(this);
-    std::string code = "swizzle";
+    // std::conditional_t<(N==2 || N==3 || N==4), swizzle<1,0>, Empty> yx;
+    std::string code = "std::conditional_t<";
     if (data.find("z") != std::string::npos && minLevel == 2)
         minLevel = 3;
     if (data.find("w") != std::string::npos)
         minLevel = 4;
-    if (minLevel > 4) {
-        return;
+    if (minLevel == 2) {
+        code += "(N==2 || N==3 || N==4)";
     }
-    code = data + " = swizzle<";
+    if (minLevel == 3) {
+        code += "(N==3 || N==4)";
+    }
+    if (minLevel == 4) {
+        code += "(N==4)";
+    }
+    code += ", swizzle<";
     for (unsigned int i = 0; i < data.length(); i++) {
         if (i > 0) code += ", ";
         if (data[i] == 'x') { code += "0"; }
@@ -90,7 +66,16 @@ void writeCode(std::string data) {
         if (data[i] == 'w') { code += "3"; }
     }
 
-    code += ">(this);";
+    code += ">, Empty> "+data;
+    std::string dataColor = "";
+    for (unsigned int i = 0; i < data.length(); i++) {
+        if (data[i] == 'x') { dataColor += "r"; }
+        if (data[i] == 'y') { dataColor += "g"; }
+        if (data[i] == 'z') { dataColor += "b"; }
+        if (data[i] == 'w') { dataColor += "a"; }
+    }
+    code += ", "+dataColor+";";
+
     std::cout << code.c_str() << std::endl;
     return;
 }
@@ -141,7 +126,7 @@ void main() {
     // generate("xyzw", 2);
     // generate("xyzw", 3);
     // generate("xyzw", 4);
-    // // return;
+    // return;
 
     std::cout << Starsurge::GetVersion() << std::endl;
 

@@ -13,9 +13,7 @@ Starsurge::Material::Material(Shader * t_shader) {
 
 void Starsurge::Material::SetShader(Shader * t_shader) {
     this->shader = t_shader;
-    Log("Compiling.");
     this->shader->Compile();
-    Log("Compiled.");
     SetupData();
 }
 

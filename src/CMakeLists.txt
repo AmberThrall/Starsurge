@@ -1,7 +1,6 @@
 add_library(Starsurge STATIC Logging.cpp
     Game.cpp
     glad.c
-    Vector.cpp
     Color.cpp
     Scene.cpp
     Entity.cpp
