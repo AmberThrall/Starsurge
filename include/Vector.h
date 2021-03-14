@@ -77,7 +77,7 @@ namespace Starsurge {
             }
             *this *= (1.0/mag);
         }
-        Vector Unit() const {
+        Vector<N> Unit() const {
             Vector<N> copy(*this);
             copy.Normalize();
             return copy;
@@ -161,46 +161,6 @@ namespace Starsurge {
         friend bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) { return !(lhs == rhs); }
 
         // Swizzling
-        template <size_t index>
-        class swizzleScalar {
-        public:
-            float& operator=(const float rhs) {
-                data = rhs;
-                return data;
-            }
-
-            float& operator++() {
-                ++data;
-                return data;
-            }
-            float& operator--(int) {
-                data--;
-                return data;
-            }
-            float& operator--() {
-                --data;
-                return data;
-            }
-            float& operator+=(const float rhs) {
-                data += rhs;
-                return data;
-            }
-            float& operator-=(const float rhs) {
-                data -= rhs;
-                return data;
-            }
-            float& operator*=(const float rhs) {
-                data *= rhs;
-                return data;
-            }
-            float& operator/=(const float rhs) {
-                data /= rhs;
-                return data;
-            }
-        private:
-            float data;
-        };
-
         template <size_t...Idx>
         class swizzle {
         public:

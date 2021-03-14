@@ -1,10 +1,10 @@
 #include "../include/Color.h"
 
-Starsurge::Color::Color() : Vector<4>({0,0,0,255}) {
+Starsurge::Color::Color(float all) : Vector4(all,all,all,255) {
 
 }
 
-Starsurge::Color::Color(float r, float g, float b, float a) : Vector<4>({r,g,b,a}) {
+Starsurge::Color::Color(float r, float g, float b, float a) : Vector4(r,g,b,a) {
     // TODO: Clamp 0-255.
 }
 

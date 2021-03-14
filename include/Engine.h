@@ -9,6 +9,7 @@
 #include "Entity.h"
 #include "Component.h"
 #include "Mesh.h"
+#include "Transform.h"
 #include "MeshRenderer.h"
 #include "Vector.h"
 #include "Matrix.h"

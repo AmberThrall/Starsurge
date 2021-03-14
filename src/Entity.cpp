@@ -2,11 +2,18 @@
 #include "../include/Logging.h"
 
 Starsurge::Entity::Entity(std::string t_name) : name(t_name), enabled(true) {
-
 }
 
 Starsurge::Entity::~Entity() {
     //TODO: Cleanup
+}
+
+std::string Starsurge::Entity::GetName() {
+    return this->name;
+}
+
+void Starsurge::Entity::Rename(std::string t_name) {
+    this->name = t_name;
 }
 
 void Starsurge::Entity::Toggle() {
@@ -15,8 +22,4 @@ void Starsurge::Entity::Toggle() {
 
 bool Starsurge::Entity::IsEnabled() {
     return this->enabled;
-}
-
-std::string Starsurge::Entity::GetName() {
-    return this->name;
 }

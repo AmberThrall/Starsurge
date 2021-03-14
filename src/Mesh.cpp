@@ -26,16 +26,23 @@ void Starsurge::Mesh::RebuildMesh() {
         gl_vertices[index++] = col[3];
     }
 
-    unsigned int * gl_indices = &this->indices[0];
+    unsigned int * gl_indices;
+    if (this->indices.size() > 0) {
+        gl_indices = &this->indices[0];
+    }
 
     glGenVertexArrays(1, &this->VAO);
     glGenBuffers(1, &this->VBO);
-    glGenBuffers(1, &this->EBO);
+    if (this->indices.size() > 0) {
+        glGenBuffers(1, &this->EBO);
+    }
     glBindVertexArray(this->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
     glBufferData(GL_ARRAY_BUFFER, NumberOfVertices()*12*sizeof(float), gl_vertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, NumberOfIndices()*sizeof(unsigned int), gl_indices, GL_STATIC_DRAW);
+    if (this->indices.size() > 0) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, NumberOfIndices()*sizeof(unsigned int), gl_indices, GL_STATIC_DRAW);
+    }
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(3*sizeof(float)));
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(6*sizeof(float)));
@@ -68,7 +75,7 @@ unsigned int Starsurge::Mesh::NumberOfIndices() {
     return this->indices.size();
 }
 
-Starsurge::Mesh Starsurge::Mesh::Triangle(Vector3 pt1, Vector3 pt2, Vector3 pt3) {
+Starsurge::Mesh * Starsurge::Mesh::Triangle(Vector3 pt1, Vector3 pt2, Vector3 pt3) {
     Vertex v1;
     v1.Position = pt1;
     v1.Normal = Vector3(0,0,0);
@@ -86,10 +93,10 @@ Starsurge::Mesh Starsurge::Mesh::Triangle(Vector3 pt1, Vector3 pt2, Vector3 pt3)
     v3.Color = Colors::WHITE;
     std::vector<Vertex> vertices = { v1, v2, v3 };
     std::vector<unsigned int> indices = { 0, 1, 2 };
-    return Mesh(vertices, indices);
+    return new Mesh(vertices, indices);
 }
 
-Starsurge::Mesh Starsurge::Mesh::Quad(Vector3 pt1, Vector3 pt2, Vector3 pt3, Vector3 pt4) {
+Starsurge::Mesh * Starsurge::Mesh::Quad(Vector3 pt1, Vector3 pt2, Vector3 pt3, Vector3 pt4) {
     Vertex v1;
     v1.Position = pt1;
     v1.Normal = Vector3(0,0,0);
@@ -112,5 +119,5 @@ Starsurge::Mesh Starsurge::Mesh::Quad(Vector3 pt1, Vector3 pt2, Vector3 pt3, Vec
     v4.Color = Colors::WHITE;
     std::vector<Vertex> vertices = { v1, v2, v3, v4 };
     std::vector<unsigned int> indices = { 0, 1, 3, 1, 2, 3 };
-    return Mesh(vertices, indices);
+    return new Mesh(vertices, indices);
 }

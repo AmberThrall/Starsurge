@@ -270,21 +270,41 @@ namespace Starsurge {
 
         // Transformations
         template<size_t m = M, size_t n = N>
-        static typename std::enable_if<m == n, Matrix<N,N>>::type Scale(Vector<N-1> s) {
-            Vector<N> diag;
-            for (size_t i = 0; i < N-1; ++i) {
-                diag[i] = s[i];
-            }
-            diag[N-1] = 1;
-            return Matrix<N,N>::Diag(diag);
+        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type Scale(Vector3 s) {
+            Matrix<4,4> ret = {
+                s.x, 0, 0, 0,
+                0, s.y, 0, 0,
+                0, 0, s.z, 0,
+                0, 0, 0, 1
+            };
+            return ret;
         }
 
         template<size_t m = M, size_t n = N>
-        static typename std::enable_if<m == n, Matrix<N,N>>::type Translate(Vector<N-1> t) {
-            Matrix<N,N> ret = Matrix<N,N>::Identity();
-            for (size_t i = 0; i < N-1; ++i) {
-                ret(i,N-1) = t[i];
-            }
+        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type Translate(Vector3 t) {
+            Matrix<4,4> ret = {
+                1, 0, 0, t.x,
+                0, 1, 0, t.y,
+                0, 0, 1, t.z,
+                0, 0, 0, 1
+            };
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type Rotate(Vector3 eulerAngles) {
+            float cx = std::cos(eulerAngles.x);
+            float cy = std::cos(eulerAngles.y);
+            float cz = std::cos(eulerAngles.z);
+            float sx = std::sin(eulerAngles.x);
+            float sy = std::sin(eulerAngles.y);
+            float sz = std::sin(eulerAngles.z);
+            Matrix<4,4> ret = {
+                cx*cy, cx*sy*sz-sx*cz, cx*sy*cz+sx*sz, 0,
+                sx*cy, sx*sy*sz+cx*cz, sx*sy*cz-cx*sz, 0,
+                -sy, cy*sz, cy*cz, 0,
+                0, 0, 0, 1
+            };
             return ret;
         }
 
@@ -294,15 +314,42 @@ namespace Starsurge {
 
             float c = std::cos(theta);
             float s = std::sin(theta);
-            float rx = axis[0];
-            float ry = axis[1];
-            float rz = axis[2];
+            float rx = axis.x;
+            float ry = axis.y;
+            float rz = axis.z;
             Matrix<4,4> ret = {
-                c+rx*rx*(1-c), rx*ry*(1-c)-rz*s, rx*ry*(1-c)+ry*s, 0,
-                ry*rx*(1-c)+rz*s, c+ry*ry*(1-c), ry*rz*(1-c)+rx*s, 0,
+                c+rx*rx*(1-c), rx*ry*(1-c)-rz*s, rx*rz*(1-c)+ry*s, 0,
+                ry*rx*(1-c)+rz*s, c+ry*ry*(1-c), ry*rz*(1-c)-rx*s, 0,
                 rz*rx*(1-c)-ry*s, rz*ry*(1-c)+rx*s, c+rz*rz*(1-c), 0,
                 0, 0, 0, 1
             };
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type Orthographic(float left,
+                float right, float bottom, float top, float near, float far) {
+            Matrix<4,4> ret;
+            ret(0,0) = 2/(right-left);
+            ret(1,1) = 2/(top-bottom);
+            ret(2,2) = -2/(far-near);
+            ret(3,3) = 1;
+            ret(0,3) = -(right+left)/(right-left);
+            ret(1,3) = -(top+bottom)/(top-bottom);
+            ret(0,3) = -(far+near)/(far-near);
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type Perspective(float fov, float aspect, float near, float far) {
+            float tanHalfFov = std::tan(fov / 2.0);
+
+            Matrix<4,4> ret;
+            ret(0,0) = 1.0/(aspect*tanHalfFov);
+            ret(1,1) = 1.0/(tanHalfFov);
+            ret(2,2) = -(far+near)/(far-near);
+            ret(3,2) = -1.0;
+            ret(2,3) = -(2.0*far*near)/(far-near);
             return ret;
         }
 

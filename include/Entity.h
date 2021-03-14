@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "Vector.h"
+#include "Matrix.h"
 #include "Component.h"
 
 namespace Starsurge {
@@ -9,15 +10,18 @@ namespace Starsurge {
         Entity(std::string t_name);
         ~Entity();
 
+        std::string GetName();
+        void Rename(std::string t_name);
+
         void Toggle();
         bool IsEnabled();
-        std::string GetName();
         template<typename T>
         void AddComponent(T * component) {
             if (FindComponent<T>() != NULL) {
                 Error(std::string("Tried to add multiple ")+std::string(typeid(T).name())+" components to one entity.");
             }
             else {
+                component->owner = this;
                 this->components.push_back(component);
             }
         }
@@ -34,11 +38,6 @@ namespace Starsurge {
     private:
         std::string name;
         bool enabled;
-
-        Vector3 position;
-        Vector3 rotation;
-        Vector3 scaling;
-
         std::vector<Component*> components;
     };
 }

@@ -1,7 +1,12 @@
 #include "../include/Component.h"
+#include "../include/Entity.h"
 
 Starsurge::Component::Component(std::string t_id) : id(t_id), enabled(true) {
 
+}
+
+Starsurge::Entity * Starsurge::Component::GetOwner() {
+    return this->owner;
 }
 
 void Starsurge::Component::Toggle() {

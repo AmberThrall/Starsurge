@@ -23,6 +23,10 @@ bool Starsurge::GLSL::Compiler::Compile(Shader * shader) {
     }
 
     if (structure.shaderType == "Shader") {
+        structure.uniforms += R"(
+            mat4 MATRIX_PROJ, MATRIX_VIEW, MATRIX_MODEL;
+        )";
+
         for (unsigned int i = 0; i < structure.passes.size(); ++i) {
             ShaderPass shaderPass;
             shaderPass.vertex = CompileVertex(structure.uniforms, structure.codeOffset[i], structure.passes[i]);

@@ -7,7 +7,6 @@ public:
     ~BasicGame() { }
 protected:
     void OnInitialize() {
-        Matrix4 transform = Matrix4::RotateZ(Radians(45))*Matrix4::Scale(Vector3(0.5));
         if (!AssetManager::Inst().Load("tests/basic/container.jpg")) {
             Error("Failed to load container.jpg");
             return;
@@ -17,27 +16,50 @@ protected:
         SetScene(scene);
         scene->SetBgColor(Color(51,76,76,255));
 
-        Entity * square = new Entity("Square");
-        square_mesh = Mesh::Quad(Vector3(0.5, 0.5, 0.0), Vector3(0.5, -0.5, 0), Vector3(-0.5, -0.5, 0.0), Vector3(-0.5, 0.5, 0.0));
-        square_mat = Material(&Shaders::BasicShader);
-        square->AddComponent<MeshRenderer>(new MeshRenderer(&square_mesh, &square_mat));
+        std::vector<Vector3> cubePositions = {
+            Vector3( 0.0f,  0.0f,  0.0f),
+            Vector3( 2.0f,  5.0f, -15.0f),
+            Vector3(-1.5f, -2.2f, -2.5f),
+            Vector3(-3.8f, -2.0f, -12.3f),
+            Vector3( 2.4f, -0.4f, -3.5f),
+            Vector3(-1.7f,  3.0f, -7.5f),
+            Vector3( 1.3f, -2.0f, -2.5f),
+            Vector3( 1.5f,  2.0f, -2.5f),
+            Vector3( 1.5f,  0.2f, -1.5f),
+            Vector3(-1.3f,  1.0f, -1.5f)
+        };
 
-        scene->AddEntity(square);
+        cube_mesh = AssetManager::Inst().GetMesh("Builtin/Cube");
+        cube_mat = Material(AssetManager::Inst().GetShader("Builtin/BasicShader"));
+        for (size_t i = 0; i < cubePositions.size(); ++i) {
+            Entity * cube = new Entity("Cube"+std::to_string(i+1));
+            cube->AddComponent<Transform>(new Transform(cubePositions[i], Vector3(Radians(10.0f*i),Radians(5.0f*i),Radians(-2.0f*i)), Vector3(1,1,1)));
+            cube->AddComponent<MeshRenderer>(new MeshRenderer(cube_mesh, &cube_mat));
+            scene->AddEntity(cube);
+            cubes.push_back(cube);
+        }
 
-        Uniform * uniform_texture0 = square_mat.GetUniform("Texture");
+        Uniform * uniform_texture0 = cube_mat.GetUniform("Texture");
         uniform_texture0->SetData(AssetManager::Inst().GetTexture("tests/basic/container.jpg"));
 
-        Uniform * uniform_transform = square_mat.GetUniform("transform");
-        uniform_transform->SetData(transform);
+        Uniform * uniform_view = cube_mat.GetUniform("MATRIX_VIEW");
+        uniform_view->SetData(Matrix4::Translate(Vector3(0, 0, -3)));
+
+        Uniform * uniform_proj = cube_mat.GetUniform("MATRIX_PROJ");
+        uniform_proj->SetData(Matrix4::Perspective(Radians(45), 800.0 / 600.0, 0.1, 100));
     }
 
     void OnUpdate() {
-        Uniform * uniform_color = square_mat.GetUniform("fragColor");
+        Uniform * uniform_color = cube_mat.GetUniform("fragColor");
         uniform_color->SetData(Color(0,255.0f*(sin(glfwGetTime()) / 2.0 + 0.5f),0,255));
+
+        // Uniform * uniform_model = cube_mat.GetUniform("MATRIX_MODEL");
+        // uniform_model->SetData(Matrix4::Rotate((float)glfwGetTime()*Radians(50), Vector3(0.5, 1.0, 0.0)));
     }
 private:
-    Mesh square_mesh;
-    Material square_mat;
+    std::vector<Entity*> cubes;
+    Mesh * cube_mesh;
+    Material cube_mat;
 };
 
 void writeCode(std::string data) {

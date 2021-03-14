@@ -47,6 +47,11 @@ void Starsurge::Game::Run() {
         return;
     }
 
+    glEnable(GL_DEPTH_TEST);
+
+    // Load builtin data.
+    AssetManager::Inst().LoadBuiltins();
+
     OnInitialize();
     GameLoop();
 }
@@ -62,7 +67,7 @@ void Starsurge::Game::GameLoop() {
         // Clear color for window.
         Color clearColor = this->activeScene->GetBgColor().ToOpenGLFormat();
         glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Iterate through each entity with a MeshRenderer
         std::vector<Entity*> meshEntities = this->activeScene->FindEntitiesWithComponent<MeshRenderer>();

@@ -2,9 +2,9 @@
 #include "Vector.h"
 
 namespace Starsurge {
-    class Color : public Vector<4> {
+    class Color : public Vector4 {
     public:
-        Color();
+        Color(float all = 0);
         Color(float r, float g, float b, float a);
 
         Color ToOpenGLFormat();

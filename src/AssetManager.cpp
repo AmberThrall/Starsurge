@@ -11,6 +11,16 @@ Starsurge::Texture * Starsurge::AssetManager::GetTexture(std::string path) {
     return textures[path];
 }
 
+Starsurge::Mesh * Starsurge::AssetManager::GetMesh(std::string path) {
+    if (meshes.find(path) == meshes.end()) { return NULL; }
+    return meshes[path];
+}
+
+Starsurge::Shader * Starsurge::AssetManager::GetShader(std::string path) {
+    if (shaders.find(path) == shaders.end()) { return NULL; }
+    return shaders[path];
+}
+
 bool Starsurge::AssetManager::Load(std::string path) {
     if (textures.find(path) != textures.end()) {
         return true;
@@ -41,4 +51,11 @@ bool Starsurge::AssetManager::Load(std::string path) {
     }
 
     return false;
+}
+
+bool Starsurge::AssetManager::LoadBuiltins() {
+    meshes["Builtin/Quad"] = Mesh::Quad(Vector3(0,0,0), Vector3(0,1,0), Vector3(1,1,0), Vector3(1,0,0));
+    meshes["Builtin/Cube"] = Mesh::Cube();
+    shaders["Builtin/BasicShader"] = &Shaders::BasicShader;
+    return true;
 }

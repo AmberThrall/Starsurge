@@ -55,7 +55,7 @@ void Starsurge::Material::Apply(unsigned int passno) {
             glUniform1i(loc, uniform.GetData<int>());
         }
         else if (uniform.GetType() == "float") {
-            glUniform1f(loc, uniform.GetData<int>());
+            glUniform1f(loc, uniform.GetData<float>());
         }
         else if (uniform.GetType() == "vec2") {
             Vector2 data = uniform.GetData<Vector2>();
