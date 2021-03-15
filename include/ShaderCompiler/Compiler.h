@@ -10,7 +10,6 @@ namespace Starsurge {
     namespace GLSL {
         struct CodeStructure {
             std::string shaderType;
-            std::string uniforms;
             std::vector<std::string> passes;
             std::vector<unsigned int> codeOffset;
         };
@@ -24,8 +23,8 @@ namespace Starsurge {
         private:
             void HandleGLSLErrors(int linenoOffset, std::string log);
             std::string TranslateCode(ASTNode * root, std::string entry);
-            unsigned int CompileVertex(std::string uniforms, unsigned int linenoOffset, std::string vert_code);
-            unsigned int CompileFragment(std::string uniforms, unsigned int linenoOffset, std::string frag_code);
+            bool CompileVertex(ShaderPass & shaderPass, unsigned int linenoOffset, std::string vert_code);
+            bool CompileFragment(ShaderPass & shaderPass, unsigned int linenoOffset, std::string frag_code);
             void Error(unsigned int lineno, std::string msg);
             CodeStructure ParseStructure();
             Uniform ParseUniform(ASTNodeVariableDeclaration * var);

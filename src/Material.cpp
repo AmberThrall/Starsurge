@@ -21,30 +21,20 @@ Starsurge::Shader * Starsurge::Material::GetShader() {
     return this->shader;
 }
 
-
-Starsurge::Uniform * Starsurge::Material::GetUniform(std::string name) {
-    return &this->data[name];
+Starsurge::Uniform * Starsurge::Material::GetUniform(int pass, std::string name) {
+    return &this->data[std::make_pair(pass,name)];
 }
 
 void Starsurge::Material::Apply(unsigned int passno) {
-    // Textures need to bind before we use our shader.
-    unsigned int texNum = 0;
-    for (auto it = this->data.begin(); it != this->data.end(); ++it) {
-        std::string name = it->first;
-        Uniform uniform = it->second;
-        if (uniform.GetType() == "sampler2D") {
-            Texture * data = uniform.GetData<Texture*>();
-            if (data) {
-                data->BindTexture(texNum++);
-            }
-        }
-    }
-
     // Now we activate the shader and use glUniform*
-    texNum = 0;
+    unsigned int texNum = 0;
     this->shader->Use(passno);
     for (auto it = this->data.begin(); it != this->data.end(); ++it) {
-        std::string name = it->first;
+        auto key = it->first;
+        if (std::get<0>(key) != passno) {
+            continue;
+        }
+        std::string name = std::get<1>(key);
         Uniform uniform = it->second;
 
         int loc = glGetUniformLocation(shader->GetProgram(passno), name.c_str());
@@ -89,6 +79,7 @@ void Starsurge::Material::Apply(unsigned int passno) {
         else if (uniform.GetType() == "sampler2D") {
             Texture * data = uniform.GetData<Texture*>();
             if (data) {
+                data->BindTexture(texNum);
                 glUniform1i(loc, texNum++);
             }
         }
@@ -109,8 +100,12 @@ void Starsurge::Material::Apply(unsigned int passno) {
 
 void Starsurge::Material::SetupData() {
     this->data.clear();
-    std::vector<Uniform> uniforms = shader->GetUniforms();
-    for (unsigned int i = 0; i < uniforms.size(); ++i) {
-        data[uniforms[i].GetName()] = uniforms[i];
+    for (int pass = 0; pass < shader->NumberOfPasses(); ++pass) {
+        std::map<std::string,Uniform> uniforms = shader->GetUniforms(pass);
+        for (auto it = uniforms.begin(); it != uniforms.end(); ++it) {
+            std::string name = it->first;
+            Uniform uniform = it->second;
+            data[std::make_pair(pass, name)] = uniform;
+        }
     }
 }

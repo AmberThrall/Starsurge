@@ -94,7 +94,6 @@ protected:
             Vector3(-1.3f,  1.0f, -1.5f)
         };
 
-        Log("Building cubes.");
         cube_mesh = AssetManager::Inst().GetMesh("Builtin/Cube");
         cube_mat = Material(AssetManager::Inst().GetShader("Builtin/BasicShader"));
         for (size_t i = 0; i < cubePositions.size(); ++i) {
@@ -105,8 +104,7 @@ protected:
             cubes.push_back(cube);
         }
 
-        Log("Setting uniforms.");
-        Uniform * uniform_texture0 = cube_mat.GetUniform("Texture");
+        Uniform * uniform_texture0 = cube_mat.GetUniform(0, "Texture");
         uniform_texture0->SetData(AssetManager::Inst().GetTexture("tests/basic/container.jpg"));
     }
 
@@ -125,8 +123,8 @@ protected:
         camera->FindComponent<Camera>()->LookAt(camTransform->Position + front);
 
 
-        // Uniform * uniform_color = cube_mat.GetUniform("fragColor");
-        // uniform_color->SetData(Color(0,255.0f*(sin(glfwGetTime()) / 2.0 + 0.5f),0,255));
+        Uniform * uniform_color = cube_mat.GetUniform(0, "fragColor");
+        uniform_color->SetData(Color(0,255.0f*(sin(Timer::Inst().Now()) / 2.0 + 0.5f),0,255));
     }
 private:
     Entity * camera;

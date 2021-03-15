@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <map>
 #include <variant>
 #include "Shader.h"
 #include "Vector.h"
@@ -12,11 +13,6 @@ namespace Starsurge {
     namespace GLSL {
         class Compiler;
     }
-    struct ShaderPass {
-        unsigned int vertex;
-        unsigned int fragment;
-        unsigned int program;
-    };
 
     class Uniform {
     public:
@@ -50,6 +46,13 @@ namespace Starsurge {
         std::variant<bool, int, unsigned int, float, Vector2, Vector3, Vector4, Color, Texture*, Matrix2, Matrix3, Matrix4> data;
     };
 
+    struct ShaderPass {
+        std::map<std::string, Uniform> uniforms;
+        unsigned int vertex;
+        unsigned int fragment;
+        unsigned int program;
+    };
+
     class Shader {
     public:
         Shader(std::string source_code);
@@ -59,19 +62,19 @@ namespace Starsurge {
         unsigned int NumberOfPasses();
         unsigned int GetProgram(unsigned int i);
 
-        std::vector<Uniform> GetUniforms();
+        std::map<std::string, Uniform> GetUniforms(unsigned int pass);
         bool Compile();
         void Use(unsigned int pass);
     private:
         std::string code;
         bool needs_recompiling;
         std::vector<ShaderPass> passes;
-        std::vector<Uniform> uniforms;
 
         friend class GLSL::Compiler;
     };
 
     namespace Shaders {
         extern Shader BasicShader;
+        extern Shader BasicLighting;
     }
 }

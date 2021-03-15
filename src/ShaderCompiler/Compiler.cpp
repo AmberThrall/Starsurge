@@ -23,14 +23,10 @@ bool Starsurge::GLSL::Compiler::Compile(Shader * shader) {
     }
 
     if (structure.shaderType == "Shader") {
-        structure.uniforms += R"(
-            mat4 MATRIX_PROJ, MATRIX_VIEW, MATRIX_MODEL;
-        )";
-
         for (unsigned int i = 0; i < structure.passes.size(); ++i) {
+            structure.passes[i] = "uniform mat4 MATRIX_PROJ, MATRIX_VIEW, MATRIX_MODEL;\n" + structure.passes[i];
             ShaderPass shaderPass;
-            shaderPass.vertex = CompileVertex(structure.uniforms, structure.codeOffset[i], structure.passes[i]);
-            if (errors.size() > 0) {
+            if (!CompileVertex(shaderPass, structure.codeOffset[i], structure.passes[i])) {
                 for (unsigned int i = 0; i < errors.size(); ++i) {
                     ShaderError(errors[i]);
                 }
@@ -38,8 +34,7 @@ bool Starsurge::GLSL::Compiler::Compile(Shader * shader) {
                 return false;
             }
 
-            shaderPass.fragment = CompileFragment(structure.uniforms, structure.codeOffset[i], structure.passes[i]);
-            if (errors.size() > 0) {
+            if (!CompileFragment(shaderPass, structure.codeOffset[i], structure.passes[i])) {
                 for (unsigned int i = 0; i < errors.size(); ++i) {
                     ShaderError(errors[i]);
                 }
@@ -61,14 +56,6 @@ bool Starsurge::GLSL::Compiler::Compile(Shader * shader) {
             }
             shader->passes.push_back(shaderPass);
         }
-
-        // Parse the uniforms.
-        GLSL::Parser parser(structure.uniforms);
-        parser.Parse();
-        std::vector<ASTNodeVariableDeclaration*> vars = parser.GetAST().root->GetChildren<ASTNodeVariableDeclaration>(AST_NODE_VARIABLE_DECLARATION);
-        for (unsigned int i = 0; i < vars.size(); ++i) {
-            shader->uniforms.push_back(ParseUniform(vars[i]));
-        }
         return true;
     }
     else {
@@ -76,37 +63,37 @@ bool Starsurge::GLSL::Compiler::Compile(Shader * shader) {
     }
 }
 
-unsigned int Starsurge::GLSL::Compiler::CompileVertex(std::string uniforms, unsigned int linenoOffset, std::string vert_code) {
-    unsigned int ret = 0;
+bool Starsurge::GLSL::Compiler::CompileVertex(ShaderPass & shaderPass, unsigned int linenoOffset, std::string vert_code) {
     int success;
     char infoLog[512];
 
-    GLSL::Parser parser(uniforms);
-    parser.Parse();
-    std::vector<ASTNodeVariableDeclaration*> vars = parser.GetAST().root->GetChildren<ASTNodeVariableDeclaration>(AST_NODE_VARIABLE_DECLARATION);
-    uniforms = "";
-    for (unsigned int i = 0; i < vars.size(); ++i) {
-        vars[i]->storage = "uniform";
-        uniforms += Node2Code(vars[i]) + ";\n";
-    }
-
-    vert_code = uniforms + R"(
+    vert_code = std::string(R"(
         struct VertexData {
             vec3 Position;
             vec3 Normal;
             vec2 UV;
             color Color;
         };
-    )" + "\n" + vert_code;
+    )") + "\n" + vert_code;
 
+    Parser parser;
     parser.SetCode(vert_code);
     parser.Parse();
     std::vector<GLSL::ParseError> errors = parser.GetErrors();
     for (unsigned int i = 0; i < errors.size(); ++i) {
         Error(errors[i].lineno+linenoOffset, errors[i].msg);
     }
-    if (errors.size() > 0) { return ret; }
+    if (errors.size() > 0) { return false; }
 
+    // While we've got it parsed, let's look at the uniforms.
+    std::vector<ASTNodeVariableDeclaration*> vars = parser.GetAST().root->GetChildren<ASTNodeVariableDeclaration>(AST_NODE_VARIABLE_DECLARATION);
+    for (unsigned int i = 0; i < vars.size(); ++i) {
+        if (vars[i]->storage == "uniform") {
+            shaderPass.uniforms[vars[i]->name] = ParseUniform(vars[i]);
+        }
+    }
+
+    // Translate the tree back to glsl code removing uncalled functions.
     vert_code = TranslateCode(parser.GetAST().root, "vertex");
     vert_code = R"(
         #version 330 core
@@ -126,47 +113,39 @@ unsigned int Starsurge::GLSL::Compiler::CompileVertex(std::string uniforms, unsi
     )";
     const char * vert_code_c_str = vert_code.c_str();
 
-    ret = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(ret, 1, &vert_code_c_str, NULL);
-    glCompileShader(ret);
-    glGetShaderiv(ret, GL_COMPILE_STATUS, &success);
+    shaderPass.vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(shaderPass.vertex, 1, &vert_code_c_str, NULL);
+    glCompileShader(shaderPass.vertex);
+    glGetShaderiv(shaderPass.vertex, GL_COMPILE_STATUS, &success);
     if (!success) {
-        glGetShaderInfoLog(ret, 512, NULL, infoLog);
-        HandleGLSLErrors(linenoOffset-11-vars.size(), std::string(infoLog));
+        glGetShaderInfoLog(shaderPass.vertex, 512, NULL, infoLog);
+        HandleGLSLErrors(linenoOffset-11, std::string(infoLog));
+        return false;
     }
-    return ret;
+    return true;
 }
 
-unsigned int Starsurge::GLSL::Compiler::CompileFragment(std::string uniforms, unsigned int linenoOffset, std::string frag_code) {
-    unsigned int ret = 0;
+bool Starsurge::GLSL::Compiler::CompileFragment(ShaderPass & shaderPass, unsigned int linenoOffset, std::string frag_code) {
     int success;
     char infoLog[512];
 
-    GLSL::Parser parser(uniforms);
-    parser.Parse();
-    std::vector<ASTNodeVariableDeclaration*> vars = parser.GetAST().root->GetChildren<ASTNodeVariableDeclaration>(AST_NODE_VARIABLE_DECLARATION);
-    uniforms = "";
-    for (unsigned int i = 0; i < vars.size(); ++i) {
-        vars[i]->storage = "uniform";
-        uniforms += Node2Code(vars[i]) + ";\n";
-    }
-
-    frag_code = uniforms + R"(
+    frag_code = std::string(R"(
         struct VertexData {
             vec3 Position;
             vec3 Normal;
             vec2 UV;
             color Color;
         };
-    )" + "\n" + frag_code;
+    )") + "\n" + frag_code;
 
+    Parser parser;
     parser.SetCode(frag_code);
     parser.Parse();
     std::vector<GLSL::ParseError> errors = parser.GetErrors();
     for (unsigned int i = 0; i < errors.size(); ++i) {
         Error(errors[i].lineno+linenoOffset, errors[i].msg);
     }
-    if (errors.size() > 0) { return ret; }
+    if (errors.size() > 0) { return false; }
 
     frag_code = TranslateCode(parser.GetAST().root, "fragment");
     frag_code = "#version 330 core\nout vec4 _internal_FragColor;\n\n"+frag_code;
@@ -177,15 +156,16 @@ unsigned int Starsurge::GLSL::Compiler::CompileFragment(std::string uniforms, un
     )";
     const char * frag_code_c_str = frag_code.c_str();
 
-    ret = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(ret, 1, &frag_code_c_str, NULL);
-    glCompileShader(ret);
-    glGetShaderiv(ret, GL_COMPILE_STATUS, &success);
+    shaderPass.fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(shaderPass.fragment, 1, &frag_code_c_str, NULL);
+    glCompileShader(shaderPass.fragment);
+    glGetShaderiv(shaderPass.fragment, GL_COMPILE_STATUS, &success);
     if (!success) {
-        glGetShaderInfoLog(ret, 512, NULL, infoLog);
-        HandleGLSLErrors(linenoOffset-1-vars.size(), std::string(infoLog));
+        glGetShaderInfoLog(shaderPass.fragment, 512, NULL, infoLog);
+        HandleGLSLErrors(linenoOffset-1, std::string(infoLog));
+        return false;
     }
-    return ret;
+    return true;
 }
 
 void Starsurge::GLSL::Compiler::HandleGLSLErrors(int linenoOffset, std::string log) {
@@ -294,10 +274,9 @@ Starsurge::GLSL::CodeStructure Starsurge::GLSL::Compiler::ParseStructure() {
 
         if (c == '{') {
             index += 1;
-            if (word != "Pass" && word != "Uniforms") {
+            if (word != "Pass") {
                 Error(lineno, "Unknown keyword: "+word);
                 ret.passes.clear();
-                ret.uniforms = "";
                 return ret;
             }
 
@@ -350,22 +329,10 @@ Starsurge::GLSL::CodeStructure Starsurge::GLSL::Compiler::ParseStructure() {
             if (scope != 0) {
                 Error(lineno, "Missing '}' at end of "+word+".");
                 ret.passes.clear();
-                ret.uniforms = "";
                 return ret;
             }
 
-            if (word == "Pass") {
-                ret.passes.push_back(pass);
-            }
-            else if (word == "Uniforms") {
-                if (ret.uniforms != "") {
-                    Error(lineno, "Multiple 'Uniform' declarations encounted.");
-                    ret.passes.clear();
-                    ret.uniforms = "";
-                    return ret;
-                }
-                ret.uniforms = pass;
-            }
+            ret.passes.push_back(pass);
 
             word = "";
         }

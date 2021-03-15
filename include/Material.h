@@ -14,12 +14,12 @@ namespace Starsurge {
         void SetShader(Shader * t_shader);
         Shader * GetShader();
 
-        Uniform * GetUniform(std::string name);
+        Uniform * GetUniform(int pass, std::string name);
         void Apply(unsigned int passno);
     protected:
         Shader * shader;
     private:
         void SetupData();
-        std::map<std::string, Uniform> data;
+        std::map<std::pair<int,std::string>, Uniform> data;
     };
 }

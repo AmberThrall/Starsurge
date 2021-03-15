@@ -140,8 +140,8 @@ unsigned int Starsurge::Shader::GetProgram(unsigned int i) {
     return passes[i].program;
 }
 
-std::vector<Starsurge::Uniform> Starsurge::Shader::GetUniforms() {
-    return this->uniforms;
+std::map<std::string, Starsurge::Uniform> Starsurge::Shader::GetUniforms(unsigned int pass) {
+    return passes[pass].uniforms;
 }
 
 bool Starsurge::Shader::Compile() {
@@ -155,7 +155,6 @@ bool Starsurge::Shader::Compile() {
         glDeleteShader(passes[i].fragment);
     }
     passes.clear();
-    uniforms.clear();
 
     GLSL::Compiler compiler(code);
     bool success = compiler.Compile(this);

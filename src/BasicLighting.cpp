@@ -1,9 +1,8 @@
 #include "../include/Shader.h"
 
-const char * source = R"(
+const char * sourceBasicLighting = R"(
     Shader {
         Pass {
-            uniform color fragColor = color(1,0,0,1);
             uniform sampler2D Texture;
 
             varying struct VS_OUT {
@@ -29,4 +28,4 @@ const char * source = R"(
 )";
 
 
-Starsurge::Shader Starsurge::Shaders::BasicShader(source);
+Starsurge::Shader Starsurge::Shaders::BasicLighting(sourceBasicLighting);
