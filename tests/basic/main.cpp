@@ -12,9 +12,14 @@ protected:
             return;
         }
 
-        Scene * scene = new Scene();
-        SetScene(scene);
-        scene->SetBgColor(Color(51,76,76,255));
+        Scene::Inst().SetBgColor(Color(51,76,76,255));
+
+        camera = new Entity("Camera");
+        camera->AddComponent<Transform>(new Transform(Vector3(0,0,3), Vector3(0,0,0), Vector3(1,1,1)));
+        camera->AddComponent<Camera>(new Camera(Radians(45), 0.1, 100));
+        Scene::Inst().AddEntity(camera);
+        Scene::Inst().SetActiveCamera(camera);
+        camera->FindComponent<Camera>()->LookAt(Vector3(0,0,0));
 
         std::vector<Vector3> cubePositions = {
             Vector3( 0.0f,  0.0f,  0.0f),
@@ -29,34 +34,32 @@ protected:
             Vector3(-1.3f,  1.0f, -1.5f)
         };
 
+        Log("Building cubes.");
         cube_mesh = AssetManager::Inst().GetMesh("Builtin/Cube");
         cube_mat = Material(AssetManager::Inst().GetShader("Builtin/BasicShader"));
         for (size_t i = 0; i < cubePositions.size(); ++i) {
             Entity * cube = new Entity("Cube"+std::to_string(i+1));
             cube->AddComponent<Transform>(new Transform(cubePositions[i], Vector3(Radians(10.0f*i),Radians(5.0f*i),Radians(-2.0f*i)), Vector3(1,1,1)));
             cube->AddComponent<MeshRenderer>(new MeshRenderer(cube_mesh, &cube_mat));
-            scene->AddEntity(cube);
+            Scene::Inst().AddEntity(cube);
             cubes.push_back(cube);
         }
 
+        Log("Setting uniforms.");
         Uniform * uniform_texture0 = cube_mat.GetUniform("Texture");
         uniform_texture0->SetData(AssetManager::Inst().GetTexture("tests/basic/container.jpg"));
-
-        Uniform * uniform_view = cube_mat.GetUniform("MATRIX_VIEW");
-        uniform_view->SetData(Matrix4::Translate(Vector3(0, 0, -3)));
-
-        Uniform * uniform_proj = cube_mat.GetUniform("MATRIX_PROJ");
-        uniform_proj->SetData(Matrix4::Perspective(Radians(45), 800.0 / 600.0, 0.1, 100));
     }
 
     void OnUpdate() {
-        Uniform * uniform_color = cube_mat.GetUniform("fragColor");
-        uniform_color->SetData(Color(0,255.0f*(sin(glfwGetTime()) / 2.0 + 0.5f),0,255));
+        // Uniform * uniform_color = cube_mat.GetUniform("fragColor");
+        // uniform_color->SetData(Color(0,255.0f*(sin(glfwGetTime()) / 2.0 + 0.5f),0,255));
 
-        // Uniform * uniform_model = cube_mat.GetUniform("MATRIX_MODEL");
-        // uniform_model->SetData(Matrix4::Rotate((float)glfwGetTime()*Radians(50), Vector3(0.5, 1.0, 0.0)));
+        Transform * camTransform = camera->FindComponent<Transform>();
+        camTransform->Position = Vector3(sin(glfwGetTime()) * 10.0f, 0, cos(glfwGetTime()) * 10.0f);
     }
 private:
+    Entity * camera;
+    float angle;
     std::vector<Entity*> cubes;
     Mesh * cube_mesh;
     Material cube_mat;

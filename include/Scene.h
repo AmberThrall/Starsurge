@@ -6,14 +6,16 @@
 namespace Starsurge {
     class Scene {
     public:
-        Scene();
-        ~Scene();
+        static Scene& Inst();
 
         void SetBgColor(Color t_bgcolor);
         Color GetBgColor();
+        void SetActiveCamera(Entity * t_entity);
+        Entity * GetActiveCamera();
         void AddEntity(Entity * entity);
-        Entity * FindEntity(std::string name);
 
+        std::vector<Entity*> GetAllEntities();
+        std::vector<Entity*> FindEntities(std::string name);
         template<typename T>
         std::vector<Entity*> FindEntitiesWithComponent() {
             std::vector<Entity*> ret;
@@ -25,9 +27,11 @@ namespace Starsurge {
             }
             return ret;
         }
-
     private:
+        Scene();
+        ~Scene();
         Color bgcolor;
         std::vector<Entity*> entities;
+        Entity* activeCamera;
     };
 }

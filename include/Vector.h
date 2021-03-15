@@ -83,6 +83,11 @@ namespace Starsurge {
             return copy;
         }
 
+        template <typename = std::enable_if_t<(N==3)>>
+        static Vector<3> Up() {
+            return Vector<3>(0,1,0);
+        }
+
         static float Dot(const Vector<N>& lhs, const Vector<N>& rhs) {
             float ret = 0;
             for (size_t i = 0; i < N; ++i) {

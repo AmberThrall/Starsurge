@@ -354,6 +354,23 @@ namespace Starsurge {
         }
 
         template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type LookAt(Vector3 right, Vector3 up, Vector3 dir, Vector3 eye) {
+            Matrix<4,4> lhs = {
+                right.x, right.y, right.z, 0,
+                up.x, up.y, up.z, 0,
+                dir.x, dir.y, dir.z, 0,
+                0, 0, 0, 1
+            };
+            Matrix<4,4> rhs = {
+                1, 0, 0, -eye.x,
+                0, 1, 0, -eye.y,
+                0, 0, 1, -eye.z,
+                0, 0, 0, 1
+            };
+            return lhs * rhs;
+        }
+
+        template<size_t m = M, size_t n = N>
         static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type RotateX(float theta) {
             return Matrix<4,4>::Rotate(theta, Vector3(1,0,0));
         }

@@ -1,5 +1,6 @@
 add_library(Starsurge STATIC Logging.cpp
     Game.cpp
+    GameSettings.cpp
     glad.c
     Color.cpp
     Scene.cpp
@@ -12,6 +13,7 @@ add_library(Starsurge STATIC Logging.cpp
     Material.cpp
     Transform.cpp
     MeshRenderer.cpp
+    Camera.cpp
     Utils.cpp
     ShaderCompiler/Lexer.cpp
     ShaderCompiler/Parser.cpp

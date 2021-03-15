@@ -11,6 +11,7 @@
 #include "Mesh.h"
 #include "Transform.h"
 #include "MeshRenderer.h"
+#include "Camera.h"
 #include "Vector.h"
 #include "Matrix.h"
 #include "Color.h"

@@ -1,7 +1,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "../include/Scene.h"
 #include "../include/Entity.h"
 #include "../include/Transform.h"
+#include "../include/Camera.h"
 #include "../include/MeshRenderer.h"
 
 Starsurge::MeshRenderer::MeshRenderer(Mesh * t_mesh, Material * t_mat) : Component(typeid(MeshRenderer).name()) {
@@ -17,6 +19,11 @@ void Starsurge::MeshRenderer::Render() {
     }
     else {
         this->material->GetUniform("MATRIX_MODEL")->SetData(Matrix4::Identity());
+    }
+    Entity * camera = Scene::Inst().GetActiveCamera();
+    if (camera) {
+        this->material->GetUniform("MATRIX_VIEW")->SetData(camera->FindComponent<Camera>()->GetViewMatrix());
+        this->material->GetUniform("MATRIX_PROJ")->SetData(camera->FindComponent<Camera>()->GetProjMatrix());
     }
 
     // Render each pass.

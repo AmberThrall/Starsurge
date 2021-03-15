@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "Logging.h"
 
 namespace Starsurge {
     class Entity;
@@ -14,6 +15,8 @@ namespace Starsurge {
         bool IsEnabled();
         std::string GetId();
     protected:
+        virtual void OnUpdate() {};
+
         std::string id;
         bool enabled;
         Entity * owner;

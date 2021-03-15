@@ -9,6 +9,7 @@ namespace Starsurge {
         Transform();
         Transform(Vector3 t_pos, Vector3 t_rot, Vector3 t_scale);
         Matrix4 AsMatrix();
+        bool HasMoved();
 
         Vector3 Position;
         Vector3 Rotation;

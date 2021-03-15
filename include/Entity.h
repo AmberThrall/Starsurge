@@ -13,6 +13,8 @@ namespace Starsurge {
         std::string GetName();
         void Rename(std::string t_name);
 
+        void Update();
+
         void Toggle();
         bool IsEnabled();
         template<typename T>

@@ -15,10 +15,14 @@ Starsurge::Transform::Transform(Vector3 t_pos, Vector3 t_rot, Vector3 t_scale) :
 }
 
 Starsurge::Matrix4 Starsurge::Transform::AsMatrix() {
-    if (this->Position != this->oldPosition || this->Rotation != this->oldRotation || this->Scaling != this->oldScaling) {
+    if (HasMoved()) {
         UpdateTransform();
     }
     return this->transformMatrix;
+}
+
+bool Starsurge::Transform::HasMoved() {
+    return (this->Position != this->oldPosition || this->Rotation != this->oldRotation || this->Scaling != this->oldScaling);
 }
 
 void Starsurge::Transform::UpdateTransform() {
