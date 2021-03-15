@@ -8,6 +8,7 @@ namespace Starsurge {
     static char* WHITESPACE = " \t\n\r\f\v"; // Why does static instead of const fix this?
 
     std::vector<std::string> Explode(std::string const & str, char delim, bool include_empty = true);
+    std::vector<std::string> Explode(std::string const & str, std::string delim, bool include_empty = true);
     std::vector<std::string> ExplodeWhitespace(std::string const & str, bool include_empty = true);
     std::string LTrim(std::string const str);
     std::string RTrim(std::string const str);

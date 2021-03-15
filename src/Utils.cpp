@@ -22,6 +22,28 @@ std::vector<std::string> Starsurge::Explode(std::string const & str, char delim,
     return res;
 }
 
+
+std::vector<std::string> Starsurge::Explode(std::string const & str, std::string delim, bool include_empty) {
+    std::vector<std::string> res;
+    size_t index = str.find(delim);
+    size_t lastIndex = 0;
+
+    while (index != std::string::npos) {
+        std::string substr = str.substr(lastIndex, index-lastIndex);
+        if (!substr.empty() || include_empty) {
+            res.push_back(std::move(substr));
+        }
+        lastIndex = index+delim.length();
+        index = str.find(delim, lastIndex);
+    }
+
+    std::string substr = str.substr(lastIndex);
+    if (!substr.empty() || include_empty) {
+        res.push_back(std::move(substr));
+    }
+    return res;
+}
+
 std::vector<std::string> Starsurge::ExplodeWhitespace(std::string const & str, bool include_empty) {
     std::vector<std::string> res;
 

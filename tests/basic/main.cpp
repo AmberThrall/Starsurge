@@ -1,3 +1,7 @@
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <cctype>
 #include "../../include/Engine.h"
 using namespace Starsurge;
 
