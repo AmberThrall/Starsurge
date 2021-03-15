@@ -23,6 +23,12 @@ namespace Starsurge {
     float Min(float v, float min);
     float Clamp(float v, float min, float max);
 
+    // Select various elements from an tuple
+    template <typename Tuple, size_t... Idx>
+    auto Select(Tuple&& tuple, std::index_sequence<Idx...>) {
+        return std::make_tuple(std::get<Idx>(std::forward<Tuple>(tuple))...);
+    }
+
     struct Match {
         unsigned int position;
         std::vector<std::string> matches;

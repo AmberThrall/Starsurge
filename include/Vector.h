@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
+#include <tuple>
 #include <initializer_list>
 #include "Logging.h"
+#include "Utils.h"
 
 namespace Starsurge {
     struct Empty {};
@@ -44,7 +46,7 @@ namespace Starsurge {
             ((this->data[i++] = float(ts)),...);
         }
 
-        size_t GetSize() const { return N; }
+        size_t Size() const { return N; }
 
         template <size_t M>
         Vector<M> Resize() {
@@ -172,11 +174,78 @@ namespace Starsurge {
         friend bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) { return !(lhs == rhs); }
 
         // Swizzling
+        template <size_t idx>
+        class swizzleScalar {
+        public:
+            operator float() const {
+                return float(m_data[idx]);
+            }
+            auto operator=(const float& other) {
+                m_data[idx] = other;
+                return (*this);
+            }
+            auto operator++(int) {
+                m_data[idx]++;
+                return (*this);
+            }
+            auto operator++() {
+                ++m_data[idx];
+                return (*this);
+            }
+            auto operator--(int) {
+                m_data[idx]--;
+                return (*this);
+            }
+            auto operator--() {
+                --m_data[idx];
+                return (*this);
+            }
+            auto operator+=(const float& other) {
+                m_data[idx] += other;
+                return (*this);
+            }
+            auto operator-=(const float& other) {
+                m_data[idx] -= other;
+                return (*this);
+            }
+            auto operator*=(const float& other) {
+                m_data[idx] *= other;
+                return (*this);
+            }
+            auto operator/=(const float& other) {
+                m_data[idx] /= other;
+                return (*this);
+            }
+        private:
+            float m_data[N];
+        };
+
         template <size_t...Idx>
         class swizzle {
         public:
             std::string ToString() {
                 return ((Vector<sizeof...(Idx)>)*this).ToString();
+            }
+
+            size_t Size() const { return (sizeof...(Idx)); }
+
+            float Length() const { return Magnitude(); }
+            float Magnitude() const {
+                Vector<sizeof...(Idx)> ret = (Vector<sizeof...(Idx)>)*this;
+                return ret.Magnitude();
+            }
+            void Normalize() {
+                float mag = Magnitude();
+                if (mag == 0) {
+                    Error("Can't normalize zero vector.");
+                    return;
+                }
+                ((m_data[Idx] *= (1.0/mag)),...);
+            }
+            Vector<sizeof...(Idx)> Unit() const {
+                Vector<sizeof...(Idx)> ret = (Vector<sizeof...(Idx)>)*this;
+                ret.Normalize();
+                return ret;
             }
 
             operator Vector<sizeof...(Idx)>() const {
@@ -185,6 +254,9 @@ namespace Starsurge {
                 ((ret[i++] = m_data[Idx]),...);
                 return ret;
             }
+
+            float operator [](int i) const { return this->m_data[getIdx(i)]; }
+            float & operator [](int i) { return this->m_data[getIdx(i)]; }
             template <size_t...UIdx, typename = std::enable_if_t<(sizeof...(Idx)==sizeof...(UIdx))>>
             auto operator=(const swizzle<UIdx...>& other) {
                 ((m_data[Idx] = other.m_data[UIdx]),...);
@@ -233,8 +305,8 @@ namespace Starsurge {
                 ((m_data[Idx] /= other),...);
                 return (*this);
             }
-            friend swizzle<Idx...> operator/(swizzle<Idx...> lhs, float rhs) { return lhs *= rhs; }
-            friend swizzle<Idx...> operator/(float lhs, swizzle<Idx...> rhs) { return rhs *= lhs; }
+            friend swizzle<Idx...> operator/(swizzle<Idx...> lhs, float rhs) { return lhs /= rhs; }
+            friend swizzle<Idx...> operator/(float lhs, swizzle<Idx...> rhs) { return rhs /= lhs; }
             template <size_t...UIdx, typename = std::enable_if_t<(sizeof...(Idx)==sizeof...(UIdx))>>
             friend bool operator==(swizzle<Idx...> lhs, swizzle<UIdx...> rhs) {
                 return (Vector<sizeof...(Idx)>)lhs == (Vector<sizeof...(UIdx)>)rhs;
@@ -245,58 +317,22 @@ namespace Starsurge {
             friend bool operator!=(swizzle<Idx...> lhs, swizzle<UIdx...> rhs) { return !(lhs == rhs); }
             friend bool operator!=(swizzle<Idx...> lhs, Vector<sizeof...(Idx)> rhs) { return !(lhs == rhs); }
             friend bool operator!=(Vector<sizeof...(Idx)> lhs, swizzle<Idx...> rhs) { return !(lhs == rhs); }
-
-            // Size 1 (float) operators.
-            template <typename = std::enable_if_t<(sizeof...(Idx)==1)>>
-            operator float() const {
-                return float(((m_data[Idx]),...));
-            }
-            template <typename = std::enable_if_t<(sizeof...(Idx)==1)>>
-            auto operator=(const float& other) {
-                ((m_data[Idx] = other),...);
-                return (*this);
-            }
-            template <typename = std::enable_if_t<(sizeof...(Idx)==1)>>
-            auto operator++(int) {
-                ((m_data[Idx]++),...);
-                return (*this);
-            }
-            template <typename = std::enable_if_t<(sizeof...(Idx)==1)>>
-            auto operator++() {
-                ((++m_data[Idx]),...);
-                return (*this);
-            }
-            template <typename = std::enable_if_t<(sizeof...(Idx)==1)>>
-            auto operator--(int) {
-                ((m_data[Idx]---),...);
-                return (*this);
-            }
-            template <typename = std::enable_if_t<(sizeof...(Idx)==1)>>
-            auto operator--() {
-                ((--m_data[Idx]),...);
-                return (*this);
-            }
-            template <typename = std::enable_if_t<(sizeof...(Idx)==1)>>
-            auto operator+=(const float& other) {
-                ((m_data[Idx] += other),...);
-                return (*this);
-            }
-            template <typename = std::enable_if_t<(sizeof...(Idx)==1)>>
-            auto operator-=(const float& other) {
-                ((m_data[Idx] -= other),...);
-                return (*this);
-            }
         private:
+            size_t getIdx(size_t i) {
+                std::vector<size_t> data{Idx...};
+                return data[i];
+            }
+
             float m_data[N];
             template<size_t...> friend class swizzle;
         };
 
         union {
             float data[N];
-            std::conditional_t<(N==2 || N==3 || N==4), swizzle<0>, Empty> x, r;
-            std::conditional_t<(N==2 || N==3 || N==4), swizzle<1>, Empty> y, g;
-            std::conditional_t<(N==3 || N==4), swizzle<2>, Empty> z, b;
-            std::conditional_t<(N==4), swizzle<3>, Empty> w, a;
+            std::conditional_t<(N==2 || N==3 || N==4), swizzleScalar<0>, Empty> x, r;
+            std::conditional_t<(N==2 || N==3 || N==4), swizzleScalar<1>, Empty> y, g;
+            std::conditional_t<(N==3 || N==4), swizzleScalar<2>, Empty> z, b;
+            std::conditional_t<(N==4), swizzleScalar<3>, Empty> w, a;
             std::conditional_t<(N==2 || N==3 || N==4), swizzle<0, 0>, Empty> xx, rr;
             std::conditional_t<(N==2 || N==3 || N==4), swizzle<0, 1>, Empty> xy, rg;
             std::conditional_t<(N==3 || N==4), swizzle<0, 2>, Empty> xz, rb;
