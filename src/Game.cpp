@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "../include/GameSettings.h"
+#include "../include/Timer.h"
 #include "../include/Input.h"
 #include "../include/Engine.h"
 #include "../include/stb_image.h"
@@ -18,6 +19,10 @@ Starsurge::Game::~Game() {
 }
 
 void Starsurge::Game::Run() {
+    // Start the clock.
+    Timer::Inst().Start();
+
+    // Set flags.
     stbi_set_flip_vertically_on_load(true);
     Starsurge::Log("Launching GLFW Window...");
 
@@ -58,6 +63,7 @@ void Starsurge::Game::Run() {
 void Starsurge::Game::GameLoop() {
     while (!glfwWindowShouldClose(this->gameWindow)) { // Run the game loop until the game is ready to close.
         // Update
+        Timer::Inst().UpdateDeltaTime();
         std::vector<Entity*> allEntities = Scene::Inst().GetAllEntities();
         for (unsigned int i = 0; i < allEntities.size(); ++i) {
             allEntities[i]->Update();

@@ -51,7 +51,7 @@ protected:
     }
 
     void OnUpdate() {
-        const float cameraSpeed = 0.05f;
+        const float cameraSpeed = 2.5f * Timer::Inst().DeltaTime();
         Transform * camTransform = camera->FindComponent<Transform>();
         Vector3 front = camera->FindComponent<Camera>()->Forwards();
         Vector3 up = camera->FindComponent<Camera>()->Up();
