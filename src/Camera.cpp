@@ -2,6 +2,7 @@
 #include "../include/Entity.h"
 #include "../include/Transform.h"
 #include "../include/Camera.h"
+#include "../include/Utils.h"
 
 Starsurge::Camera::Camera(float fov, float near, float far) : Component(typeid(Camera).name()) {
     this->viewMatrix = Matrix4::Identity();
@@ -38,7 +39,7 @@ void Starsurge::Camera::SetOrthographic(float left, float right, float bottom, f
 void Starsurge::Camera::SetPerspective(float fov, float near, float far) {
     float w = (float)GameSettings::Inst().GetWindowWidth();
     float h = (float)GameSettings::Inst().GetWindowHeight();
-    this->projMatrix = Matrix4::Perspective(fov, w/h, near, far);
+    this->projMatrix = Matrix4::Perspective(Radians(fov), w/h, near, far);
 }
 
 Starsurge::Matrix4 Starsurge::Camera::GetViewMatrix() {

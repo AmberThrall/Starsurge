@@ -13,8 +13,8 @@ namespace Starsurge {
         static Timer& Inst();
 
         // Call 'callback' after 'delay' seconds. If 'repeat' is set, the timer resets and 'callback' is called again after 'delay' seconds.
-        template <typename T, typename... Ts>
-        unsigned int Callback(double delay, bool repeat, std::function<T(Ts...)> callback, Ts... ts) {
+        template <typename... Ts>
+        unsigned int Callback(double delay, bool repeat, std::function<void(Ts...)> callback, Ts... ts) {
             // Find the first available id.
             int id = 0;
             while (this->callbacks.find(id) != this->callbacks.end()) {
@@ -33,7 +33,10 @@ namespace Starsurge {
                 }
             });
             t.detach();
-            return 0;
+            return id;
+        }
+        unsigned int Callback(double delay, bool repeat, std::function<void()> function) {
+            return Callback<>(delay, repeat, function);
         }
 
         void SetCallbackDelay(unsigned int id, double delay);

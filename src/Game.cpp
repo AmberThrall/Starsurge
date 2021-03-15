@@ -18,6 +18,10 @@ Starsurge::Game::~Game() {
 
 }
 
+void Starsurge::Game::CloseGame() {
+    glfwDestroyWindow(this->gameWindow);
+}
+
 void Starsurge::Game::Run() {
     // Start the clock.
     Timer::Inst().Start();
@@ -43,7 +47,7 @@ void Starsurge::Game::Run() {
     glfwMakeContextCurrent(this->gameWindow);
     glfwSetFramebufferSizeCallback(this->gameWindow, framebuffer_size_callback);
     GameSettings::Inst().ResizeWindow(800, 600);
-    Input::Inst().gameWindow = this->gameWindow;
+    Input::Inst().Setup(this->gameWindow);
 
     // Initailize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -92,5 +96,4 @@ void Starsurge::Game::GameLoop() {
     }
 
     glfwTerminate();
-    return;
 }

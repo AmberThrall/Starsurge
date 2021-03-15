@@ -18,6 +18,9 @@ namespace Starsurge {
 
     float Radians(float deg);
     float Degrees(float rad);
+    float Max(float v, float max);
+    float Min(float v, float min);
+    float Clamp(float v, float min, float max);
 
     struct Match {
         unsigned int position;

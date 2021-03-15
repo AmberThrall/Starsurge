@@ -1,9 +1,13 @@
 #pragma once
+#include <thread>
+#include <functional>
+#include <map>
+#include "Callback.h"
 #include "Vector.h"
 
 namespace Starsurge {
     class Game;
-    
+
     enum InputState {
         INPUT_RELEASE = 0,
         INPUT_PRESS = 1,
@@ -134,6 +138,15 @@ namespace Starsurge {
         KEY_MENU = 348
     };
 
+    enum InputKeyModifiers {
+        MOD_SHIFT = 0x01,
+        MOD_CONTROL = 0x02,
+        MOD_ALT = 0x04,
+        MOD_SUPER = 0x08,
+        MOD_CAPS_LOCK = 0x10,
+        MOD_NUM_LOCK = 0x20
+    };
+
     enum InputMouseButton {
         MOUSE_1 = 0,
         MOUSE_2 = 1,
@@ -152,12 +165,28 @@ namespace Starsurge {
     public:
         static Input& Inst();
 
+        unsigned int KeyCallback(int key, std::function<void(int, int, int, void*)> function, void * t_data = NULL);
+        unsigned int KeyCallback(std::function<void(int, int, int, void*)> function, void * t_data = NULL);
+        unsigned int MouseButtonCallback(int button, std::function<void(int, int, int, void*)> function, void * t_data = NULL);
+        unsigned int MouseButtonCallback(std::function<void(int, int, int, void*)> function, void * t_data = NULL);
+        unsigned int MousePosCallback(std::function<void(double, double, void*)> function, void * t_data = NULL);
+        unsigned int ScrollCallback(std::function<void(double, double, void*)> function, void * t_data = NULL);
+
         InputState Key(InputKey key);
         InputState MouseButton(InputMouseButton button);
 
         Vector2 GetCurserPos();
         void MoveCursor(double x, double y);
+        void HideCursor();
+        void LockCursor();
+        void UnlockCursor();
+
+        std::map<unsigned int, Callback<TypeList<int>, TypeList<int, int, int>>> keyCallbacks;
+        std::map<unsigned int, Callback<TypeList<int>, TypeList<int, int, int>>> mouseButtonCallbacks;
+        std::map<unsigned int, Callback<TypeList<>, TypeList<double, double>>> mousePosCallbacks;
+        std::map<unsigned int, Callback<TypeList<>, TypeList<double, double>>> scrollCallbacks;
     private:
+        void Setup(GLFWwindow * window);
         GLFWwindow * gameWindow;
         friend class Game;
     };

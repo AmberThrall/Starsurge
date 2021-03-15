@@ -1,12 +1,67 @@
 #include "../../include/Engine.h"
 using namespace Starsurge;
 
+
 class BasicGame : public Starsurge::Game {
 public:
+    std::string message;
     BasicGame() : Game("Basic Game") { }
     ~BasicGame() { }
 protected:
+    float lastX, lastY;
+    float yaw, pitch;
+    float fov;
+    Vector3 front;
+
+    static void OnEscape(int key, int action, int mods, void * data) {
+        BasicGame * game = reinterpret_cast<BasicGame*>(data);
+        game->CloseGame();
+    }
+
+    static void OnMouseMove(double x, double y, void * data) {
+        BasicGame * game = reinterpret_cast<BasicGame*>(data);
+        if (game->lastX < 0 || game->lastY < 0) {
+            game->lastX = x;
+            game->lastY = y;
+        }
+
+        float xoffset = x - game->lastX;
+        float yoffset = game->lastY - y;
+        game->lastX = x;
+        game->lastY = y;
+
+        float sensitivity = 0.1f;
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
+
+        game->yaw += xoffset;
+        game->pitch += yoffset;
+
+        game->pitch = Clamp(game->pitch, -89.0f, 89.0f);
+
+        Vector3 dir = Vector3(0,0,0);
+        dir.x = std::cos(Radians(game->yaw))*std::cos(Radians(game->pitch));
+        dir.y = std::sin(Radians(game->pitch));
+        dir.z = std::sin(Radians(game->yaw))*std::cos(Radians(game->pitch));
+        game->front = Vector3::Normalize(dir);
+    }
+
+    static void OnScroll(double xoffset, double yoffset, void * data) {
+        BasicGame * game = reinterpret_cast<BasicGame*>(data);
+        game->fov = Clamp(game->fov - (float)yoffset, 1.0f, 90.0f);
+        game->camera->FindComponent<Camera>()->SetPerspective(game->fov, 0.1, 100);
+    }
+
     void OnInitialize() {
+        fov = 45;
+        lastX = -1;
+        lastY = -1;
+        yaw = -90.0f;
+        pitch = 0;
+        Input::Inst().LockCursor();
+        Input::Inst().KeyCallback(KEY_ESCAPE, OnEscape, this);
+        Input::Inst().MousePosCallback(OnMouseMove, this);
+        Input::Inst().ScrollCallback(OnScroll, this);
         if (!AssetManager::Inst().Load("tests/basic/container.jpg")) {
             Error("Failed to load container.jpg");
             return;
@@ -16,10 +71,11 @@ protected:
 
         camera = new Entity("Camera");
         camera->AddComponent<Transform>(new Transform(Vector3(0,0,3), Vector3(0,0,0), Vector3(1,1,1)));
-        camera->AddComponent<Camera>(new Camera(Radians(45), 0.1, 100));
+        camera->AddComponent<Camera>(new Camera(fov, 0.1, 100));
         Scene::Inst().AddEntity(camera);
         Scene::Inst().SetActiveCamera(camera);
         camera->FindComponent<Camera>()->LookAt(Vector3(0,0,0));
+        front = camera->FindComponent<Camera>()->Forwards();
 
         std::vector<Vector3> cubePositions = {
             Vector3( 0.0f,  0.0f,  0.0f),
@@ -53,7 +109,6 @@ protected:
     void OnUpdate() {
         const float cameraSpeed = 2.5f * Timer::Inst().DeltaTime();
         Transform * camTransform = camera->FindComponent<Transform>();
-        Vector3 front = camera->FindComponent<Camera>()->Forwards();
         Vector3 up = camera->FindComponent<Camera>()->Up();
         if (Input::Inst().Key(KEY_W) == INPUT_PRESS)
             camTransform->Position += cameraSpeed * front;
@@ -77,94 +132,7 @@ private:
     Material cube_mat;
 };
 
-void writeCode(std::string data) {
-    int minLevel = data.length();
-    // std::conditional_t<(N==2 || N==3 || N==4), swizzle<1,0>, Empty> yx;
-    std::string code = "std::conditional_t<";
-    if (data.find("z") != std::string::npos && minLevel == 2)
-        minLevel = 3;
-    if (data.find("w") != std::string::npos)
-        minLevel = 4;
-    if (minLevel == 2) {
-        code += "(N==2 || N==3 || N==4)";
-    }
-    if (minLevel == 3) {
-        code += "(N==3 || N==4)";
-    }
-    if (minLevel == 4) {
-        code += "(N==4)";
-    }
-    code += ", swizzle<";
-    for (unsigned int i = 0; i < data.length(); i++) {
-        if (i > 0) code += ", ";
-        if (data[i] == 'x') { code += "0"; }
-        if (data[i] == 'y') { code += "1"; }
-        if (data[i] == 'z') { code += "2"; }
-        if (data[i] == 'w') { code += "3"; }
-    }
-
-    code += ">, Empty> "+data;
-    std::string dataColor = "";
-    for (unsigned int i = 0; i < data.length(); i++) {
-        if (data[i] == 'x') { dataColor += "r"; }
-        if (data[i] == 'y') { dataColor += "g"; }
-        if (data[i] == 'z') { dataColor += "b"; }
-        if (data[i] == 'w') { dataColor += "a"; }
-    }
-    code += ", "+dataColor+";";
-
-    std::cout << code.c_str() << std::endl;
-    return;
-}
-
-void generate(std::string chars, int n) {
-    if (n == 2) {
-        for (size_t i = 0; i < chars.length(); ++i) {
-            for (size_t j = 0; j < chars.length(); ++j) {
-                std::string combo = "";
-                combo += chars[i];
-                combo += chars[j];
-                writeCode(combo);
-            }
-        }
-    }
-    if (n == 3) {
-        for (size_t i = 0; i < chars.length(); ++i) {
-            for (size_t j = 0; j < chars.length(); ++j) {
-                for (size_t h = 0; h < chars.length(); ++h) {
-                    std::string combo = "";
-                    combo += chars[i];
-                    combo += chars[j];
-                    combo += chars[h];
-                    writeCode(combo);
-                }
-            }
-        }
-    }
-    if (n == 4) {
-        for (size_t i = 0; i < chars.length(); ++i) {
-            for (size_t j = 0; j < chars.length(); ++j) {
-                for (size_t h = 0; h < chars.length(); ++h) {
-                    for (size_t k = 0; k < chars.length(); ++k) {
-                        std::string combo = "";
-                        combo += chars[i];
-                        combo += chars[j];
-                        combo += chars[h];
-                        combo += chars[k];
-                        writeCode(combo);
-                    }
-                }
-            }
-        }
-    }
-}
-
 void main() {
-    // generate("xyzw", 2);
-    // generate("xyzw", 3);
-    // generate("xyzw", 4);
-    // return;
-
     std::cout << Starsurge::GetVersion() << std::endl;
 
     BasicGame game;

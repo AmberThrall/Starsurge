@@ -96,6 +96,22 @@ float Starsurge::Degrees(float rad) {
     return rad*(180.0f / PI);
 }
 
+float Starsurge::Max(float v, float max) {
+    if (v > max)
+        return max;
+    return v;
+}
+
+float Starsurge::Min(float v, float min) {
+    if (v < min)
+        return min;
+    return v;
+}
+
+float Starsurge::Clamp(float v, float min, float max) {
+    return Min(Max(v, max), min);
+}
+
 std::vector<Starsurge::Match> Starsurge::FindSubstrings(std::string str, std::string regex) {
     std::smatch m;
     std::vector<Match> ret;
