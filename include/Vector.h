@@ -88,6 +88,12 @@ namespace Starsurge {
             return Vector<3>(0,1,0);
         }
 
+        static Vector<N> Normalize(const Vector<N>& v) {
+            Vector<N> ret = v;
+            ret.Normalize();
+            return ret;
+        }
+
         static float Dot(const Vector<N>& lhs, const Vector<N>& rhs) {
             float ret = 0;
             for (size_t i = 0; i < N; ++i) {

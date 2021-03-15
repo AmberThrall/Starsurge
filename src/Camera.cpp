@@ -49,6 +49,20 @@ Starsurge::Matrix4 Starsurge::Camera::GetProjMatrix() {
     return this->projMatrix;
 }
 
+Starsurge::Vector3 Starsurge::Camera::Forwards() {
+    Transform * transform = GetOwner()->FindComponent<Transform>();
+    if (transform) {
+        Vector3 v = this->target - transform->Position;
+        v.Normalize();
+        return v;
+    }
+    return Vector3(0,0,0);
+}
+
+Starsurge::Vector3 Starsurge::Camera::Up() {
+    return Vector3(0,1,0);
+}
+
 void Starsurge::Camera::OnUpdate() {
     Transform * transform = GetOwner()->FindComponent<Transform>();
     if (transform) {

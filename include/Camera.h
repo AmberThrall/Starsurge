@@ -9,13 +9,15 @@ namespace Starsurge {
         Camera(float fov, float near, float far);
         Camera(float left, float right, float bottom, float top, float near, float far);
 
-        void Refresh();
         void LookAt(Vector3 t_target);
         void SetOrthographic(float left, float right, float bottom, float top, float near, float far);
         void SetPerspective(float fov, float near, float far);
 
         Matrix4 GetViewMatrix();
         Matrix4 GetProjMatrix();
+
+        Vector3 Forwards();
+        Vector3 Up();
     protected:
         void OnUpdate();
     private:

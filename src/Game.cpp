@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "../include/GameSettings.h"
+#include "../include/Input.h"
 #include "../include/Engine.h"
 #include "../include/stb_image.h"
 
@@ -37,6 +38,7 @@ void Starsurge::Game::Run() {
     glfwMakeContextCurrent(this->gameWindow);
     glfwSetFramebufferSizeCallback(this->gameWindow, framebuffer_size_callback);
     GameSettings::Inst().ResizeWindow(800, 600);
+    Input::Inst().gameWindow = this->gameWindow;
 
     // Initailize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {

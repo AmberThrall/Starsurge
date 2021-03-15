@@ -22,6 +22,7 @@ add_library(Starsurge STATIC Logging.cpp
     stb_image.cpp
     Texture.cpp
     AssetManager.cpp
+    Input.cpp
 )
 target_include_directories(Starsurge PUBLIC ${PROJECT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR} ${GLFW3_INCLUDE_DIR})
 target_link_libraries(Starsurge ${OPENGL_gl_LIBRARY} ${GLFW3_LIBRARY})

@@ -51,11 +51,23 @@ protected:
     }
 
     void OnUpdate() {
+        const float cameraSpeed = 0.05f;
+        Transform * camTransform = camera->FindComponent<Transform>();
+        Vector3 front = camera->FindComponent<Camera>()->Forwards();
+        Vector3 up = camera->FindComponent<Camera>()->Up();
+        if (Input::Inst().Key(KEY_W) == INPUT_PRESS)
+            camTransform->Position += cameraSpeed * front;
+        if (Input::Inst().Key(KEY_S) == INPUT_PRESS)
+            camTransform->Position -= cameraSpeed * front;
+        if (Input::Inst().Key(KEY_A) == INPUT_PRESS)
+            camTransform->Position -= cameraSpeed * Vector3::Normalize(Vector3::CrossProduct(front, up));
+        if (Input::Inst().Key(KEY_D) == INPUT_PRESS)
+            camTransform->Position += cameraSpeed * Vector3::Normalize(Vector3::CrossProduct(front, up));
+        camera->FindComponent<Camera>()->LookAt(camTransform->Position + front);
+
+
         // Uniform * uniform_color = cube_mat.GetUniform("fragColor");
         // uniform_color->SetData(Color(0,255.0f*(sin(glfwGetTime()) / 2.0 + 0.5f),0,255));
-
-        Transform * camTransform = camera->FindComponent<Transform>();
-        camTransform->Position = Vector3(sin(glfwGetTime()) * 10.0f, 0, cos(glfwGetTime()) * 10.0f);
     }
 private:
     Entity * camera;
