@@ -31,7 +31,6 @@ namespace Starsurge {
         void SetData(int val);
         void SetData(unsigned int val);
         void SetData(float val);
-        void SetData(double val);
         void SetData(Vector2 val);
         void SetData(Vector3 val);
         void SetData(Vector4 val);
@@ -75,6 +74,6 @@ namespace Starsurge {
 
     namespace Shaders {
         extern Shader BasicShader;
-        extern Shader BasicLighting;
+        extern Shader Phong;
     }
 }

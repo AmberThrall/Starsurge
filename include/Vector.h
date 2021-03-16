@@ -67,7 +67,7 @@ namespace Starsurge {
             return ret;
         }
 
-        float Length() const { return Magnitude(); }
+        float Norm() const { return Magnitude(); }
         float Magnitude() const {
             return std::sqrt(Vector::Dot(*this, *this));
         }
@@ -229,7 +229,7 @@ namespace Starsurge {
 
             size_t Size() const { return (sizeof...(Idx)); }
 
-            float Length() const { return Magnitude(); }
+            float Norm() const { return Magnitude(); }
             float Magnitude() const {
                 Vector<sizeof...(Idx)> ret = (Vector<sizeof...(Idx)>)*this;
                 return ret.Magnitude();

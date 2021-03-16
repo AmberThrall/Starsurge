@@ -1,15 +1,19 @@
 #pragma once
+#include <GLFW/glfw3.h>
+#include "Vector.h"
 
 namespace Starsurge {
     class GameSettings {
     public:
         static GameSettings& Inst();
 
-        unsigned int GetWindowWidth();
-        unsigned int GetWindowHeight();
+        Vector2 GetWindowSize();
         void ResizeWindow(unsigned int w, unsigned int h);
     private:
         GameSettings() {};
-        unsigned int windowWidth, windowHeight;
+
+        GLFWwindow * gameWindow;
+
+        friend class Game;
     };
 }

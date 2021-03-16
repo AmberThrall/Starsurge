@@ -3,7 +3,7 @@
 const char * source = R"(
     Shader {
         Pass {
-            uniform color fragColor = color(1,0,0,1);
+            uniform color Color;
             uniform sampler2D Texture;
 
             varying struct VS_OUT {
@@ -22,7 +22,7 @@ const char * source = R"(
             }
 
             color fragment() {
-                return texture(Texture, vs_out.UV) * vs_out.Color;
+                return texture(Texture, vs_out.UV) * vs_out.Color * Color;
             }
         }
     }

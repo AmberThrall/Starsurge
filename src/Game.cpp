@@ -46,7 +46,7 @@ void Starsurge::Game::Run() {
     }
     glfwMakeContextCurrent(this->gameWindow);
     glfwSetFramebufferSizeCallback(this->gameWindow, framebuffer_size_callback);
-    GameSettings::Inst().ResizeWindow(800, 600);
+    GameSettings::Inst().gameWindow = this->gameWindow;
     Input::Inst().Setup(this->gameWindow);
 
     // Initailize GLAD

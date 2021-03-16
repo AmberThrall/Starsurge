@@ -76,19 +76,20 @@ unsigned int Starsurge::Mesh::NumberOfIndices() {
 }
 
 Starsurge::Mesh * Starsurge::Mesh::Triangle(Vector3 pt1, Vector3 pt2, Vector3 pt3) {
+    Vector3 normal = Vector3::CrossProduct(pt1 - pt3, pt2 - pt3);
     Vertex v1;
     v1.Position = pt1;
-    v1.Normal = Vector3(0,0,0);
+    v1.Normal = normal;
     v1.UV = Vector2(0.0,0.0);
     v1.Color = Colors::WHITE;
     Vertex v2;
     v2.Position = pt2;
-    v2.Normal = Vector3(0,0,0);
+    v2.Normal = normal;
     v2.UV = Vector2(1.0,0.0);
     v2.Color = Colors::WHITE;
     Vertex v3;
     v3.Position = pt3;
-    v3.Normal = Vector3(0,0,0);
+    v3.Normal = normal;
     v3.UV = Vector2(0.5,1.0);
     v3.Color = Colors::WHITE;
     std::vector<Vertex> vertices = { v1, v2, v3 };
@@ -97,24 +98,25 @@ Starsurge::Mesh * Starsurge::Mesh::Triangle(Vector3 pt1, Vector3 pt2, Vector3 pt
 }
 
 Starsurge::Mesh * Starsurge::Mesh::Quad(Vector3 pt1, Vector3 pt2, Vector3 pt3, Vector3 pt4) {
+    Vector3 normal = Vector3::CrossProduct(pt1 - pt3, pt2 - pt3);
     Vertex v1;
     v1.Position = pt1;
-    v1.Normal = Vector3(0,0,0);
+    v1.Normal = normal;
     v1.UV = Vector2(1,1);
     v1.Color = Colors::WHITE;
     Vertex v2;
     v2.Position = pt2;
-    v2.Normal = Vector3(0,0,0);
+    v2.Normal = normal;
     v2.UV = Vector2(1,0);
     v2.Color = Colors::WHITE;
     Vertex v3;
     v3.Position = pt3;
-    v3.Normal = Vector3(0,0,0);
+    v3.Normal = normal;
     v3.UV = Vector2(0,0);
     v3.Color = Colors::WHITE;
     Vertex v4;
     v4.Position = pt4;
-    v4.Normal = Vector3(0,0,0);
+    v4.Normal = normal;
     v4.UV = Vector2(0,1);
     v4.Color = Colors::WHITE;
     std::vector<Vertex> vertices = { v1, v2, v3, v4 };

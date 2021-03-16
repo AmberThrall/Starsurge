@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "../../include/ShaderCompiler/Compiler.h"
+#include "../../include/ShaderCompiler/Lexemes.h"
 #include "../../include/Utils.h"
 #include "../../include/Logging.h"
 #include "../../include/Shader.h"
@@ -24,7 +25,31 @@ bool Starsurge::GLSL::Compiler::Compile(Shader * shader) {
 
     if (structure.shaderType == "Shader") {
         for (unsigned int i = 0; i < structure.passes.size(); ++i) {
-            structure.passes[i] = "uniform mat4 MATRIX_PROJ, MATRIX_VIEW, MATRIX_MODEL;\n" + structure.passes[i];
+            structure.passes[i] = R"(
+                const int POINT_LIGHT = 0;
+                const int DIRECTIONAL_LIGHT = 1;
+                const int SPOTLIGHT = 2;
+                struct Light {
+                    int type;
+                    vec3 position;
+                    vec3 direction;
+                    color ambient;
+                    color diffuse;
+                    color specular;
+
+                    float innerRadius;
+                    float outerRadius;
+
+                    float constant;
+                    float linear;
+                    float quadratic;
+                };
+                uniform int NUM_LIGHTS;
+                uniform Light LIGHTS[10];
+                uniform mat4 MATRIX_PROJ, MATRIX_VIEW, MATRIX_MODEL;
+                uniform mat3 MATRIX_NORMAL;
+                uniform vec3 CAMERA;
+            )" + structure.passes[i];
             ShaderPass shaderPass;
             if (!CompileVertex(shaderPass, structure.codeOffset[i], structure.passes[i])) {
                 for (unsigned int i = 0; i < errors.size(); ++i) {
@@ -89,7 +114,7 @@ bool Starsurge::GLSL::Compiler::CompileVertex(ShaderPass & shaderPass, unsigned 
     std::vector<ASTNodeVariableDeclaration*> vars = parser.GetAST().root->GetChildren<ASTNodeVariableDeclaration>(AST_NODE_VARIABLE_DECLARATION);
     for (unsigned int i = 0; i < vars.size(); ++i) {
         if (vars[i]->storage == "uniform") {
-            shaderPass.uniforms[vars[i]->name] = ParseUniform(vars[i]);
+            ParseUniform(shaderPass, vars[i]);
         }
     }
 
@@ -352,10 +377,39 @@ Starsurge::GLSL::CodeStructure Starsurge::GLSL::Compiler::ParseStructure() {
     return ret;
 }
 
-Starsurge::Uniform Starsurge::GLSL::Compiler::ParseUniform(ASTNodeVariableDeclaration * var) {
-    Uniform ret(var->name, var->type);
-    // TODO: Default values.
-    return ret;
+void Starsurge::GLSL::Compiler::ParseUniform(ShaderPass & shaderPass, ASTNodeVariableDeclaration * var) {
+    std::string name = var->name;
+    std::string type = var->type;
+    int count = 1;
+    if (var->arraySize > 0) count = var->arraySize;
+    for (unsigned int i = 0; i < count; ++i) {
+        if (var->arraySize > 0) {
+            name += "["+std::to_string(i)+"]";
+        }
+
+        if (!ElemOf<const char*>(TYPES, TYPES_COUNT, var->type.c_str())) {
+            // Find the struct.
+            ASTNode * root = var->GetParent();
+            std::vector<ASTNodeStruct*> structs = root->GetChildren<ASTNodeStruct>(AST_NODE_STRUCT);
+            for (unsigned int j = 0; j < structs.size(); ++j) {
+                if (structs[j]->name == type) {
+                    std::vector<ASTNodeField*> fields = structs[j]->GetChildren<ASTNodeField>(AST_NODE_FIELD);
+                    std::string basename = name;
+                    for (unsigned int k = 0; k < fields.size(); ++k) {
+                        name += ".";
+                        name += fields[k]->name;
+                        shaderPass.uniforms[name] = Uniform(name, fields[k]->type);
+                        name = basename;
+                    }
+                }
+            }
+        }
+        else {
+            shaderPass.uniforms[name] = Uniform(name, type);
+        }
+
+        name = var->name;
+    }
 }
 
 void Starsurge::GLSL::Compiler::BuildDeps(ASTNode * entry, std::vector<std::string> & deps) {

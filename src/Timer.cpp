@@ -56,10 +56,12 @@ double Starsurge::Timer::DeltaTime() {
 
 void Starsurge::Timer::Start() {
     this->gameStart = std::chrono::steady_clock::now();
+    this->lastFrame = this->gameStart;
 }
 
 void Starsurge::Timer::UpdateDeltaTime() {
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-    this->deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(now - lastFrame).count() / 1000000.0;
+    std::chrono::duration<double, std::milli> dur = now - lastFrame;
+    this->deltaTime = dur.count()  / 1000.0;
     lastFrame = now;
 }

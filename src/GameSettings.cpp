@@ -1,3 +1,5 @@
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include "../include/GameSettings.h"
 
 Starsurge::GameSettings& Starsurge::GameSettings::Inst() {
@@ -5,15 +7,12 @@ Starsurge::GameSettings& Starsurge::GameSettings::Inst() {
     return instance;
 }
 
-unsigned int Starsurge::GameSettings::GetWindowWidth() {
-    return this->windowWidth;
-}
-
-unsigned int Starsurge::GameSettings::GetWindowHeight() {
-    return this->windowHeight;
+Starsurge::Vector2 Starsurge::GameSettings::GetWindowSize() {
+    int w, h;
+    glfwGetWindowSize(this->gameWindow, &w, &h);
+    return Vector2(w, h);
 }
 
 void Starsurge::GameSettings::ResizeWindow(unsigned int w, unsigned int h) {
-    this->windowWidth = w;
-    this->windowHeight = h;
+    glfwSetWindowSize(this->gameWindow, w, h);
 }

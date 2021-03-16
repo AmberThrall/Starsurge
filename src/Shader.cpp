@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <map>
+#include "../include/AssetManager.h"
 #include "../include/Shader.h"
 #include "../include/Logging.h"
 #include "../include/Utils.h"
@@ -16,10 +17,11 @@ Starsurge::Uniform::Uniform(std::string t_name, std::string t_type) : name(t_nam
     else if (type == "vec3" || type == "ivec3") { SetData(Vector3(0,0,0)); }
     else if (type == "vec4" || type == "ivec4") { SetData(Vector4(0,0,0,0)); }
     else if (type == "color") { SetData(Colors::WHITE); }
-    else if (type == "sampler2D") { SetData((Texture*)NULL); }
+    else if (type == "sampler2D") { SetData(AssetManager::Inst().GetTexture("Builtin/White")); }
     else if (type == "mat2" || type == "mat2x2") { SetData(Matrix2::Identity()); }
     else if (type == "mat3" || type == "mat3x3") { SetData(Matrix3::Identity()); }
     else if (type == "mat4" || type == "mat4x4") { SetData(Matrix4::Identity()); }
+    else { Error("Unsupported uniform type: "+type); }
 }
 
 std::string Starsurge::Uniform::GetName() {
@@ -32,84 +34,101 @@ std::string Starsurge::Uniform::GetType() {
 
 void Starsurge::Uniform::SetData(bool val) {
     if (GetType() != "bool") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type bool.");
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type bool.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(int val) {
     if (GetType() != "int") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type int.");
+        if (GetType() == "uint") { SetData((unsigned int)std::abs(val)); return; }
+        if (GetType() == "float") { SetData((float)val); return; }
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type int.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(unsigned int val) {
     if (GetType() != "uint") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type uint.");
+        if (GetType() == "int") { SetData((int)val); return; }
+        if (GetType() == "float") { SetData((float)val); return; }
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type uint.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(float val) {
     if (GetType() != "float") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type float.");
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type float.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Vector2 val) {
-    if (GetType() != "vec2" || GetType() != "ivec2") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Vector2.");
+    if (GetType() != "vec2" && GetType() != "ivec2") {
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type Vector2.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Vector3 val) {
-    if (GetType() != "vec3" || GetType() != "ivec3") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Vector3.");
+    if (GetType() != "vec3" && GetType() != "ivec3") {
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type Vector3.");
+        return;
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Vector4 val) {
-    if (GetType() != "vec4" || GetType() != "ivec4") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Vector4.");
+    if (GetType() != "vec4" && GetType() != "ivec4") {
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type Vector4.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Color val) {
     if (GetType() != "color") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Color.");
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type Color.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Texture * val) {
     if (GetType() != "sampler2D") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Texture*.");
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type Texture*.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Matrix2 val) {
     if (GetType() != "mat2" && GetType() != "mat2x2") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Matrix2.");
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type Matrix2.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Matrix3 val) {
     if (GetType() != "mat3" && GetType() != "mat3x3") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Matrix3.");
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type Matrix3.");
+        return;
     }
     this->data = val;
 }
 
 void Starsurge::Uniform::SetData(Matrix4 val) {
     if (GetType() != "mat4" && GetType() != "mat4x4") {
-        throw std::runtime_error("Tried to set uniform of type "+GetType()+" to type Matrix4.");
+        ShaderError("Tried to set uniform '"+this->name+"' of type "+GetType()+" to type Matrix4.");
+        return;
     }
     this->data = val;
 }
@@ -159,6 +178,24 @@ bool Starsurge::Shader::Compile() {
     GLSL::Compiler compiler(code);
     bool success = compiler.Compile(this);
     this->needs_recompiling = false;
+
+    // If it failed to compile, use a very basic error shader.
+    if (!success) {
+        SetCode(R"(
+            Shader {
+                Pass {
+                    vec4 vertex(VertexData v) {
+                        return MATRIX_PROJ*MATRIX_VIEW*MATRIX_MODEL*vec4(v.Position, 1.0f);
+                    }
+
+                    color fragment() {
+                        return color(0, 0, 0, 1);
+                    }
+                }
+            }
+        )");
+        Compile();
+    }
 
     return success;
 }

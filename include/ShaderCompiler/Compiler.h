@@ -27,7 +27,7 @@ namespace Starsurge {
             bool CompileFragment(ShaderPass & shaderPass, unsigned int linenoOffset, std::string frag_code);
             void Error(unsigned int lineno, std::string msg);
             CodeStructure ParseStructure();
-            Uniform ParseUniform(ASTNodeVariableDeclaration * var);
+            void ParseUniform(ShaderPass & shaderPass, ASTNodeVariableDeclaration * var);
             void BuildDeps(ASTNode* node, std::vector<std::string> & deps);
             std::string Node2Code(ASTNode * node);
 

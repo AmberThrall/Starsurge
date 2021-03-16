@@ -10,7 +10,7 @@ add_library(Starsurge STATIC Logging.cpp
     Cube.cpp
     Shader.cpp
     BasicShader.cpp
-    BasicLighting.cpp
+    Phong.cpp
     Material.cpp
     Transform.cpp
     MeshRenderer.cpp
@@ -25,6 +25,8 @@ add_library(Starsurge STATIC Logging.cpp
     AssetManager.cpp
     Input.cpp
     Timer.cpp
+    Quaternion.cpp
+    Light.cpp
 )
 target_include_directories(Starsurge PUBLIC ${PROJECT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR} ${GLFW3_INCLUDE_DIR})
 target_link_libraries(Starsurge ${OPENGL_gl_LIBRARY} ${GLFW3_LIBRARY})

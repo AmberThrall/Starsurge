@@ -2,7 +2,10 @@
 #include "../include/Utils.h"
 
 Starsurge::Color::Color(float all){
-    Color(all, all, all, 255);
+    this->data[0] = Clamp(all, 0, 255);
+    this->data[1] = Clamp(all, 0, 255);
+    this->data[2] = Clamp(all, 0, 255);
+    this->data[3] = 255;
 }
 
 Starsurge::Color::Color(float r, float g, float b) {

@@ -3,6 +3,7 @@
 #include <initializer_list>
 #include "Logging.h"
 #include "Vector.h"
+#include "Quaternion.h"
 
 namespace Starsurge {
     template<size_t M, size_t N = M>
@@ -14,6 +15,14 @@ namespace Starsurge {
                     this->data[r*N+c] = t_val;
                 }
             }
+        }
+
+        template <typename = std::enable_if_t<(M==1)>>
+        Matrix(Vector<N> v) {
+            for (size_t c = 0; c < N; ++c) {
+                this->data[c] = v[c];
+            }
+            return ret;
         }
 
         Matrix(const Matrix<M,N>& other) {
@@ -88,6 +97,15 @@ namespace Starsurge {
                 for (size_t c = 0; c < N; ++c) {
                     ret(c,r) = this->data[r*N+c];
                 }
+            }
+            return ret;
+        }
+
+        template <size_t P>
+        static Matrix<P,1> Transpose(Vector<P> v) {
+            Matrix<P,1> ret;
+            for (size_t r = 0; r < P; ++r) {
+                ret(r,0) = v[r];
             }
             return ret;
         }
@@ -255,6 +273,11 @@ namespace Starsurge {
         }
 
         template<size_t P, size_t Q>
+        static Matrix<P,Q> OuterProduct(Vector<P> u, Vector<Q> v) {
+            return (Matrix<1,P>(u).Transpose())*(Matrix<1,Q>(v));
+        }
+
+        template<size_t P, size_t Q>
         static Matrix<M, P+Q> Augmented(Matrix<M,P> a, Matrix<M,Q> b) {
             Matrix<M,P+Q> ret;
             for (size_t r = 0; r < M; ++r) {
@@ -270,29 +293,52 @@ namespace Starsurge {
 
         // Transformations
         template<size_t m = M, size_t n = N>
-        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type Scale(Vector3 s) {
-            Matrix<4,4> ret = {
-                s.x, 0, 0, 0,
-                0, s.y, 0, 0,
-                0, 0, s.z, 0,
-                0, 0, 0, 1
+        static typename std::enable_if<(m == n), Matrix<N,N>>::type Scale(Vector<N-1> s) {
+            Vector<N> diag;
+            for (size_t i = 0; i < N-1; ++i) {
+                diag[i] = s[i];
+            }
+            diag[N-1] = 1;
+            return Matrix<N,N>::Diag(diag);
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n), Matrix<N,N>>::type Translate(Vector<N-1> t) {
+            Matrix<N,N> ret = Matrix<N,N>::Identity();
+            for (size_t i = 0; i < N-1; ++i) {
+                ret(i, N-1) = t[i];
+            }
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && N == 2), Matrix<2,2>>::type Rotate(float theta) {
+            Matrix<2,2> ret = {
+                std::cos(theta), -std::sin(theta),
+                std::sin(theta), std::cos(theta);
             };
             return ret;
         }
 
         template<size_t m = M, size_t n = N>
-        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type Translate(Vector3 t) {
+        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type Rotate(Quaternion q) {
+            q.Normalize();
+            float s = (1/std::pow(q.Norm()));
+            float qr = q.scalar;
+            float qi = q.vector.x;
+            float qj = q.vector.y;
+            float qk = q.vector.z;
             Matrix<4,4> ret = {
-                1, 0, 0, t.x,
-                0, 1, 0, t.y,
-                0, 0, 1, t.z,
+                1-2*s*(qj*qj+qk*qk), 2*s*(qi*qj-qk*qr), 2*s*(qi*qk+qj*qr), 0,
+                2*s*(qi*qj+qk*qr), 1-2*s*(qi*qi+qk*qk), 2*s*(qj*qk-qi*qr), 0,
+                2*s*(qi*qk-qj*qr), 2*s*(qj*qk+qi*qr), 1-2*s*(qi*qi+qj*qj), 0,
                 0, 0, 0, 1
             };
-            return ret;
+            return ret.Resize<N,N>();
         }
 
         template<size_t m = M, size_t n = N>
-        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type Rotate(Vector3 eulerAngles) {
+        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type Rotate(Vector3 eulerAngles) {
             float cx = std::cos(eulerAngles.x);
             float cy = std::cos(eulerAngles.y);
             float cz = std::cos(eulerAngles.z);
@@ -305,11 +351,11 @@ namespace Starsurge {
                 -sy, cy*sz, cy*cz, 0,
                 0, 0, 0, 1
             };
-            return ret;
+            return ret.Resize<N,N>();
         }
 
         template<size_t m = M, size_t n = N>
-        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type Rotate(float theta, Vector3 axis) {
+        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type Rotate(float theta, Vector3 axis) {
             axis.Normalize();
 
             float c = std::cos(theta);
@@ -323,7 +369,7 @@ namespace Starsurge {
                 rz*rx*(1-c)-ry*s, rz*ry*(1-c)+rx*s, c+rz*rz*(1-c), 0,
                 0, 0, 0, 1
             };
-            return ret;
+            return ret.Resize<N,N>();
         }
 
         template<size_t m = M, size_t n = N>

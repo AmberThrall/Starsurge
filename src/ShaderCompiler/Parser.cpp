@@ -261,7 +261,7 @@ std::string Starsurge::GLSL::Parser::EvaluateType(ASTNodeExpression * expr, ASTN
         if (type == "uint") { return "int"; }
         else if (type == "bool") { return "int"; }
         else if (type == "float" || type == "int") { return type; }
-        else { return ""; }
+        else { return type; }
     }
     else if (expr->GetNodeType() == AST_NODE_POSTFIX_OP) {
         ASTNodePostfixOp * postfix = (ASTNodePostfixOp*)expr;
@@ -296,7 +296,7 @@ std::string Starsurge::GLSL::Parser::EvaluateType(ASTNodeExpression * expr, ASTN
             std::string type = EvaluateType((ASTNodeExpression*)postfix->GetChild(0), scope);
             if (type == "bool") { return "int"; }
             else if (type == "float" || type == "int" || type == "uint") { return type; }
-            else { return ""; }
+            else { return type; }
         }
     }
     else if (expr->GetNodeType() == AST_NODE_PAREN_EXPRESSION) {
@@ -1217,10 +1217,10 @@ Starsurge::GLSL::ASTNodeExpression * Starsurge::GLSL::Parser::Expression(ASTNode
         lhs = binary;
 
         // Make sure the operation was legal.
-        if (EvaluateType(binary, scope) == "") {
-            Error("Illegal operation: "+EvaluateType((ASTNodeExpression*)binary->GetLeft(), scope)+op.data+EvaluateType((ASTNodeExpression*)binary->GetRight(), scope));
-            return NULL;
-        }
+        // if (EvaluateType(binary, scope) == "") {
+        //     Error("Illegal operation: "+EvaluateType((ASTNodeExpression*)binary->GetLeft(), scope)+op.data+EvaluateType((ASTNodeExpression*)binary->GetRight(), scope));
+        //     return NULL;
+        // }
 
         maxPrecedence = OPERATOR_PRECEDENCE[op.type];
         if (isAssignment) { // Right-associative operators
@@ -1328,7 +1328,6 @@ Starsurge::GLSL::ASTNode * Starsurge::GLSL::Parser::VariableDeclaration(ASTNode 
 Starsurge::GLSL::ASTNodeFunction * Starsurge::GLSL::Parser::FunctionDeclaration(ASTNode * scope) {
     // [{QUALIFIER}] Type IDENTIFIER '(' {['in' / 'out' /'inout'] Type IDENTIFIER ','} ['in' / 'out' /'inout'] Type IDENTIFIER ')'
     QualifierData qualData = Qualifiers();
-
     if (!Type(scope)) {
         return NULL;
     }
@@ -1566,6 +1565,7 @@ Starsurge::GLSL::QualifierData Starsurge::GLSL::Parser::Qualifiers() {
 }
 
 Starsurge::GLSL::ASTNodeExpression * Starsurge::GLSL::Parser::UnaryPrimary(ASTNode * scope) {
+    unsigned int oldPosition = Tell();
     // '(' Expression ')'
     if (Match(TOKEN_LEFT_PAREN)) {
         ASTNodeExpression * node = Expression(scope);
@@ -1583,6 +1583,7 @@ Starsurge::GLSL::ASTNodeExpression * Starsurge::GLSL::Parser::UnaryPrimary(ASTNo
     if (functionCall) {
         return functionCall;
     }
+    Seek(oldPosition);
 
     // Variable
     if (Variable(scope)) {
@@ -1822,7 +1823,6 @@ Starsurge::GLSL::ASTNodeFunctionCall * Starsurge::GLSL::Parser::FunctionCall(AST
 
     if (f != "") {
         if (!Match(TOKEN_LEFT_PAREN)) {
-            Error("Expected '(' for function call.");
             return NULL;
         }
 
@@ -1843,6 +1843,7 @@ Starsurge::GLSL::ASTNodeFunctionCall * Starsurge::GLSL::Parser::FunctionCall(AST
             }
             else {
                 Error("Expected either ',' or ')' in function call.");
+                return NULL;
             }
         }
 
@@ -2329,7 +2330,7 @@ Starsurge::GLSL::ASTNodeFunctionCall * Starsurge::GLSL::Parser::FunctionCall(AST
             if (matches.size() > 0) {
                 for (unsigned int i = 0; i < matches.size(); ++i) {
                     std::vector<std::string> option;
-                    for (unsigned int j = 0; j < matches[i]->parameters.size(); ++i) {
+                    for (unsigned int j = 0; j < matches[i]->parameters.size(); ++j) {
                         option.push_back(matches[i]->parameters[j].type);
                     }
                     validOptions.push_back(option);

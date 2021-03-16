@@ -54,10 +54,17 @@ bool Starsurge::AssetManager::Load(std::string path) {
 }
 
 bool Starsurge::AssetManager::LoadBuiltins() {
+    // Meshes
     meshes["Builtin/Triangle"] = Mesh::Triangle(Vector3(0,0,0), Vector3(0,1,0), Vector3(1,1,0));
     meshes["Builtin/Quad"] = Mesh::Quad(Vector3(0,0,0), Vector3(0,1,0), Vector3(1,1,0), Vector3(1,0,0));
     meshes["Builtin/Cube"] = Mesh::Cube();
+
+    // Textures
+    textures["Builtin/White"] = new Texture(std::vector<Color>({Colors::WHITE}), 1, 1);
+    textures["Builtin/Black"] = new Texture(std::vector<Color>({Colors::BLACK}), 1, 1);
+
+    // Shaders
     shaders["Builtin/BasicShader"] = &Shaders::BasicShader;
-    shaders["Builtin/BasicLighting"] = &Shaders::BasicLighting;
+    shaders["Builtin/Phong"] = &Shaders::Phong;
     return true;
 }
