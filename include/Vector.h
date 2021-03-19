@@ -85,9 +85,25 @@ namespace Starsurge {
             return copy;
         }
 
+        static Vector<N> Zero() {
+            Vector<N> ret;
+            return ret;
+        }
+        template <typename = std::enable_if_t<(N==3)>>
+        static Vector<3> Right() {
+            return Vector<3>(1,0,0);
+        }
         template <typename = std::enable_if_t<(N==3)>>
         static Vector<3> Up() {
             return Vector<3>(0,1,0);
+        }
+        template <typename = std::enable_if_t<(N==3)>>
+        static Vector<3> Forward() {
+            return Vector<3>(0,0,1);
+        }
+
+        static Vector<N> Lerp(Vector<N> start, Vector<N> end, float t) {
+            return start + t*(end - start);
         }
 
         static Vector<N> Normalize(const Vector<N>& v) {
@@ -96,6 +112,36 @@ namespace Starsurge {
             return ret;
         }
 
+        static Vector<N> Projection(const Vector<N> a, const Vector<N> b) {
+            return (Vector<N>::Dot(a,b)/Vector<N>::Dot(a,a))*a;
+        }
+
+        static Vector<N> Rejection(const Vector<N> a, const Vector<N> b) {
+            return a - Vector<N>::Projection(a, b);
+        }
+
+        static std::vector<Vector<N>> GramSchmidt(std::vector<Vector<N>> vectors) {
+            std::vector<Vector<N>> u;
+            for (unsigned int i = 0; i < vectors.size(); ++i) {
+                Vector<N> ui = vectors[i];
+                for (unsigned int j = 0; j < i; j++) {
+                    ui -= Vector<N>::Projection(u[j], vectors[i]);
+                }
+                u.push_back(ui);
+            }
+
+            // Normalize all the u's.
+            for (unsigned int i = 0; i < u.size(); ++i) {
+                u[i].Normalize();
+            }
+
+            return u;
+        }
+
+        static float TripleProduct(const Vector<3>& a, const Vector<3>& b, const Vector<3>& c) {
+            // https://en.wikipedia.org/wiki/Triple_product
+            return Vector3::Dot(a, Vector3::CrossProduct(b, c));
+        }
         static float Dot(const Vector<N>& lhs, const Vector<N>& rhs) {
             float ret = 0;
             for (size_t i = 0; i < N; ++i) {
