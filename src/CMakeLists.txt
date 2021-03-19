@@ -26,6 +26,7 @@ add_library(Starsurge STATIC Logging.cpp
     Input.cpp
     Timer.cpp
     Quaternion.cpp
+    EulerAngles.cpp
     Light.cpp
 )
 target_include_directories(Starsurge PUBLIC ${PROJECT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR} ${GLFW3_INCLUDE_DIR})

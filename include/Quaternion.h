@@ -1,7 +1,13 @@
 #pragma once
 #include "Vector.h"
+#include "EulerAngles.h"
 
 namespace Starsurge {
+    // Predefine classes due to circular inclusion.
+    class EulerAngles;
+    template<size_t M, size_t N>
+    class Matrix;
+
     class Quaternion {
     public:
         Quaternion();
@@ -16,7 +22,6 @@ namespace Starsurge {
 
         std::string ToString();
 
-        Quaternion Identity();
         Quaternion Inverse();
         Quaternion Conjugate();
         Quaternion ConjugateBy(Quaternion q);
@@ -24,9 +29,12 @@ namespace Starsurge {
         Vector3 Axis();
         float Angle();
 
+        static Quaternion Identity();
         static float Dot(Quaternion p, Quaternion q);
         static float AngleBetween(Quaternion p, Quaternion q);
-        static Quaternion FromEulerAngles(Vector3 euler);
+        static Quaternion FromEulerAngles(EulerAngles euler);
+        static Quaternion FromAxisAngle(float theta, Vector3 axis);
+        static Quaternion FromMatrix(Matrix<3,3> m);
 
         float Norm();
         float Magnitude();
@@ -53,8 +61,10 @@ namespace Starsurge {
         }
         friend Quaternion operator-(Quaternion lhs, const Quaternion& rhs) { return lhs -= rhs; }
         Quaternion& operator*=(const Quaternion& rhs) {
-            this->scalar = this->scalar*rhs.scalar - Vector3::Dot(this->vector, rhs.vector);
-            this->vector = this->scalar*rhs.vector + rhs.scalar*this->vector + Vector3::CrossProduct(this->vector, rhs.vector);
+            float s = this->scalar*rhs.scalar - Vector3::Dot(this->vector, rhs.vector);
+            Vector3 v = this->scalar*rhs.vector + rhs.scalar*this->vector + Vector3::CrossProduct(this->vector, rhs.vector);
+            this->scalar = s;
+            this->vector = v;
             return *this;
         }
         friend Quaternion operator*(Quaternion lhs, const Quaternion& rhs) { return lhs *= rhs; }

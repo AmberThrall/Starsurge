@@ -4,8 +4,13 @@
 #include "Logging.h"
 #include "Vector.h"
 #include "Quaternion.h"
+#include "EulerAngles.h"
+#include "Utils.h"
 
 namespace Starsurge {
+    class Quaternion;
+    class EulerAngles;
+
     template<size_t M, size_t N = M>
     class Matrix {
     public:
@@ -22,7 +27,6 @@ namespace Starsurge {
             for (size_t c = 0; c < N; ++c) {
                 this->data[c] = v[c];
             }
-            return ret;
         }
 
         Matrix(const Matrix<M,N>& other) {
@@ -322,36 +326,39 @@ namespace Starsurge {
 
         template<size_t m = M, size_t n = N>
         static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type Rotate(Quaternion q) {
+            // https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
             q.Normalize();
-            float s = (1/std::pow(q.Norm()));
-            float qr = q.scalar;
-            float qi = q.vector.x;
-            float qj = q.vector.y;
-            float qk = q.vector.z;
+            float q0 = q.scalar;
+            float q1 = q.vector.x;
+            float q2 = q.vector.y;
+            float q3 = q.vector.z;
             Matrix<4,4> ret = {
-                1-2*s*(qj*qj+qk*qk), 2*s*(qi*qj-qk*qr), 2*s*(qi*qk+qj*qr), 0,
-                2*s*(qi*qj+qk*qr), 1-2*s*(qi*qi+qk*qk), 2*s*(qj*qk-qi*qr), 0,
-                2*s*(qi*qk-qj*qr), 2*s*(qj*qk+qi*qr), 1-2*s*(qi*qi+qj*qj), 0,
+                1-2*(q2*q2+q3*q3), 2*(q1*q2-q0*q3), 2*(q0*q2+q1*q3), 0,
+                2*(q1*q2+q0*q3), 1-2*(q1*q1+q3*q3), 2*(q2*q3-q0*q1), 0,
+                2*(q1*q3-q0*q2), 2*(q0*q1+q2*q3), 1-2*(q1*q1+q2*q2), 0,
                 0, 0, 0, 1
             };
             return ret.Resize<N,N>();
         }
 
         template<size_t m = M, size_t n = N>
-        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type Rotate(Vector3 eulerAngles) {
-            float cx = std::cos(eulerAngles.x);
-            float cy = std::cos(eulerAngles.y);
-            float cz = std::cos(eulerAngles.z);
-            float sx = std::sin(eulerAngles.x);
-            float sy = std::sin(eulerAngles.y);
-            float sz = std::sin(eulerAngles.z);
-            Matrix<4,4> ret = {
-                cx*cy, cx*sy*sz-sx*cz, cx*sy*cz+sx*sz, 0,
-                sx*cy, sx*sy*sz+cx*cz, sx*sy*cz-cx*sz, 0,
-                -sy, cy*sz, cy*cz, 0,
-                0, 0, 0, 1
+        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type Rotate(EulerAngles euler) {
+            switch (euler.GetOrder()) {
+                case XYZ:
+                    return Matrix<N,N>::RotateX(Radians(euler.x))*Matrix<N,N>::RotateY(Radians(euler.y))*Matrix<N,N>::RotateZ(Radians(euler.z));
+                case YZX:
+                    return Matrix<N,N>::RotateY(Radians(euler.y))*Matrix<N,N>::RotateZ(Radians(euler.z))*Matrix<N,N>::RotateX(Radians(euler.x));
+                case ZXY:
+                    return Matrix<N,N>::RotateZ(Radians(euler.z))*Matrix<N,N>::RotateX(Radians(euler.x))*Matrix<N,N>::RotateY(Radians(euler.y));
+                case XZY:
+                    return Matrix<N,N>::RotateX(Radians(euler.x))*Matrix<N,N>::RotateZ(Radians(euler.z))*Matrix<N,N>::RotateY(Radians(euler.y));
+                case YXZ:
+                    return Matrix<N,N>::RotateY(Radians(euler.y))*Matrix<N,N>::RotateX(Radians(euler.x))*Matrix<N,N>::RotateZ(Radians(euler.z));
+                case ZYX:
+                    return Matrix<N,N>::RotateZ(Radians(euler.z))*Matrix<N,N>::RotateY(Radians(euler.y))*Matrix<N,N>::RotateX(Radians(euler.x));
+                default:
+                    return Matrix<N,N>::Identity();
             };
-            return ret.Resize<N,N>();
         }
 
         template<size_t m = M, size_t n = N>
@@ -367,6 +374,45 @@ namespace Starsurge {
                 c+rx*rx*(1-c), rx*ry*(1-c)-rz*s, rx*rz*(1-c)+ry*s, 0,
                 ry*rx*(1-c)+rz*s, c+ry*ry*(1-c), ry*rz*(1-c)-rx*s, 0,
                 rz*rx*(1-c)-ry*s, rz*ry*(1-c)+rx*s, c+rz*rz*(1-c), 0,
+                0, 0, 0, 1
+            };
+            return ret.Resize<N,N>();
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type RotateX(float theta) {
+            float c = std::cos(theta);
+            float s = std::sin(theta);
+            Matrix<4,4> ret = {
+                1, 0, 0, 0,
+                0, c, -s, 0,
+                0, s, c, 0,
+                0, 0, 0, 1
+            };
+            return ret.Resize<N,N>();
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type RotateY(float theta) {
+            float c = std::cos(theta);
+            float s = std::sin(theta);
+            Matrix<4,4> ret = {
+                c, 0, s, 0,
+                0, 1, 0, 0,
+                -s, 0, c, 0,
+                0, 0, 0, 1
+            };
+            return ret.Resize<N,N>();
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type RotateZ(float theta) {
+            float c = std::cos(theta);
+            float s = std::sin(theta);
+            Matrix<4,4> ret = {
+                c, -s, 0, 0,
+                s, c, 0, 0,
+                0, 0, 1, 0,
                 0, 0, 0, 1
             };
             return ret.Resize<N,N>();
@@ -416,21 +462,6 @@ namespace Starsurge {
             return lhs * rhs;
         }
 
-        template<size_t m = M, size_t n = N>
-        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type RotateX(float theta) {
-            return Matrix<4,4>::Rotate(theta, Vector3(1,0,0));
-        }
-
-        template<size_t m = M, size_t n = N>
-        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type RotateY(float theta) {
-            return Matrix<4,4>::Rotate(theta, Vector3(0,1,0));
-        }
-
-        template<size_t m = M, size_t n = N>
-        static typename std::enable_if<(m == n && n == 4), Matrix<4,4>>::type RotateZ(float theta) {
-            return Matrix<4,4>::Rotate(theta, Vector3(0,0,1));
-        }
-
         // Square matrices
         template<size_t m = M, size_t n = N>
         static typename std::enable_if<m == n, Matrix<N,N>>::type Identity() {
@@ -445,6 +476,17 @@ namespace Starsurge {
                     ret(r,c)  = (r == c ? vals[r] : 0);
                 }
             }
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<m == n && n == 3, Matrix<3,3>>::type CrossProduct(Vector<3> v) {
+            //https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
+            Matrix<3,3> ret = {
+                0, -v.z, v.y,
+                v.z, 0, -v.x,
+                -v.y, v.x, 0
+            };
             return ret;
         }
 
@@ -562,7 +604,6 @@ namespace Starsurge {
         }
         friend Matrix<M,N> operator*(Matrix<M,N> lhs, const float& rhs) { return lhs *= rhs; }
         friend Matrix<M,N> operator*(const float& lhs, Matrix<M,N> rhs) { return rhs *= lhs; }
-
         template<size_t P>
         friend Matrix<M,P> operator*(Matrix<M,N> lhs, Matrix<N,P> rhs) {
             Matrix<M,P> ret;
@@ -582,6 +623,10 @@ namespace Starsurge {
                 ret[r] = Vector<N>::Dot(row, rhs);
             }
             return ret;
+        }
+        Matrix<M,N>& operator*=(const Matrix<N,N>& rhs) {
+            *this = *this * rhs;
+            return *this;
         }
     protected:
         float data[M*N];

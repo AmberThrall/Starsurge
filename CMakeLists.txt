@@ -13,3 +13,4 @@ find_package(OpenGL REQUIRED)
 # Our subdirectories
 add_subdirectory(src)
 add_subdirectory(tests)
+add_subdirectory(tools)

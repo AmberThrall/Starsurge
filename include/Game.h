@@ -12,6 +12,7 @@ namespace Starsurge {
     protected:
         virtual void OnInitialize() = 0;
         virtual void OnUpdate() = 0;
+        virtual void OnRender();
 
         std::string gamename;
     private:

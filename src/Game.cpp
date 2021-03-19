@@ -81,14 +81,7 @@ void Starsurge::Game::GameLoop() {
         glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Iterate through each entity with a MeshRenderer
-        std::vector<Entity*> meshEntities = Scene::Inst().FindEntitiesWithComponent<MeshRenderer>();
-        for (unsigned int i = 0; i < meshEntities.size(); ++i) {
-            MeshRenderer * component = meshEntities[i]->FindComponent<MeshRenderer>();
-            if (component != NULL) {
-                component->Render();
-            }
-        }
+        OnRender();
 
         //  Swap buffers and poll IO
         glfwSwapBuffers(this->gameWindow);
@@ -96,4 +89,15 @@ void Starsurge::Game::GameLoop() {
     }
 
     glfwTerminate();
+}
+
+void Starsurge::Game::OnRender() {
+    // Iterate through each entity with a MeshRenderer
+    std::vector<Entity*> meshEntities = Scene::Inst().FindEntitiesWithComponent<MeshRenderer>();
+    for (unsigned int i = 0; i < meshEntities.size(); ++i) {
+        MeshRenderer * component = meshEntities[i]->FindComponent<MeshRenderer>();
+        if (component != NULL) {
+            component->Render();
+        }
+    }
 }

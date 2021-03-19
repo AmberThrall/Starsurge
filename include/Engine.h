@@ -13,6 +13,7 @@
 #include "MeshRenderer.h"
 #include "Camera.h"
 #include "Vector.h"
+#include "EulerAngles.h"
 #include "Quaternion.h"
 #include "Matrix.h"
 #include "Color.h"

@@ -114,6 +114,13 @@ namespace Starsurge {
             float z = a[0]*b[1] - a[1]*b[0];
             return Vector<3>(x, y, z);
         }
+        static float AngleBetween(Vector<N> a, Vector<N> b) {
+            // a DOT b = ||a||*||b||*cos(theta)
+            float dot = Vector<N>::Dot(a, b);
+            float normA = a.Norm();
+            float normB = b.Norm();
+            return Degrees(std::acos(dot/(normA*normB)));
+        }
 
         void Set(size_t i, float v) {
             this->data[i] = v;
