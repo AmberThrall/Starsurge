@@ -42,6 +42,7 @@ namespace Starsurge {
         void SetCallbackDelay(unsigned int id, double delay);
         void StopCallback(unsigned int id);
 
+        unsigned int EpochTime();
         double Now();
         unsigned int StartTimer();
         double StopTimer(unsigned int id);

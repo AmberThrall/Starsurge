@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include "../include/GameSettings.h"
 #include "../include/Timer.h"
+#include "../include/RNG.h"
 #include "../include/Input.h"
 #include "../include/Engine.h"
 #include "../include/stb_image.h"
@@ -25,6 +26,9 @@ void Starsurge::Game::CloseGame() {
 void Starsurge::Game::Run() {
     // Start the clock.
     Timer::Inst().Start();
+
+    // Seed the RNG engine.
+    RNG::Inst().Seed(Timer::Inst().EpochTime());
 
     // Set flags.
     stbi_set_flip_vertically_on_load(true);

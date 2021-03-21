@@ -1,4 +1,5 @@
 #include <chrono>
+#include <ctime>
 #include "../include/Timer.h"
 #include "../include/Logging.h"
 
@@ -21,6 +22,11 @@ void Starsurge::Timer::StopCallback(unsigned int id) {
         return;
     }
     this->callbacks.erase(id);
+}
+
+unsigned int Starsurge::Timer::EpochTime() {
+    std::time_t result = std::time(nullptr);
+    return (unsigned int)result;
 }
 
 double Starsurge::Timer::Now() {
