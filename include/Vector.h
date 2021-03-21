@@ -274,16 +274,16 @@ namespace Starsurge {
 
         static std::vector<Vector<N>> GramSchmidt(std::vector<Vector<N>> vectors) {
             std::vector<Vector<N>> u;
-            for (unsigned int i = 0; i < vectors.size(); ++i) {
+            for (size_t i = 0; i < vectors.size(); ++i) {
                 Vector<N> ui = vectors[i];
-                for (unsigned int j = 0; j < i; j++) {
+                for (size_t j = 0; j < i; j++) {
                     ui -= Vector<N>::Projection(u[j], vectors[i]);
                 }
                 u.push_back(ui);
             }
 
             // Normalize all the u's.
-            for (unsigned int i = 0; i < u.size(); ++i) {
+            for (size_t i = 0; i < u.size(); ++i) {
                 u[i].Normalize();
             }
 

@@ -160,6 +160,10 @@ namespace Starsurge {
             return ret;
         }
 
+        float Get(size_t r, size_t c) {
+            return this->data[r*N+c];
+        }
+
         Vector<N> GetRow(size_t r) {
             Vector<N> ret;
             for (size_t c = 0; c < N; ++c) {
@@ -401,8 +405,213 @@ namespace Starsurge {
         }
 
         template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n), Matrix<N,N>>::type BackwardIdentity() {
+            Matrix<N,N> ret(0);
+            for (size_t r = 0; r < N; ++r) {
+                ret(M-r-1,r) = 1;
+            }
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n), Matrix<N,N>>::type LowerShift() {
+            return Matrix<N,N>::SubDiag(Vector<N-1>::One());
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n), Matrix<N,N>>::type UpperShift() {
+            return Matrix<N,N>::SuperDiag(Vector<N-1>::One());
+        }
+
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), bool>::type IsSymmetric() {
+            return (*this == Transpose());
+        }
+
+        template<size_t m = M, size_t n = N>
         typename std::enable_if<(m == n), bool>::type IsOrthogonal() {
             return (Transpose()*(*this) == (*this)*Transpose() && Transpose()*(*this) == Matrix<M,N>::Identity());
+        }
+
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), bool>::type IsLowerTrianglar() {
+            for (size_t r = 0; r < N; ++r) {
+                for (size_t c = r+1; c < N; ++c) {
+                    if (Get(r,c) != 0) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), bool>::type IsUpperTrianglar() {
+            for (size_t c = 0; c < N; ++c) {
+                for (size_t r = c+1; r < N; ++r) {
+                    if (Get(r,c) != 0) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), bool>::type IsDiagonal() {
+            return (IsUpperTrianglar() && IsLowerTrianglar());
+        }
+
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), bool>::type IsTriangular() {
+            return (IsUpperTrianglar() || IsLowerTrianglar());
+        }
+
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), bool>::type IsPermutation() {
+            std::vector<size_t> permutation;
+            for (size_t c = 0; c < N; ++c) {
+                Vector<N> col = GetColumn(c);
+                for (size_t i = 0; i < N; ++i) {
+                    if (col == Vector<N>::Basis(i)) {
+                        if (ElemOf<size_t>(permutation, i)) {
+                            return false;
+                        }
+                        permutation.push_back(i);
+                        break;
+                    }
+                }
+
+                if (permutation.size() != c+1) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), Vector<N>>::type Solve(Vector<N> b) {
+            Vector<N> x;
+            Matrix<N,N> L, U, P;
+
+            if (IsLowerTrianglar()) {
+                for (size_t r = 0; r < N; ++r) {
+                    float rhs = b[r];
+                    for (size_t c = 0; c < r; ++c) {
+                        rhs -= x[c]*Get(r,c);
+                    }
+                    x[r] = rhs / Get(r,r);
+                }
+                return x;
+            }
+            else if (IsUpperTrianglar()) {
+                for (size_t r = N-1; r >= 0; r--) {
+                    float rhs = b[r];
+                    for (size_t c = N-1; c > r; c--) {
+                        rhs -= x[c]*Get(r,c);
+                    }
+                    x[r] = rhs / Get(r,r);
+
+                    if (r == 0) break;
+                }
+                return x;
+            }
+            else if (LUPDecomp(L, U, P)) {
+                Vector<N> y = L.Solve(P*b);
+                x = U.Solve(y);
+                return x;
+            }
+            else {
+                Error("Unable to solve equation Ax=b.");
+                return x;
+            }
+        }
+
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), void>::type QRDecomp(Matrix<N,N> & Q, Matrix<N,N> & R) {
+            std::vector<Vector<N>> columns;
+            for (size_t c = 0; c < N; ++c) {
+                columns.push_back(GetColumn(c));
+            }
+
+            std::vector<Vector<N>> e = Vector<N>::GramSchmidt(columns);
+            for (size_t c = 0; c < N; ++c) {
+                Q.SetColumn(c, e[c]);
+            }
+
+            for (size_t r = 0; r < N; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (c < r) {
+                        R(r,c) = 0;
+                    }
+                    else {
+                        R(r,c) = Vector<N>::Dot(e[r], columns[c]);
+                    }
+                }
+            }
+        }
+
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), bool>::type LUPDecomp(Matrix<N,N> & L, Matrix<N,N> & U, Matrix<N,N> & P) {
+            L = *this;
+
+            std::vector<size_t> permutations;
+            for (size_t i = 0; i < N; ++i) {
+                permutations.push_back(i);
+            }
+
+            for (size_t i = 0; i < N; ++i) {
+                float maxA = -1;
+                size_t i_max = i;
+
+                for (size_t k = i; k < N; ++k) {
+                    if (std::abs(L(k,i)) > maxA) {
+                        maxA = std::abs(L(k,i));
+                        i_max = k;
+                    }
+                }
+
+                if (maxA < 0.00001) {
+                    return false;
+                }
+
+                if (i_max != i) {
+                    float j = permutations[i];
+                    permutations[i] = permutations[i_max];
+                    permutations[i_max] = j;
+
+                    Vector<N> rowI = L.GetRow(i);
+                    L.SetRow(i, L.GetRow(i_max));
+                    L.SetRow(i_max, rowI);
+                }
+
+                for (size_t j = i+1; j < N; ++j) {
+                    L(j,i) /= L(i,i);
+
+                    for (size_t k = i+1; k < N; ++k) {
+                        L(j, k) -= L(j,i) * L(i,k);
+                    }
+                }
+            }
+
+            // Create the matrices.
+            U = L;
+            for (size_t r = 0; r < N; ++r) {
+                L(r, r) = 1;
+                for (size_t c = r+1; c < N; ++c) {
+                    L(r, c) = 0;
+                    U(c, r) = 0;
+                }
+            }
+
+            for (size_t r = 0; r < N; ++r) {
+                P.SetRow(r, Vector<N>::Basis(permutations[r]));
+            }
+
+            return true;
         }
 
         template<size_t P, size_t Q>
@@ -654,6 +863,24 @@ namespace Starsurge {
         }
 
         template<size_t m = M, size_t n = N>
+        static typename std::enable_if<m == n, Matrix<N,N>>::type SuperDiag(const Vector<N-1>& vals) {
+            Matrix<N,N> ret(0);
+            for (size_t r = 0; r < N-1; ++r) {
+                ret(r,r+1) = vals[r];
+            }
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<m == n, Matrix<N,N>>::type SubDiag(const Vector<N-1>& vals) {
+            Matrix<N,N> ret(0);
+            for (size_t r = 0; r < N-1; ++r) {
+                ret(r+1,r) = vals[r];
+            }
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
         static typename std::enable_if<m == n && n == 3, Matrix<3,3>>::type CrossProduct(Vector<3> v) {
             //https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
             Matrix<3,3> ret = {
@@ -690,6 +917,14 @@ namespace Starsurge {
 
         template<size_t m = M, size_t n = N>
         typename std::enable_if<(m==n && n>2), float>::type Determinant() {
+            if (IsTriangular()) {
+                float det = 0;
+                for (size_t i = 0; i < N; ++i) {
+                    det *= Get(i, i);
+                }
+                return det;
+            }
+
             float det = 0;
             for (size_t i = 0; i < N; ++i) {
                 det += data[i] * Cofactor(0, i);
