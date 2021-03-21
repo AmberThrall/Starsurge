@@ -614,6 +614,48 @@ namespace Starsurge {
             return true;
         }
 
+        template<size_t M1, size_t N1, size_t M2, size_t N2>
+        static Matrix<M1+M2,N1+N2> BlockMatrix(Matrix<M1,N1> A, Matrix<M1,N2> B, Matrix<M2,N1> C, Matrix<M2,N2> D) {
+            Matrix<M1+M2,N1+N2> ret;
+            for (size_t r = 0; r < M1+M2; ++r) {
+                for (size_t c = 0; c < N1+N2; ++c) {
+                    if (r < M1 && c < N1) {
+                        ret(r,c) = A(r,c);
+                    }
+                    else if (r < M1 && c >= N1) {
+                        ret(r,c) = B(r,c-N1);
+                    }
+                    else if (r >= M1 && c < N1) {
+                        ret(r,c) = C(r-M1,c);
+                    }
+                    else if (r >= M1 && c >= N1) {
+                        ret(r,c) = D(r-M1,c-N1);
+                    }
+                }
+            }
+            return ret;
+        }
+
+        template<size_t M, size_t N>
+        static Matrix<M+1,N+1> BlockMatrix(float a, Matrix<1,N> b, Matrix<M,1> c, Matrix<M,N> d) {
+            return Matrix<M+1,N+1>::BlockMatrix(Matrix<1,1>(a), b, c, d);
+        }
+
+        template<size_t M, size_t N>
+        static Matrix<M+1,N+1> BlockMatrix(float a, Vector<N> b, Vector<M> c, Matrix<M,N> d) {
+            return Matrix<M+1,N+1>::BlockMatrix(Matrix<1,1>(a), Matrix<1,N>(b), Matrix<1,M>(c).Transpose(), d);
+        }
+
+        template<size_t M, size_t N>
+        static Matrix<M+1,N+1> BlockMatrix(Matrix<M,N> a, Matrix<M,1> b, Matrix<1,N> c, float d) {
+            return Matrix<M+1,N+1>::BlockMatrix(a, b, c, Matrix<1,1>(d));
+        }
+
+        template<size_t M, size_t N>
+        static Matrix<M+1,N+1> BlockMatrix(Matrix<M,N> a, Vector<M> b, Vector<N> c, float d) {
+            return Matrix<M+1,N+1>::BlockMatrix(a, Matrix<1,M>(b).Transpose(), Matrix<1,N>(c), Matrix<1,1>(d));
+        }
+
         template<size_t P, size_t Q>
         static Matrix<P,Q> OuterProduct(Vector<P> u, Vector<Q> v) {
             return (Matrix<1,P>(u).Transpose())*(Matrix<1,Q>(v));
@@ -621,20 +663,7 @@ namespace Starsurge {
 
         template<size_t M1, size_t N1, size_t M2, size_t N2>
         static Matrix<M1+M2,N1+N2> DirectSum(Matrix<M1,N1> a, Matrix<M2,N2> b) {
-            Matrix<M1+M2,N1+N2> ret;
-            for (size_t r = 0; r < M1; ++r) {
-                for (size_t c = 0; c < N1; ++c) {
-                    ret(r,c) = a(r,c);
-                }
-            }
-
-            for (size_t r = 0; r < M2; ++r) {
-                for (size_t c = 0; c < N2; ++c) {
-                    ret(r+M1,c+N1) = b(r,c);
-                }
-            }
-
-            return ret;
+            return Matrix<M1+M2,N1+N2>::BlockMatrix(a, Matrix<M1,N2>::Zero(), Matrix<M2,N1>::Zero(), b);
         }
 
         template<size_t M1, size_t N1, size_t M2, size_t N2>
