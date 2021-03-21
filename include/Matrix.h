@@ -456,6 +456,16 @@ namespace Starsurge {
             return ret;
         }
 
+        static Matrix<M,N> Vandermonde(Vector<M> alpha) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    ret(r, c) = std::pow(alpha[r], c);
+                }
+            }
+            return ret;
+        }
+
         template<size_t m = M, size_t n = N>
         static typename std::enable_if<(m == n), Matrix<N,N>>::type LowerShift() {
             return Matrix<N,N>::SubDiag(Vector<N-1>::One());
@@ -533,6 +543,24 @@ namespace Starsurge {
             }
 
             return true;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == 1), Matrix<1,N>>::type RowVector(Vector<N> v) {
+            Matrix<1,N> ret;
+            for (size_t c = 0; c < N; ++c) {
+                ret(0,c) = v[c];
+            }
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(n == 1), Matrix<M,1>>::type ColumnVector(Vector<M> v) {
+            Matrix<M,1> ret;
+            for (size_t r = 0; r < M; ++r) {
+                ret(r,0) = v[r];
+            }
+            return ret;
         }
 
         template<size_t m = M, size_t n = N>
@@ -686,7 +714,7 @@ namespace Starsurge {
 
         template<size_t M, size_t N>
         static Matrix<M+1,N+1> BlockMatrix(float a, Vector<N> b, Vector<M> c, Matrix<M,N> d) {
-            return Matrix<M+1,N+1>::BlockMatrix(Matrix<1,1>(a), Matrix<1,N>(b), Matrix<1,M>(c).Transpose(), d);
+            return Matrix<M+1,N+1>::BlockMatrix(Matrix<1,1>(a), Matrix<1,N>::RowVector(b), Matrix<M,1>::ColumnVector(c), d);
         }
 
         template<size_t M, size_t N>
@@ -696,7 +724,7 @@ namespace Starsurge {
 
         template<size_t M, size_t N>
         static Matrix<M+1,N+1> BlockMatrix(Matrix<M,N> a, Vector<M> b, Vector<N> c, float d) {
-            return Matrix<M+1,N+1>::BlockMatrix(a, Matrix<1,M>(b).Transpose(), Matrix<1,N>(c), Matrix<1,1>(d));
+            return Matrix<M+1,N+1>::BlockMatrix(a, Matrix<M,1>::ColumnVector(b), Matrix<1,N>::RowVector(c), Matrix<1,1>(d));
         }
 
         template<size_t P, size_t Q>

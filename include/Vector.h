@@ -167,6 +167,21 @@ namespace Starsurge {
             return Vector<3>(0,0,1);
         }
 
+        static Vector<N> Linspace(float start, float stop, bool endpoint = true) {
+            float step = (stop - start) / N;
+            if (endpoint) {
+                step = (stop - start) / (N-1);
+            }
+            float v = start;
+            Vector<N> ret;
+            ret[0] = v;
+            for (size_t i = 1; i < N; ++i) {
+                v += step;
+                ret[i] = v;
+            }
+            return ret;
+        }
+
         static Vector<N> EntrywiseProduct(Vector<N> a, Vector<N> b) {
             Vector<N> ret;
             for (size_t i = 0; i < N; ++i) {
