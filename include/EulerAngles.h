@@ -6,8 +6,7 @@
 namespace Starsurge {
     // Predefine classes due to circular inclusion.
     class Quaternion;
-    template<size_t M, size_t N>
-    class Matrix;
+    template<size_t M, size_t N> class Matrix;
 
     enum EulerAngleOrders {
         XYZ, YZX, ZXY, XZY, YXZ, ZYX
@@ -25,6 +24,7 @@ namespace Starsurge {
         void SetOrder(EulerAngleOrders order);
 
         std::string ToString();
+        Vector3 Rotate(Vector3 v);
 
         static EulerAngles FromMatrix(Matrix<3,3> m, EulerAngleOrders order = XYZ);
         static EulerAngles FromQuaternion(Quaternion q, EulerAngleOrders order = XYZ);

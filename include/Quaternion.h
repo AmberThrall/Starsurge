@@ -5,8 +5,7 @@
 namespace Starsurge {
     // Predefine classes due to circular inclusion.
     class EulerAngles;
-    template<size_t M, size_t N>
-    class Matrix;
+    template<size_t M, size_t N> class Matrix;
 
     class Quaternion {
     public:
@@ -29,6 +28,7 @@ namespace Starsurge {
         Vector3 Axis();
         float Angle();
 
+        static Quaternion Lerp(Quaternion start, Quaternion end, float t);
         static Quaternion Identity();
         static float Dot(Quaternion p, Quaternion q);
         static float AngleBetween(Quaternion p, Quaternion q);

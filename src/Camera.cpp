@@ -14,22 +14,37 @@ Starsurge::Camera::Camera(float left, float right, float bottom, float top, floa
     SetOrthographic(left, right, bottom, top, near, far);
 }
 
-void Starsurge::Camera::LookAt(Vector3 t_target) {
-    this->target = t_target;
-    Vector3 pos = Vector3(0,0,0);
-    Vector3 up = Vector3::Up();
-    Matrix4 eye = Matrix4::Translate(pos);
+void Starsurge::Camera::LookAt(Vector3 target) {
+    //https://stackoverflow.com/questions/52413464/look-at-quaternion-using-up-vector
     Transform * transform = GetOwner()->FindComponent<Transform>();
     if (transform) {
-        pos = transform->Position;
-    }
+        Quaternion q;
+        Vector3 eye = transform->Position;
+        Vector3 forward = Vector3::Normalize(eye - target);
+        Vector3 right = Vector3::Normalize(Vector3::CrossProduct(Vector3::Up(), forward));
+        Vector3 up = Vector3::CrossProduct(forward, right);
 
-    Vector3 dir = pos - this->target;
-    dir.Normalize();
-    Vector3 right = Vector3::CrossProduct(up, dir);
-    right.Normalize();
-    up = Vector3::CrossProduct(dir, right);
-    this->viewMatrix = Matrix4::LookAt(right, up, dir, pos);
+        float trace = right.x + up.y + forward.z;
+        if (trace > 0) {
+            float s = 0.5 / sqrt(trace + 1.0);
+            q = Quaternion(0.25 / s, (up.z - forward.y) * s, (forward.x - right.z) * s, (right.y - up.x) * s);
+        }
+        else if (right.x > up.y) {
+            float s = 2 * sqrt(trace + right.x - up.y - forward.z);
+            q = Quaternion((up.z - forward.y) / s, 0.25*s, (up.x + right.y) / s, (forward.x + right.z) / s);
+        }
+        else if (up.y > forward.z) {
+            float s = 2 * sqrt(trace + up.y - right.x - forward.z);
+            q = Quaternion((forward.x - right.z) / s, (up.x + right.y) / s, 0.25 * s, (forward.y + up.z) / s);
+        }
+        else {
+            float s = 2 * sqrt(trace+forward.z - right.x - up.y);
+            q = Quaternion((right.y - up.x) / s, (forward.x + right.z) / s, (forward.y + up.z) / s, 0.25 * s);
+        }
+
+        transform->Rotation.SetQuaternion(q);
+    }
+    this->viewMatrix = Matrix4::LookAt(Right(), Up(), Forward(), transform->Position);
 }
 
 void Starsurge::Camera::SetOrthographic(float left, float right, float bottom, float top, float near, float far) {
@@ -49,10 +64,11 @@ Starsurge::Matrix4 Starsurge::Camera::GetProjMatrix() {
     return this->projMatrix;
 }
 
-Starsurge::Vector3 Starsurge::Camera::Forwards() {
+Starsurge::Vector3 Starsurge::Camera::Forward() {
     Transform * transform = GetOwner()->FindComponent<Transform>();
     if (transform) {
-        Vector3 v = this->target - transform->Position;
+        Quaternion q = transform->Rotation.GetQuaternion();
+        Vector3 v = q.Rotate(Vector3::Forward());
         v.Normalize();
         return v;
     }
@@ -60,14 +76,34 @@ Starsurge::Vector3 Starsurge::Camera::Forwards() {
 }
 
 Starsurge::Vector3 Starsurge::Camera::Up() {
-    return Vector3(0,1,0);
+    Transform * transform = GetOwner()->FindComponent<Transform>();
+    if (transform) {
+        Quaternion q = transform->Rotation.GetQuaternion();
+        Vector3 v = q.Rotate(Vector3::Up());
+        v.Normalize();
+        return v;
+    }
+    return Vector3(0,0,0);
+}
+
+Starsurge::Vector3 Starsurge::Camera::Right() {
+    Transform * transform = GetOwner()->FindComponent<Transform>();
+    if (transform) {
+        Quaternion q = transform->Rotation.GetQuaternion();
+        Vector3 v = q.Rotate(Vector3::Right());
+        v.Normalize();
+        return v;
+    }
+    return Vector3(0,0,0);
 }
 
 void Starsurge::Camera::OnUpdate() {
     Transform * transform = GetOwner()->FindComponent<Transform>();
     if (transform) {
         if (transform->HasMoved()) {
-            LookAt(this->target);
+            // Remake the VIEW matrix.
+            //LookAt(transform->Position + Forward());
+            this->viewMatrix = Matrix4::LookAt(Right(), Up(), Forward(), transform->Position);
         }
     }
 }

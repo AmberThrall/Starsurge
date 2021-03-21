@@ -76,6 +76,12 @@ Starsurge::Quaternion Starsurge::Quaternion::ConjugateBy(Quaternion q) {
     return q*p*q.Inverse();
 }
 
+Starsurge::Vector3 Starsurge::Quaternion::Rotate(Vector3 v) {
+    Quaternion p(0, v);
+    p = p.ConjugateBy(*this);
+    return p.vector;
+}
+
 Starsurge::Vector3 Starsurge::Quaternion::Axis() {
     double s = std::sqrt(1-this->scalar*this->scalar);
     if (s < 0.000001) {
@@ -86,6 +92,10 @@ Starsurge::Vector3 Starsurge::Quaternion::Axis() {
 
 float Starsurge::Quaternion::Angle() {
     return Degrees(2*std::acos(this->scalar));
+}
+
+Starsurge::Quaternion Starsurge::Quaternion::Lerp(Quaternion start, Quaternion end, float t) {
+    return start + t * (end - start);
 }
 
 float Starsurge::Quaternion::Dot(Quaternion p, Quaternion q) {
@@ -151,7 +161,7 @@ Starsurge::Quaternion Starsurge::Quaternion::FromEulerAngles(EulerAngles euler) 
 
 Starsurge::Quaternion Starsurge::Quaternion::FromAxisAngle(float theta, Vector3 axis) {
     axis.Normalize();
-    return Quaternion(std::cos(theta/2), axis*std::sin(theta / 2));
+    return Quaternion(std::cos(Radians(theta)/2), axis*std::sin(Radians(theta) / 2));
 }
 
 Starsurge::Quaternion Starsurge::Quaternion::FromMatrix(Matrix3 m) {

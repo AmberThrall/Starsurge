@@ -22,6 +22,8 @@ namespace Starsurge {
     float Max(float v, float max);
     float Min(float v, float min);
     float Clamp(float v, float min, float max);
+    float Wrap(float v, float min, float max);
+    float Lerp(float start, float end, float t);
 
     // Select various elements from an tuple
     template <typename Tuple, size_t... Idx>

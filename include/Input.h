@@ -178,6 +178,7 @@ namespace Starsurge {
         Vector2 GetCurserPos();
         void MoveCursor(double x, double y);
         void HideCursor();
+        void ShowCursor();
         void LockCursor();
         void UnlockCursor();
 

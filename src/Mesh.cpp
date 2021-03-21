@@ -75,6 +75,13 @@ unsigned int Starsurge::Mesh::NumberOfIndices() {
     return this->indices.size();
 }
 
+std::vector<Starsurge::Vertex> Starsurge::Mesh::GetVertices() {
+    return this->vertices;
+}
+std::vector<unsigned int> Starsurge::Mesh::GetIndices() {
+    return this->indices;
+}
+
 Starsurge::Mesh * Starsurge::Mesh::Triangle(Vector3 pt1, Vector3 pt2, Vector3 pt3) {
     Vector3 normal = Vector3::CrossProduct(pt1 - pt3, pt2 - pt3);
     Vertex v1;

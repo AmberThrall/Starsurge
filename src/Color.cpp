@@ -2,24 +2,24 @@
 #include "../include/Utils.h"
 
 Starsurge::Color::Color(float all){
-    this->data[0] = Clamp(all, 0, 255);
-    this->data[1] = Clamp(all, 0, 255);
-    this->data[2] = Clamp(all, 0, 255);
+    this->data[0] = Starsurge::Clamp(all, 0, 255);
+    this->data[1] = Starsurge::Clamp(all, 0, 255);
+    this->data[2] = Starsurge::Clamp(all, 0, 255);
     this->data[3] = 255;
 }
 
 Starsurge::Color::Color(float r, float g, float b) {
-    this->data[0] = Clamp(r, 0, 255);
-    this->data[1] = Clamp(g, 0, 255);
-    this->data[2] = Clamp(b, 0, 255);
+    this->data[0] = Starsurge::Clamp(r, 0, 255);
+    this->data[1] = Starsurge::Clamp(g, 0, 255);
+    this->data[2] = Starsurge::Clamp(b, 0, 255);
     this->data[3] = 255;
 }
 
 Starsurge::Color::Color(float r, float g, float b, float a) {
-    this->data[0] = Clamp(r, 0, 255);
-    this->data[1] = Clamp(g, 0, 255);
-    this->data[2] = Clamp(b, 0, 255);
-    this->data[3] = Clamp(a, 0, 255);
+    this->data[0] = Starsurge::Clamp(r, 0, 255);
+    this->data[1] = Starsurge::Clamp(g, 0, 255);
+    this->data[2] = Starsurge::Clamp(b, 0, 255);
+    this->data[3] = Starsurge::Clamp(a, 0, 255);
 }
 
 Starsurge::Color Starsurge::Color::FromHex(std::string hex) {
@@ -67,9 +67,9 @@ std::string Starsurge::Color::ToHex() {
 
 Starsurge::Color Starsurge::Color::FromHSL(float hue, float saturation, float lightness) {
     // https://www.rapidtables.com/convert/color/hsl-to-rgb.html
-    hue = Clamp(hue, 0, 360);
-    saturation = Clamp(saturation, 0, 1);
-    lightness = Clamp(lightness, 0, 1);
+    hue = Starsurge::Clamp(hue, 0, 360);
+    saturation = Starsurge::Clamp(saturation, 0, 1);
+    lightness = Starsurge::Clamp(lightness, 0, 1);
 
     float C = (1-std::abs(2*lightness-1))*saturation;
     float X = C * (1-std::abs(std::fmod(hue / 60, 2) - 1));
@@ -87,9 +87,9 @@ Starsurge::Color Starsurge::Color::FromHSL(float hue, float saturation, float li
 
 Starsurge::Color Starsurge::Color::FromHSV(float hue, float saturation, float value) {
     // https://www.rapidtables.com/convert/color/hsv-to-rgb.html
-    hue = Clamp(hue, 0, 360);
-    saturation = Clamp(saturation, 0, 1);
-    value = Clamp(value, 0, 1);
+    hue = Starsurge::Clamp(hue, 0, 360);
+    saturation = Starsurge::Clamp(saturation, 0, 1);
+    value = Starsurge::Clamp(value, 0, 1);
 
     float C = value * saturation;
     float X = C * (1-std::abs(std::fmod(hue/60, 2) - 1));
@@ -107,10 +107,10 @@ Starsurge::Color Starsurge::Color::FromHSV(float hue, float saturation, float va
 
 Starsurge::Color Starsurge::Color::FromCYMK(float cyan, float magenta, float yellow, float black) {
     // https://www.rapidtables.com/convert/color/cmyk-to-rgb.html
-    cyan = Clamp(cyan, 0, 1);
-    magenta = Clamp(magenta, 0, 1);
-    yellow = Clamp(yellow, 0, 1);
-    black = Clamp(black, 0, 1);
+    cyan = Starsurge::Clamp(cyan, 0, 1);
+    magenta = Starsurge::Clamp(magenta, 0, 1);
+    yellow = Starsurge::Clamp(yellow, 0, 1);
+    black = Starsurge::Clamp(black, 0, 1);
 
     return Color(255*(1-cyan)*(1-black), 255*(1-magenta)*(1-black), 255*(1-yellow)*(1-black), 255);
 }

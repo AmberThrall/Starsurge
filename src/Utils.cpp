@@ -134,6 +134,20 @@ float Starsurge::Clamp(float v, float min, float max) {
     return Min(Max(v, max), min);
 }
 
+float Starsurge::Wrap(float v, float min, float max) {
+    while (v < min) {
+        v += std::abs(max-min);
+    }
+    while (v > max) {
+        v -= std::abs(max-min);
+    }
+    return v;
+}
+
+float Starsurge::Lerp(float start, float end, float t) {
+    return start + t*(end-start);
+}
+
 std::vector<Starsurge::Match> Starsurge::FindSubstrings(std::string str, std::string regex) {
     std::smatch m;
     std::vector<Match> ret;

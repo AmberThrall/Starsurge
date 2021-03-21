@@ -28,6 +28,12 @@ add_library(Starsurge STATIC Logging.cpp
     Quaternion.cpp
     EulerAngles.cpp
     Light.cpp
+    Ray.cpp
+    Line.cpp
+    Plane.cpp
+    AABB.cpp
+    Sphere.cpp
+    Intersects.cpp
 )
 target_include_directories(Starsurge PUBLIC ${PROJECT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR} ${GLFW3_INCLUDE_DIR})
 target_link_libraries(Starsurge ${OPENGL_gl_LIBRARY} ${GLFW3_LIBRARY})

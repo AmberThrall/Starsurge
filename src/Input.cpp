@@ -118,6 +118,10 @@ void Starsurge::Input::HideCursor() {
     glfwSetInputMode(this->gameWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 }
 
+void Starsurge::Input::ShowCursor() {
+    glfwSetInputMode(this->gameWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+}
+
 void Starsurge::Input::LockCursor() {
     glfwSetInputMode(this->gameWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }

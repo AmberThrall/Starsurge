@@ -80,7 +80,7 @@ protected:
         Scene::Inst().AddEntity(camera);
         Scene::Inst().SetActiveCamera(camera);
         camera->FindComponent<Camera>()->LookAt(Vector3(0,0,0));
-        front = camera->FindComponent<Camera>()->Forwards();
+        front = camera->FindComponent<Camera>()->Forward();
 
         // Cubes
         Log("Adding cubes.");

@@ -45,6 +45,14 @@ namespace Starsurge {
             size_t i = 0;
             ((this->data[i++] = float(ts)),...);
         }
+        template <size_t M,typename... Ts, typename = std::enable_if_t<(M+sizeof...(Ts)==N)>>
+        Vector(const Vector<M> v, Ts... ts) {
+            size_t i = 0;
+            for (; i < M; ++i) {
+                this->data[i] = v.data[i];
+            }
+            ((this->data[i++] = float(ts)),...);
+        }
 
         size_t Size() const { return N; }
 
@@ -101,6 +109,69 @@ namespace Starsurge {
         static Vector<3> Forward() {
             return Vector<3>(0,0,1);
         }
+        //
+        // template <Vector<N>... Ts>
+        // static bool LinearlyIndependent(Ts... ts) {
+        //     std::vector<Vector<N>> v{Ts...};
+        // }
+
+        static float Min(Vector<N> a) {
+            float min = a[0];
+            for (size_t i = 0; i < N; ++i) {
+                min = std::min(min, a[i]);
+            }
+            return min;
+        }
+
+        static Vector<N> Min(Vector<N> a, Vector<N> b) {
+            Vector<N> ret;
+            for (size_t i = 0; i < N; ++i) {
+                ret[i] = std::min(a[i], b[i]);
+            }
+            return ret;
+        }
+
+        static float Max(Vector<N> a) {
+            float max = a[0];
+            for (size_t i = 0; i < N; ++i) {
+                max = std::max(max, a[i]);
+            }
+            return max;
+        }
+
+        static Vector<N> Max(Vector<N> a, Vector<N> b) {
+            Vector<N> ret;
+            for (size_t i = 0; i < N; ++i) {
+                ret[i] = std::max(a[i], b[i]);
+            }
+            return ret;
+        }
+
+        static Vector<N> Clamp(Vector<N> a, Vector<N> min, Vector<N> max) {
+            return Vector<N>::Min(Vector<N>::Max(a, max), min);
+        }
+
+        static Vector<N> Abs(Vector<N> a) {
+            Vector<N> ret;
+            for (size_t i = 0; i < N; ++i) {
+                ret[i] = std::abs(a[i]);
+            }
+            return ret;
+        }
+
+        /* Returns true if a and b point in the same direction, i.e., a = tb, t >= 0. */
+        static bool SameDirection(Vector<N> a, Vector<N> b, float eps = 0.00001) {
+            Vector<N> c = Vector<N>::Normalize(b) - Vector<N>::Normalize(a);
+            if (c.Norm() < eps) {
+                return true;
+            }
+            return false;
+        }
+
+        /* Returns true if a is parallel to b, i.e., a = tb. */
+        static bool Parallel(Vector<N> a, Vector<N> b, float eps = 0.00001) {
+            return SameDirection(a,b) || SameDirection(a, -1.0f*b);
+        }
 
         static Vector<N> Lerp(Vector<N> start, Vector<N> end, float t) {
             return start + t*(end - start);
@@ -118,6 +189,35 @@ namespace Starsurge {
 
         static Vector<N> Rejection(const Vector<N> a, const Vector<N> b) {
             return a - Vector<N>::Projection(a, b);
+        }
+
+        static Vector<N> Reflect(const Vector<N> incident, Vector<N> normal) {
+            // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/reflect.xhtml
+            return incident - 2.0f * Vector<N>::Dot(normal, incident) * normal;
+        }
+
+        static Vector<N> Refract(const Vector<N> incident, Vector<N> normal, float eta) {
+            // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/refract.xhtml
+            float k = 1.0 - eta*eta * (1.0 - std::pow(Vector<N>::Dot(normal, incident), 2))
+            if (k < 0.0) {
+                return Vector<N>::Zero();
+            }
+            return eta * incident - (eta * Vector<N>::Dot(normal, incident) + std::sqrt(k))*normal;
+        }
+
+        static Vector<N> FaceForward(const Vector<N> v, Vector<N> incident, Vector<N> ref) {
+            // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/faceforward.xhtml
+            if (Vector<N>::Dot(ref, incident) < 0) {
+                return v;
+            }
+            return -v;
+        }
+
+        /* Skew the vector in the direction 'dir' by 'theta' degrees. It is assumed that 'perp' is perpindicular to 'dir'. */
+        static Vector<N> Skew(const Vector<N> v, Vector<N> dir, Vector<N> perp, float theta) {
+            dir.Normalize();
+            perp.Normalize();
+            return v + dir * Vector<N>::Dot(perp, v) * std::tan(Radians(theta));
         }
 
         static std::vector<Vector<N>> GramSchmidt(std::vector<Vector<N>> vectors) {
@@ -199,6 +299,7 @@ namespace Starsurge {
             }
             return *this;
         }
+        friend Vector<N> operator-(const Vector<N>& rhs) { return -1.0f * rhs; }
         friend Vector<N> operator-(Vector<N> lhs, const Vector<N>& rhs) { return lhs -= rhs; }
         Vector<N>& operator*=(const float& rhs) {
             for (size_t i=0; i < N; ++i) {
@@ -344,6 +445,7 @@ namespace Starsurge {
                 ((m_data[Idx] -= other[i++]),...);
                 return (*this);
             }
+            friend swizzle<Idx...> operator-(swizzle<Idx...> rhs) { return -1.0f * rhs; }
             template <size_t...UIdx, typename = std::enable_if_t<(sizeof...(Idx)==sizeof...(UIdx))>>
             friend swizzle<Idx...> operator-(swizzle<Idx...> lhs, swizzle<UIdx...> rhs) { return lhs -= rhs; }
             friend swizzle<Idx...> operator-(swizzle<Idx...> lhs, Vector<sizeof...(Idx)> rhs) { return lhs -= rhs; }

@@ -45,6 +45,11 @@ std::string Starsurge::EulerAngles::ToString() {
     return ret;
 }
 
+Starsurge::Vector3 Starsurge::EulerAngles::Rotate(Vector3 v) {
+    Matrix3 mat = Matrix3::Rotate(*this);
+    return mat*v;
+}
+
 Starsurge::EulerAngles Starsurge::EulerAngles::FromMatrix(Matrix3 m, EulerAngleOrders order) {
     // https://github.com/mrdoob/three.js/blob/dev/src/math/Euler.js
     float x, y, z;
@@ -55,7 +60,7 @@ Starsurge::EulerAngles Starsurge::EulerAngles::FromMatrix(Matrix3 m, EulerAngleO
 
     switch (order) {
         case XYZ:
-              y = std::asin(Clamp(m13, -1, 1));
+              y = std::asin(Starsurge::Clamp(m13, -1, 1));
               if (std::abs(m13) < 0.9999999) { // Check for singularity (cy == 0).
                 x = std::atan2(-m23, m33);
                 z = std::atan2(-m12, m11);
@@ -66,7 +71,7 @@ Starsurge::EulerAngles Starsurge::EulerAngles::FromMatrix(Matrix3 m, EulerAngleO
               }
             break;
         case YXZ:
-            x = std::asin(-Clamp(m23, -1, 1));
+            x = std::asin(-Starsurge::Clamp(m23, -1, 1));
             if (std::abs(m23) < 0.9999999) {
                 y = std::atan2(m13, m33);
                 z = std::atan2(m21, m22);
@@ -77,7 +82,7 @@ Starsurge::EulerAngles Starsurge::EulerAngles::FromMatrix(Matrix3 m, EulerAngleO
             }
             break;
         case ZXY:
-            x = std::asin(Clamp(m32, -1, 1));
+            x = std::asin(Starsurge::Clamp(m32, -1, 1));
             if (std::abs(m32) < 0.9999999) {
                 y = std::atan2(-m31, m33);
                 z = std::atan2(-m12, m22);
@@ -88,7 +93,7 @@ Starsurge::EulerAngles Starsurge::EulerAngles::FromMatrix(Matrix3 m, EulerAngleO
             }
             break;
         case ZYX:
-            y = std::asin(-Clamp(m31, -1, 1));
+            y = std::asin(-Starsurge::Clamp(m31, -1, 1));
             if (std::abs(m31) < 0.9999999) {
                 x = std::atan2(m32, m33);
                 z = std::atan2(m21, m11);
@@ -99,7 +104,7 @@ Starsurge::EulerAngles Starsurge::EulerAngles::FromMatrix(Matrix3 m, EulerAngleO
             }
             break;
         case YZX:
-            z = std::asin(Clamp(m21, -1, 1));
+            z = std::asin(Starsurge::Clamp(m21, -1, 1));
             if (std::abs(m21) < 0.9999999) {
                 x = std::atan2(-m23, m22);
                 y = std::atan2(-m31, m11);
@@ -110,7 +115,7 @@ Starsurge::EulerAngles Starsurge::EulerAngles::FromMatrix(Matrix3 m, EulerAngleO
             }
             break;
         case XZY:
-            z = std::asin(-Clamp(m12, -1, 1));
+            z = std::asin(-Starsurge::Clamp(m12, -1, 1));
             if (std::abs(m12) < 0.9999999) {
                 x = std::atan2(m32, m22);
                 y = std::atan2(m13, m11);

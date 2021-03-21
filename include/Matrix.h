@@ -6,8 +6,11 @@
 #include "Quaternion.h"
 #include "EulerAngles.h"
 #include "Utils.h"
+#include "Plane.h"
 
 namespace Starsurge {
+    // Predefine classes due to circular inclusion.
+    class Plane;
     class Quaternion;
     class EulerAngles;
 
@@ -73,6 +76,12 @@ namespace Starsurge {
                     r++;
                 }
             }
+        }
+
+        template <typename... Ts, typename = std::enable_if_t<(sizeof...(Ts)==M*N)>>
+        Matrix(Ts... ts) {
+            size_t i = 0;
+            ((this->data[i++] = float(ts)),...);
         }
 
         size_t NumRows() const { return M; }
@@ -276,9 +285,24 @@ namespace Starsurge {
             return ret;
         }
 
+        template<size_t m = M, size_t n = N>
+        typename std::enable_if<(m == n), bool>::type IsOrthogonal() {
+            return (Transpose()*(*this) == (*this)*Transpose() && Transpose()*(*this) == Matrix<M,N>::Identity());
+        }
+
         template<size_t P, size_t Q>
         static Matrix<P,Q> OuterProduct(Vector<P> u, Vector<Q> v) {
             return (Matrix<1,P>(u).Transpose())*(Matrix<1,Q>(v));
+        }
+
+        static Matrix<N,N> ProjectionMatrix(Vector<N> a) {
+            a.Normalize();
+            return OuterProduct(a, a);
+        }
+
+        static Matrix<N,N> RejectionMatrix(Vector<N> a) {
+            a.Normalize();
+            return Matrix<N,N>::Identity() - OuterProduct(a, a);
         }
 
         template<size_t P, size_t Q>
@@ -307,6 +331,13 @@ namespace Starsurge {
         }
 
         template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type Scale(float s, Vector3 dir) {
+            Matrix<4,4> ret = ((s-1)*Matrix<3,3>::ProjectionMatrix(dir)+Matrix<3,3>::Identity()).Resize<4,4>();
+            ret(3,3) = 1;
+            return ret.Resize<N,N>();
+        }
+
+        template<size_t m = M, size_t n = N>
         static typename std::enable_if<(m == n), Matrix<N,N>>::type Translate(Vector<N-1> t) {
             Matrix<N,N> ret = Matrix<N,N>::Identity();
             for (size_t i = 0; i < N-1; ++i) {
@@ -318,8 +349,8 @@ namespace Starsurge {
         template<size_t m = M, size_t n = N>
         static typename std::enable_if<(m == n && N == 2), Matrix<2,2>>::type Rotate(float theta) {
             Matrix<2,2> ret = {
-                std::cos(theta), -std::sin(theta),
-                std::sin(theta), std::cos(theta);
+                std::cos(Radians(theta)), -std::sin(Radians(theta)),
+                std::sin(Radians(theta)), std::cos(Radians(theta))
             };
             return ret;
         }
@@ -415,6 +446,20 @@ namespace Starsurge {
                 0, 0, 1, 0,
                 0, 0, 0, 1
             };
+            return ret.Resize<N,N>();
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && n == 4), Matrix<N,N>>::type Reflect(Plane plane) {
+            Vector4 n = Vector4(plane.GetNormal().x, plane.GetNormal().y, plane.GetNormal().z, 0);
+            Vector4 f = Vector4(plane.a, plane.b, plane.c, plane.d);
+            return Matrix<4,4>::Identity() - 2 * Matrix<4,4>::OuterProduct(n, f);
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n && (n == 3 || n == 4)), Matrix<N,N>>::type Skew(float theta, Vector<N> dir, Vector<N> perp) {
+            Matrix<4,4> ret = (Matrix<3,3>::Identity() + std::tan(Radians(theta)) * Matrix<3,3>::OuterProduct(dir, perp)).Resize<4,4>();
+            ret(3,3) = 1;
             return ret.Resize<N,N>();
         }
 

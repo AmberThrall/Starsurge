@@ -25,7 +25,7 @@ void Starsurge::Rotation3D::SetEulerAngles(EulerAngles euler) {
 
 void Starsurge::Rotation3D::SetQuaternion(Quaternion q) {
     this->quaternion = q;
-    this->eulerAngles = EulerAngles::FromQuaternion(q);
+    this->eulerAngles = EulerAngles::FromQuaternion(q, this->eulerAngles.GetOrder());
 }
 
 Starsurge::Transform::Transform() : Component(typeid(Transform).name()) {
