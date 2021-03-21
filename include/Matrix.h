@@ -94,11 +94,11 @@ namespace Starsurge {
             }
         }
 
-        template <typename... Ts, typename = std::enable_if_t<(sizeof...(Ts)==M*N)>>
-        Matrix(Ts... ts) {
-            size_t i = 0;
-            ((this->data[i++] = float(ts)),...);
-        }
+        // template <typename... Ts, typename = std::enable_if_t<(sizeof...(Ts)==M*N)>>
+        // Matrix(Ts... ts) {
+        //     size_t i = 0;
+        //     ((this->data[i++] = float(ts)),...);
+        // }
 
         size_t NumRows() const { return M; }
         size_t NumColumns() const { return N; }
@@ -395,7 +395,7 @@ namespace Starsurge {
         }
 
         static Matrix<M,N> Zero() {
-            Matrix<M,N> ret(0);
+            Matrix<M,N> ret;
             return ret;
         }
 
@@ -703,6 +703,53 @@ namespace Starsurge {
                         ret(r,c) = b(r-P,c);
                 }
             }
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n), Matrix<N,N>>::type Pow(Matrix<N,N> a, int p) {
+            if (p == 0) {
+                return Matrix<N,N>::Identity();
+            }
+            else if (p == 1) {
+                return a;
+            }
+            else if (a.IsDiagonal()) {
+                Matrix<N,N> ret;
+                for (size_t i = 0; i < N; ++i) {
+                    ret(i,i) = std::pow(a(i,i), p);
+                }
+                return ret;
+            }
+
+            Matrix<N,N> ret(a);
+            for (size_t i = 1; i < std::abs(p); ++i) {
+                ret *= a;
+            }
+
+            if (p < 0) {
+                return ret.Inverse();
+            }
+            return ret;
+        }
+
+        template<size_t m = M, size_t n = N>
+        static typename std::enable_if<(m == n), Matrix<N,N>>::type Exp(Matrix<N,N> a, size_t num_terms = 10) {
+            if (a.IsDiagonal()) {
+                Matrix<N,N> ret;
+                for (size_t i = 0; i < N; ++i) {
+                    ret(i,i) = std::exp(a(i,i));
+                }
+                return ret;
+            }
+
+            float factorial = 1;
+            Matrix<N,N> ret = Matrix<N,N>::Identity();
+            for (size_t k = 1; k < num_terms; ++k) {
+                factorial *= k;
+                ret += Matrix<N,N>::Pow(a, k) / factorial;
+            }
+
             return ret;
         }
 
@@ -1062,6 +1109,14 @@ namespace Starsurge {
         }
         friend Matrix<M,N> operator*(Matrix<M,N> lhs, const float& rhs) { return lhs *= rhs; }
         friend Matrix<M,N> operator*(const float& lhs, Matrix<M,N> rhs) { return rhs *= lhs; }
+        Matrix<M,N>& operator/=(const float& rhs) {
+            for (size_t i = 0; i < M*N; ++i) {
+                this->data[i] /= rhs;
+            }
+            return *this;
+        }
+        friend Matrix<M,N> operator/(Matrix<M,N> lhs, const float& rhs) { return lhs /= rhs; }
+        friend Matrix<M,N> operator/(const float& lhs, Matrix<M,N> rhs) { return rhs /= lhs; }
         template<size_t P>
         friend Matrix<M,P> operator*(Matrix<M,N> lhs, Matrix<N,P> rhs) {
             Matrix<M,P> ret;

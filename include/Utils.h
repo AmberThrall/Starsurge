@@ -25,6 +25,8 @@ namespace Starsurge {
     float Wrap(float v, float min, float max);
     float Lerp(float start, float end, float t);
 
+    long Factorial(long n);
+
     // Select various elements from an tuple
     template <typename Tuple, size_t... Idx>
     auto Select(Tuple&& tuple, std::index_sequence<Idx...>) {

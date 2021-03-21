@@ -144,6 +144,13 @@ float Starsurge::Wrap(float v, float min, float max) {
     return v;
 }
 
+long Starsurge::Factorial(long n) {
+    if (n == 0 || n == 1) {
+        return 1;
+    }
+    return n*Factorial(n-1);
+}
+
 float Starsurge::Lerp(float start, float end, float t) {
     return start + t*(end-start);
 }
