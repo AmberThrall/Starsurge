@@ -78,6 +78,22 @@ namespace Starsurge {
             }
         }
 
+        Matrix(std::initializer_list<Vector<M>> list) {
+            if (list.size() != N) {
+                Error("Not correct amount of data.");
+                for (size_t r = 0; r < M; ++r) {
+                    for (size_t c = 0; c < N; ++c) {
+                        this->data[r*N+c] = 0;
+                    }
+                }
+                return;
+            }
+            size_t i = 0;
+            for (auto it = std::begin(list); it != std::end(list); ++it) {
+                SetColumn(i++, *it);
+            }
+        }
+
         template <typename... Ts, typename = std::enable_if_t<(sizeof...(Ts)==M*N)>>
         Matrix(Ts... ts) {
             size_t i = 0;
@@ -238,23 +254,68 @@ namespace Starsurge {
             return ret;
         }
 
-        Matrix<M,N> RowReduce() {
+        Matrix<M,N> RowReduce(size_t m = M, size_t n = N) {
             Matrix<M,N> ret(*this);
 
+            size_t h = 0, k = 0;
+            while (h < m && k < n) {
+                // Find the k-th pivot.
+                size_t i_max = h;
+                float max = -1;
+                for (size_t i = h; i < m; ++i) {
+                    if (std::abs(ret(i, k)) > max) {
+                        i_max = i;
+                        max = std::abs(ret(i, k));
+                    }
+                }
+
+                if (ret(i_max, k) == 0) { // No pivot in this column
+                    k += 1;
+                }
+                else {
+                    // Swap rows h and i_max
+                    Vector<N> rowH = ret.GetRow(h);
+                    Vector<N> rowIMax = ret.GetRow(i_max);
+                    ret.SetRow(h, rowIMax);
+                    ret.SetRow(i_max, rowH);
+
+                    // Handle all rows below the pivot.
+                    for (size_t i = h+1; i < M; ++i) {
+                        float f = ret(i, k) / ret(h, k);
+                        ret(i, k) = 0;
+
+                        // Ri -> Ri - Rh*f
+                        for (size_t j = k+1; j < N; ++j) {
+                             ret(i, j) = ret(i,j) - ret(h,j)*f;
+                        }
+                    }
+
+                    // Increase pivot row and column
+                    h += 1;
+                    k += 1;
+                }
+            }
+            return ret;
+        }
+
+        Matrix<M,N> RREF() {
+            Matrix<M,N> ret(*this);
             size_t lead = 0;
             for (size_t r = 0; r < M; ++r) {
-                if (lead >= N)
-                    break;
+                if (lead >= N) {
+                    return ret;
+                }
 
-                // Find the first non-zero pivot.
+                // Find the pivot.
                 size_t i = r;
                 while (ret(i, lead) == 0) {
-                    i++;
-                    if (i >= M) {
+                    i += 1;
+                    if (i == M) {
                         i = r;
-                        lead++;
-                        if (lead >= N)
+                        lead += 1;
+                        if (lead == N) {
                             return ret;
+                        }
                     }
                 }
 
@@ -263,25 +324,79 @@ namespace Starsurge {
                 Vector<N> rowR = ret.GetRow(r);
                 ret.SetRow(i, rowR);
                 ret.SetRow(r, rowI);
+                rowR = ret.GetRow(r);
 
-                // Normalize the pivot.
-                if (ret(r, lead) != 0 && ret(r, lead) != 1) {
-                    rowR = ret.GetRow(r);
-                    ret.SetRow(r, rowR*(1/ret(r,lead)));
-                }
+                // Rr -> Rr / pivot
+                ret.SetRow(r, rowR / ret(r, lead));
+                rowR = ret.GetRow(r);
 
-                // Cancel out rows.
+                // For each row i != r, Ri -> Ri - Rr*ret(i, lead)
                 for (size_t i = 0; i < M; ++i) {
-                    if (i != r) {
-                        rowR = ret.GetRow(r);
-                        rowI = ret.GetRow(i);
-                        ret.SetRow(i, -ret(i,lead)*rowR+rowI);
-                    }
+                    if (i == r)
+                        continue;
+
+                    rowI = ret.GetRow(i);
+                    ret.SetRow(i, rowI - rowR * ret(i, lead));
                 }
 
-                lead++;
+                // Increment lead.
+                lead += 1;
             }
 
+            return ret;
+        }
+
+        Matrix<M,N> RCEF() {
+            Matrix<M,N> ret(*this);
+            return ret.Transpose().RREF().Transpose();
+        }
+
+        std::vector<Vector<M>> Image(float eps = 0.00001) {
+            Matrix<M,N> reduced = RREF();
+
+            std::vector<Vector<M>> basis;
+            for (size_t c = 0; c < N; c++) {
+                Vector<M> col = reduced.GetColumn(c);
+                if (std::abs(col[c]-1) < eps) {
+                    basis.push_back(GetColumn(c));
+                }
+            }
+            return basis;
+        }
+
+        unsigned int Rank(float eps = 0.00001) {
+            std::vector<Vector<M>> basis = Image(eps);
+            return basis.size();
+        }
+
+        std::vector<Vector<N>> Kernel(float eps = 0.00001) {
+            Matrix<M+N,N> augmented = Matrix<M+N,N>::RowAugmented(*this, Matrix<N,N>::Identity());
+            augmented = augmented.RCEF();
+            Matrix<M,N> B = augmented.SubMatrix<M,N>(0,0);
+            Matrix<N,N> C = augmented.SubMatrix<N,N>(M,0);
+
+            std::vector<Vector<N>> basis;
+            for (size_t c = 0; c < N; c++) {
+                Vector<M> col = B.GetColumn(c);
+                if (std::abs(col.Norm()) < eps) {
+                    basis.push_back(C.GetColumn(c));
+                }
+            }
+            return basis;
+        }
+
+        unsigned int Nullity(float eps = 0.00001) {
+            std::vector<Vector<N>> basis = Kernel(eps);
+            return basis.size();
+        }
+
+        static Matrix<M,N> Zero() {
+            Matrix<M,N> ret(0);
+            return ret;
+        }
+
+        static Matrix<M,N> One() {
+            Matrix<M,N> ret(1);
             return ret;
         }
 
@@ -314,6 +429,20 @@ namespace Starsurge {
                         ret(r,c) = a(r,c);
                     else
                         ret(r,c) = b(r,c-P);
+                }
+            }
+            return ret;
+        }
+
+        template<size_t P, size_t Q>
+        static Matrix<P+Q, N> RowAugmented(Matrix<P,N> a, Matrix<Q,N> b) {
+            Matrix<P+Q,N> ret;
+            for (size_t r = 0; r < P+Q; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (r < P)
+                        ret(r,c) = a(r,c);
+                    else
+                        ret(r,c) = b(r-P,c);
                 }
             }
             return ret;

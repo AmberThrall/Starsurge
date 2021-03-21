@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <initializer_list>
 #include "Logging.h"
 #include "Utils.h"
@@ -97,6 +98,10 @@ namespace Starsurge {
             Vector<N> ret;
             return ret;
         }
+        static Vector<N> One() {
+            Vector<N> ret(1);
+            return ret;
+        }
         template <typename = std::enable_if_t<(N==3)>>
         static Vector<3> Right() {
             return Vector<3>(1,0,0);
@@ -109,11 +114,6 @@ namespace Starsurge {
         static Vector<3> Forward() {
             return Vector<3>(0,0,1);
         }
-        //
-        // template <Vector<N>... Ts>
-        // static bool LinearlyIndependent(Ts... ts) {
-        //     std::vector<Vector<N>> v{Ts...};
-        // }
 
         static float Min(Vector<N> a) {
             float min = a[0];
@@ -129,6 +129,12 @@ namespace Starsurge {
                 ret[i] = std::min(a[i], b[i]);
             }
             return ret;
+        }
+
+        template <typename...Ts>
+        static Vector<N> Min(Vector<N> a, Vector<N> b, Ts&&... ts) {
+            Vector<N> ret = Vector<N>::Min(a,b);
+            return Vector<N>::Min(ret, std::forward<Ts>(ts)...);
         }
 
         static float Max(Vector<N> a) {
@@ -147,6 +153,12 @@ namespace Starsurge {
             return ret;
         }
 
+        template <typename...Ts>
+        static Vector<N> Max(Vector<N> a, Vector<N> b, Ts&&... ts) {
+            Vector<N> ret = Vector<N>::Max(a,b);
+            return Vector<N>::Max(ret, std::forward<Ts>(ts)...);
+        }
+
         static Vector<N> Clamp(Vector<N> a, Vector<N> min, Vector<N> max) {
             return Vector<N>::Min(Vector<N>::Max(a, max), min);
         }
@@ -157,6 +169,46 @@ namespace Starsurge {
                 ret[i] = std::abs(a[i]);
             }
             return ret;
+        }
+
+        static Vector<N> Floor(Vector<N> a) {
+            Vector<N> ret;
+            for (size_t i = 0; i < N; ++i) {
+                ret[i] = std::floor(a[i]);
+            }
+            return ret;
+        }
+
+        static Vector<N> Ceil(Vector<N> a) {
+            Vector<N> ret;
+            for (size_t i = 0; i < N; ++i) {
+                ret[i] = std::ceil(a[i]);
+            }
+            return ret;
+        }
+
+        static Vector<N> Round(Vector<N> a) {
+            Vector<N> ret;
+            for (size_t i = 0; i < N; ++i) {
+                ret[i] = std::round(a[i]);
+            }
+            return ret;
+        }
+
+        static Vector<N> Fract(Vector<N> a) {
+            return a - Vector<N>::Floor(a);
+        }
+
+        static Vector<N> Mod(Vector<N> a, float b) {
+            Vector<N> ret;
+            for (size_t i = 0; i < N; ++i) {
+                ret[i] = std::fmod(a[i], b);
+            }
+            return ret;
+        }
+
+        static Vector<N> Mix(Vector<N> a, Vector<N> b, float amt) {
+            return (1-amt)*a+amt*b;
         }
 
         /* Returns true if a and b point in the same direction, i.e., a = tb, t >= 0. */
