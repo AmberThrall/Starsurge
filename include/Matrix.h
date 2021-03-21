@@ -657,7 +657,7 @@ namespace Starsurge {
             return ret;
         }
 
-        static Matrix<M, N> HadamardProduct(Matrix<M,N> a, Matrix<M,N> b) {
+        static Matrix<M, N> EntrywiseProduct(Matrix<M,N> a, Matrix<M,N> b) {
             Matrix<M,N> ret;
             for (size_t r = 0; r < M; ++r) {
                 for (size_t c = 0; c < N; ++c) {

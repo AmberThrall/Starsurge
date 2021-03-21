@@ -115,6 +115,14 @@ namespace Starsurge {
             return Vector<3>(0,0,1);
         }
 
+        static Vector<N> EntrywiseProduct(Vector<N> a, Vector<N> b) {
+            Vector<N> ret;
+            for (size_t i = 0; i < N; ++i) {
+                ret[i] = a[i]*b[i];
+            }
+            return ret;
+        }
+
         static float Min(Vector<N> a) {
             float min = a[0];
             for (size_t i = 0; i < N; ++i) {
