@@ -213,7 +213,7 @@ Starsurge::AABB Starsurge::AABB::Transform(const Matrix4 matrix) {
         NEAR_RIGHT_BOTTOM, FAR_RIGHT_BOTTOM };
     for (unsigned int i = 0; i < 8; ++i) {
         Vector4 corner = Vector4(GetCorner(corners[i]), 1);
-        ret = AABB::Union(ret, (matrix * corner).Resize<3>());
+        ret = AABB::Union(ret, (matrix * corner).SubVector<3>());
     }
     return ret;
 }

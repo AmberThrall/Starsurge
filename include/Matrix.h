@@ -105,6 +105,49 @@ namespace Starsurge {
         bool IsSquare() const { return M == N; }
         float * Ptr() { return &data[0]; }
 
+        bool All() const {
+            for (size_t i = 0; i < M*N; ++i) {
+                if (this->data[i] <= 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        bool Any() const {
+            for (size_t i = 0; i < M*N; ++i) {
+                if (this->data[i] > 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        Matrix<M,N> Not() const {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (this->data[r*N+c] > 0) {
+                        ret(r,c) = 0;
+                    }
+                    else {
+                        ret(r,c) = 1;
+                    }
+                }
+            }
+            return ret;
+        }
+
+        unsigned int Count() const {
+            unsigned int count = 0;
+            for (size_t i = 0; i < M*N; ++i) {
+                if (this->data[i] > 0) {
+                    count += 1;
+                }
+            }
+            return count;
+        }
+
         std::string ToString() const {
             std::string ret = "";
             for (size_t r = 0; r < M; ++r) {
@@ -1112,6 +1155,106 @@ namespace Starsurge {
             return true;
         }
         friend bool operator!=(const Matrix<M,N>& lhs, const Matrix<M,N>& rhs) { return !(lhs == rhs); }
+        friend Matrix<M,N> operator==(const Matrix<M,N>& lhs, float rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) == rhs)
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
+        friend Matrix<M,N> operator!=(const Matrix<M,N>& lhs, float rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) != rhs)
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
+        friend Matrix<M,N> operator>(const Matrix<M,N>& lhs, float rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) > rhs)
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
+        friend Matrix<M,N> operator>(const Matrix<M,N>& lhs, const Matrix<M,N>& rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) > rhs(r,c))
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
+        friend Matrix<M,N> operator>=(const Matrix<M,N>& lhs, float rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) >= rhs)
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
+        friend Matrix<M,N> operator>=(const Matrix<M,N>& lhs, const Matrix<M,N>& rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) >= rhs(r,c))
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
+        friend Matrix<M,N> operator<(const Matrix<M,N>& lhs, float rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) < rhs)
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
+        friend Matrix<M,N> operator<(const Matrix<M,N>& lhs, const Matrix<M,N>& rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) < rhs(r,c))
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
+        friend Matrix<M,N> operator<=(const Matrix<M,N>& lhs, float rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) <= rhs)
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
+        friend Matrix<M,N> operator<=(const Matrix<M,N>& lhs, const Matrix<M,N>& rhs) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    if (lhs(r,c) <= rhs(r,c))
+                        ret(r,c) = 1;
+                }
+            }
+            return ret;
+        }
         Matrix<M,N>& operator+=(const Matrix<M,N>& rhs) {
             for (size_t r = 0; r < M; ++r) {
                 for (size_t c = 0; c < N; ++c) {

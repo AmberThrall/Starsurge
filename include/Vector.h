@@ -57,11 +57,18 @@ namespace Starsurge {
 
         size_t Size() const { return N; }
 
+        float Head() const {
+            return this->data[0];
+        }
+        float Tail() const {
+            return this->data[N-1];
+        }
+
         template <size_t M>
-        Vector<M> Resize() {
+        Vector<M> SubVector(size_t i = 0) {
             Vector<M> ret;
-            for (size_t i = 0; i < M && i < N; ++i) {
-                ret[i] = this->data[i];
+            for (size_t j = i; j < M && j < N; ++j) {
+                ret[j] = this->data[j];
             }
             return ret;
         }
@@ -80,6 +87,10 @@ namespace Starsurge {
         float Magnitude() const {
             return std::sqrt(Vector::Dot(*this, *this));
         }
+        float SquaredNorm() const { return SquaredMagnitude(); }
+        float SquaredMagnitude() const {
+            return Vector::Dot(*this, *this);
+        }
         void Normalize() {
             float mag = Magnitude();
             if (mag == 0) {
@@ -92,6 +103,47 @@ namespace Starsurge {
             Vector<N> copy(*this);
             copy.Normalize();
             return copy;
+        }
+
+        bool All() const {
+            for (size_t i = 0; i < N; ++i) {
+                if (this->data[i] <= 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        bool Any() const {
+            for (size_t i = 0; i < N; ++i) {
+                if (this->data[i] > 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        unsigned int Count() const {
+            unsigned int count = 0;
+            for (size_t i = 0; i < N; ++i) {
+                if (this->data[i] > 0) {
+                    count += 1;
+                }
+            }
+            return count;
+        }
+
+        Vector<N> Not() const {
+            Vector<N> ret;
+            for (size_t i = 0; i < N; ++i) {
+                if (this->data[i] > 0) {
+                    ret[i] = 0;
+                }
+                else {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
         }
 
         static Vector<N> Zero() {
@@ -121,6 +173,26 @@ namespace Starsurge {
                 ret[i] = a[i]*b[i];
             }
             return ret;
+        }
+
+        static float Sum(Vector<N> a) {
+            float sum = 0;
+            for (size_t i = 0; i < N; ++i) {
+                sum += a[i];
+            }
+            return sum;
+        }
+
+        static float Product(Vector<N> a) {
+            float prod = 1;
+            for (size_t i = 0; i < N; ++i) {
+                prod *= a[i];
+            }
+            return prod;
+        }
+
+        static float Mean(Vector<N> a) {
+            return Vector<N>::Sum(a) / N;
         }
 
         static float Min(Vector<N> a) {
@@ -385,7 +457,97 @@ namespace Starsurge {
             }
             return true;
         }
-        friend bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) { return !(lhs == rhs); }
+        friend bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) { return !(lhs == rhs); }\
+        friend Vector<N> operator==(const Vector<N>& lhs, float rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] == rhs) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
+        friend Vector<N> operator!=(const Vector<N>& lhs, float rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] != rhs) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
+        friend Vector<N> operator>(const Vector<N>& lhs, const Vector<N>& rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] > rhs[i]) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
+        friend Vector<N> operator>(const Vector<N>& lhs, float rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] > rhs) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
+        friend Vector<N> operator>=(const Vector<N>& lhs, const Vector<N>& rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] >= rhs[i]) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
+        friend Vector<N> operator>=(const Vector<N>& lhs, float rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] >= rhs) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
+        friend Vector<N> operator<(const Vector<N>& lhs, const Vector<N>& rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] < rhs[i]) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
+        friend Vector<N> operator<(const Vector<N>& lhs, float rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] < rhs) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
+        friend Vector<N> operator<=(const Vector<N>& lhs, const Vector<N>& rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] <= rhs[i]) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
+        friend Vector<N> operator<=(const Vector<N>& lhs, float rhs) {
+            Vector<N> ret;
+            for (size_t i=0; i < N; ++i) {
+                if (lhs[i] <= rhs) {
+                    ret[i] = 1;
+                }
+            }
+            return ret;
+        }
 
         // Swizzling
         template <size_t idx>
@@ -448,6 +610,25 @@ namespace Starsurge {
                 Vector<sizeof...(Idx)> ret = (Vector<sizeof...(Idx)>)*this;
                 return ret.Magnitude();
             }
+            float SquaredNorm() const { return SquaredMagnitude(); }
+            float SquaredMagnitude() const {
+                Vector<sizeof...(Idx)> ret = (Vector<sizeof...(Idx)>)*this;
+                return ret.SquaredMagnitude();
+            }
+
+            bool All() const {
+                Vector<sizeof...(Idx)> ret = (Vector<sizeof...(Idx)>)*this;
+                return ret.All();
+            }
+            bool Any() const {
+                Vector<sizeof...(Idx)> ret = (Vector<sizeof...(Idx)>)*this;
+                return ret.Any();
+            }
+            unsigned int Count() const {
+                Vector<sizeof...(Idx)> ret = (Vector<sizeof...(Idx)>)*this;
+                return ret.Count();
+            }
+
             void Normalize() {
                 float mag = Magnitude();
                 if (mag == 0) {
@@ -532,6 +713,28 @@ namespace Starsurge {
             friend bool operator!=(swizzle<Idx...> lhs, swizzle<UIdx...> rhs) { return !(lhs == rhs); }
             friend bool operator!=(swizzle<Idx...> lhs, Vector<sizeof...(Idx)> rhs) { return !(lhs == rhs); }
             friend bool operator!=(Vector<sizeof...(Idx)> lhs, swizzle<Idx...> rhs) { return !(lhs == rhs); }
+            friend Vector<sizeof...(Idx)> operator==(swizzle<Idx...> lhs, float rhs) {
+                return (Vector<sizeof...(Idx)>)lhs == rhs;
+            }
+            friend Vector<sizeof...(Idx)> operator!=(swizzle<Idx...> lhs, float rhs) {
+                return (Vector<sizeof...(Idx)>)lhs != rhs;
+            }
+            template <size_t...UIdx, typename = std::enable_if_t<(sizeof...(Idx)==sizeof...(UIdx))>>
+            friend Vector<sizeof...(Idx)> operator>(swizzle<Idx...> lhs, swizzle<UIdx...> rhs) { return (Vector<sizeof...(Idx)>)lhs > (Vector<sizeof...(Idx)>)rhs; }
+            friend Vector<sizeof...(Idx)> operator>(swizzle<Idx...> lhs, Vector<sizeof...(Idx)> rhs) { return (Vector<sizeof...(Idx)>)lhs > rhs; }
+            friend Vector<sizeof...(Idx)> operator>(Vector<sizeof...(Idx)> lhs, swizzle<Idx...> rhs) { return (Vector<sizeof...(Idx)>)rhs > lhs; }
+            template <size_t...UIdx, typename = std::enable_if_t<(sizeof...(Idx)==sizeof...(UIdx))>>
+            friend Vector<sizeof...(Idx)> operator>=(swizzle<Idx...> lhs, swizzle<UIdx...> rhs) { return (Vector<sizeof...(Idx)>)lhs >= (Vector<sizeof...(Idx)>)rhs; }
+            friend Vector<sizeof...(Idx)> operator>=(swizzle<Idx...> lhs, Vector<sizeof...(Idx)> rhs) { return (Vector<sizeof...(Idx)>)lhs >= rhs; }
+            friend Vector<sizeof...(Idx)> operator>=(Vector<sizeof...(Idx)> lhs, swizzle<Idx...> rhs) { return (Vector<sizeof...(Idx)>)rhs >= lhs; }
+            template <size_t...UIdx, typename = std::enable_if_t<(sizeof...(Idx)==sizeof...(UIdx))>>
+            friend Vector<sizeof...(Idx)> operator<(swizzle<Idx...> lhs, swizzle<UIdx...> rhs) { return (Vector<sizeof...(Idx)>)lhs < (Vector<sizeof...(Idx)>)rhs; }
+            friend Vector<sizeof...(Idx)> operator<(swizzle<Idx...> lhs, Vector<sizeof...(Idx)> rhs) { return (Vector<sizeof...(Idx)>)lhs < rhs; }
+            friend Vector<sizeof...(Idx)> operator<(Vector<sizeof...(Idx)> lhs, swizzle<Idx...> rhs) { return (Vector<sizeof...(Idx)>)rhs < lhs; }
+            template <size_t...UIdx, typename = std::enable_if_t<(sizeof...(Idx)==sizeof...(UIdx))>>
+            friend Vector<sizeof...(Idx)> operator<=(swizzle<Idx...> lhs, swizzle<UIdx...> rhs) { return (Vector<sizeof...(Idx)>)lhs <= (Vector<sizeof...(Idx)>)rhs; }
+            friend Vector<sizeof...(Idx)> operator<=(swizzle<Idx...> lhs, Vector<sizeof...(Idx)> rhs) { return (Vector<sizeof...(Idx)>)lhs <= rhs; }
+            friend Vector<sizeof...(Idx)> operator<=(Vector<sizeof...(Idx)> lhs, swizzle<Idx...> rhs) { return (Vector<sizeof...(Idx)>)rhs <= lhs; }
         private:
             size_t getIdx(size_t i) {
                 std::vector<size_t> data{Idx...};
