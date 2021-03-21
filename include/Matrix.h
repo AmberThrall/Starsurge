@@ -619,6 +619,55 @@ namespace Starsurge {
             return (Matrix<1,P>(u).Transpose())*(Matrix<1,Q>(v));
         }
 
+        template<size_t M1, size_t N1, size_t M2, size_t N2>
+        static Matrix<M1+M2,N1+N2> DirectSum(Matrix<M1,N1> a, Matrix<M2,N2> b) {
+            Matrix<M1+M2,N1+N2> ret;
+            for (size_t r = 0; r < M1; ++r) {
+                for (size_t c = 0; c < N1; ++c) {
+                    ret(r,c) = a(r,c);
+                }
+            }
+
+            for (size_t r = 0; r < M2; ++r) {
+                for (size_t c = 0; c < N2; ++c) {
+                    ret(r+M1,c+N1) = b(r,c);
+                }
+            }
+
+            return ret;
+        }
+
+        template<size_t M1, size_t N1, size_t M2, size_t N2>
+        static Matrix<M1*M2,N1*N2> KroneckerProduct(Matrix<M1,N1> a, Matrix<M2,N2> b) {
+            Matrix<M1*M2,N1*N2> ret;
+            for (size_t r = 0; r < M1*M2; ++r) {
+                for (size_t c = 0; c < N1*N2; ++c) {
+                    ret(r,c) = a(r/M2,c/M2)*b(r%M2,c%N2);
+                }
+            }
+
+            return ret;
+        }
+
+        template<size_t P, size_t Q>
+        static Matrix<P*Q, P*Q> KroneckerSum(Matrix<P,P> a, Matrix<Q,Q> b) {
+            Matrix<P*Q,P*Q> ret = KroneckerProduct(a, Matrix<Q,Q>::Identity());
+            ret += KroneckerProduct(Matrix<P,P>::Identity(), b);
+
+            return ret;
+        }
+
+        static Matrix<M, N> HadamardProduct(Matrix<M,N> a, Matrix<M,N> b) {
+            Matrix<M,N> ret;
+            for (size_t r = 0; r < M; ++r) {
+                for (size_t c = 0; c < N; ++c) {
+                    ret(r,c) = a(r,c) * b(r,c);
+                }
+            }
+
+            return ret;
+        }
+
         static Matrix<N,N> ProjectionMatrix(Vector<N> a) {
             a.Normalize();
             return OuterProduct(a, a);
