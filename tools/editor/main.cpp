@@ -42,6 +42,11 @@ protected:
     }
 
     void OnUpdate() {
+        ImGui::Begin("My First Tool", &my_tool_active, ImGuiWindowFlags_MenuBar);
+        ImGui::ColorEdit4("Color", (float*)&my_color);
+        ImGui::TextColored(ImVec4(1,1,0,1), "Hello World!");
+        ImGui::End();
+
         if (Input::Inst().MouseButton(MOUSE_RIGHT) == INPUT_PRESS) {
             Input::Inst().HideCursor();
             const Vector2 sensitivity = Vector2(15, 15);
@@ -110,7 +115,10 @@ protected:
         grid->Render();
         Game::OnRender();
     }
+
 private:
+    bool my_tool_active;
+    ImVec4 my_color;
     Entity * camera;
     Entity * cube;
     Grid * grid;

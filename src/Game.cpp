@@ -1,3 +1,6 @@
+#include "../include/imgui/imgui.h"
+#include "../include/imgui/imgui_impl_glfw.h"
+#include "../include/imgui/imgui_impl_opengl3.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "../include/GameSettings.h"
@@ -61,6 +64,16 @@ void Starsurge::Game::Run() {
 
     glEnable(GL_DEPTH_TEST);
 
+    // Setup Dear ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    this->imguiIO = ImGui::GetIO();
+    this->imguiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+    this->imguiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(this->gameWindow, true);
+    ImGui_ImplOpenGL3_Init("#version 330 core");
+
     // Load builtin data.
     AssetManager::Inst().LoadBuiltins();
 
@@ -77,9 +90,15 @@ void Starsurge::Game::GameLoop() {
             allEntities[i]->Update();
         }
 
+        // Update Dear ImGui
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
         OnUpdate();
 
         // Rendering
+        ImGui::Render();
         // Clear color for window.
         Color clearColor = Scene::Inst().GetBgColor().ToOpenGLFormat();
         glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
@@ -87,11 +106,23 @@ void Starsurge::Game::GameLoop() {
 
         OnRender();
 
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        if (this->imguiIO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
         //  Swap buffers and poll IO
         glfwSwapBuffers(this->gameWindow);
         glfwPollEvents();
     }
 
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     glfwTerminate();
 }
 

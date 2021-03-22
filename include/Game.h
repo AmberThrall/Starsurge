@@ -1,4 +1,5 @@
 #pragma once
+#include "imgui/imgui.h"
 #include <GLFW/glfw3.h>
 #include "Scene.h"
 
@@ -17,6 +18,7 @@ namespace Starsurge {
         std::string gamename;
     private:
         void GameLoop();
+        ImGuiIO imguiIO;
         GLFWwindow * gameWindow;
     };
 }
