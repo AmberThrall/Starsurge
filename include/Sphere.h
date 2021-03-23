@@ -1,5 +1,6 @@
 #pragma once
 #include "Vector.h"
+#include "Mesh.h"
 
 namespace Starsurge {
     class Sphere {
@@ -15,7 +16,11 @@ namespace Starsurge {
 
         std::string ToString() const;
 
+        Mesh CreateMesh(unsigned int nsubdivisions) const;
+
         Vector3 position;
         float radius;
+    private:
+        void Subdivide(std::vector<Vector3> & vertices, std::vector<unsigned int> & indices) const;
     };
 };

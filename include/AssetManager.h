@@ -22,5 +22,7 @@ namespace Starsurge {
         std::map<std::string, Texture*> textures;
         std::map<std::string, Mesh*> meshes;
         std::map<std::string, Shader*> shaders;
+
+        Mesh cubeMesh, sphereMesh;
     };
 }

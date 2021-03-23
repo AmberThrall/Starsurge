@@ -7,7 +7,6 @@ add_library(Starsurge STATIC Logging.cpp
     Entity.cpp
     Component.cpp
     Mesh.cpp
-    Cube.cpp
     Shader.cpp
     BasicShader.cpp
     Phong.cpp

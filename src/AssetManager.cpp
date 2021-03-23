@@ -1,5 +1,7 @@
 #include "../include/AssetManager.h"
 #include "../include/stb_image.h"
+#include "../include/AABB.h"
+#include "../include/Sphere.h"
 
 Starsurge::AssetManager& Starsurge::AssetManager::Inst() {
     static AssetManager instance;
@@ -57,7 +59,10 @@ bool Starsurge::AssetManager::LoadBuiltins() {
     // Meshes
     meshes["Builtin/Triangle"] = Mesh::Triangle(Vector3(0,0,0), Vector3(0,1,0), Vector3(1,1,0));
     meshes["Builtin/Quad"] = Mesh::Quad(Vector3(-1,-1,0), Vector3(1,-1,0), Vector3(1,1,0), Vector3(-1,1,0));
-    meshes["Builtin/Cube"] = Mesh::Cube();
+    this->cubeMesh = AABB(Vector3(-0.5,-0.5,-0.5),Vector3(0.5,0.5,0.5)).CreateMesh();
+    meshes["Builtin/Cube"] = &this->cubeMesh;
+    this->sphereMesh = Sphere(Vector3(0,0,0), 1).CreateMesh(3);
+    meshes["Builtin/Sphere"] = &this->sphereMesh;
 
     // Textures
     textures["Builtin/White"] = new Texture(std::vector<Color>({Colors::WHITE}), 1, 1);

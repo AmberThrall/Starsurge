@@ -60,6 +60,8 @@ namespace Starsurge {
         AABB Transform(const Matrix<3,3> matrix);
         AABB Transform(const Matrix<4,4> matrix);
 
+        Mesh CreateMesh() const;
+
         AABB& operator=(const AABB& other) {
             if (this != &other) {
                 SetBounds(other);
