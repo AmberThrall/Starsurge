@@ -41,11 +41,111 @@ protected:
         cubeMaterial->GetUniform(0, "material.shininess")->SetData(32);
     }
 
-    void OnUpdate() {
-        ImGui::Begin("My First Tool", &my_tool_active, ImGuiWindowFlags_MenuBar);
-        ImGui::ColorEdit4("Color", (float*)&my_color);
-        ImGui::TextColored(ImVec4(1,1,0,1), "Hello World!");
+    Vector2 BestSceneSize(int w, int h) {
+        std::vector<Vector2> aspect16by9 = {
+            {1024,576}, {1152,648}, {1280,720}, {1366,768}, {1600,900}, {1920,1080}, {2560,1440}, {3840,2160}
+        };
+        Log("In: ("+std::to_string(w)+","+std::to_string(h)+")");
+        for (int i = aspect16by9.size()-1; i >= 0; i--) {
+            if (w >= aspect16by9[i].x && h >= aspect16by9[i].y) {
+                Log("Got: "+aspect16by9[i].ToString());
+                return aspect16by9[i];
+            }
+        }
+
+        Log("Nothing found.");
+        return Vector2(w, h);
+    }
+
+    void Gui() {
+        ImGuiStyle & style = ImGui::GetStyle();
+        ImGuiStyle styleBackup = style;
+        style.WindowRounding = 0;
+        style.FrameRounding = 0;
+        style.Colors[ImGuiCol_WindowBg].w = 1;
+        style.WindowPadding = ImVec2(0,0);
+        ImGui::Begin("Frames", &my_tool_active, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize
+                                                | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
+                                                | ImGuiWindowFlags_NoTitleBar);
+            float menuBarHeight = ImGui::GetCurrentWindow()->MenuBarHeight();
+            if (ImGui::BeginMenuBar()) {
+                if (ImGui::BeginMenu("File")) {
+                    if (ImGui::MenuItem("New Project", "Ctrl+N")) {
+                        Log("New project");
+                    }
+                    if (ImGui::MenuItem("Open...", "Ctrl+O")) {
+                        Log("Open project");
+                    }
+                    if (ImGui::MenuItem("Save...", "Ctrl+O")) {
+                        Log("Save project");
+                    }
+                    if (ImGui::MenuItem("Exit")) {
+                        CloseGame();
+                    }
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMenuBar();
+            }
+
+            Vector2 windowSize = GameSettings::Inst().GetWindowSize();
+            // Splitter 1
+            float gap = 8;
+            float splitter1Height = windowSize.y-menuBarHeight;
+            if (split1Size1 <= 0) {
+                split1Size1 = BestSceneSize(windowSize.x-gap, splitter1Height).x;
+                split1Size2 = windowSize.x - split1Size1 - gap;
+            }
+            if (split1Size1 >= windowSize.x - gap) {
+                split1Size1 = BestSceneSize(windowSize.x-gap, splitter1Height).x;
+                split1Size2 = windowSize.x - split1Size1 - gap;
+            }
+            ImGui::Splitter(false, gap, &split1Size1, &split1Size2, gap, gap, splitter1Height);
+            ImGui::BeginChild("1", ImVec2(split1Size1, splitter1Height), true);
+                if (split2Size1 <= 0) {
+                    split2Size1 = BestSceneSize(split1Size1, splitter1Height-gap).y;
+                    split2Size2 = splitter1Height - split2Size1 - gap;
+                }
+                if (split2Size1 >= splitter1Height - gap) {
+                    split2Size1 = BestSceneSize(split1Size1, splitter1Height-gap).y;
+                    split2Size2 = splitter1Height - split2Size1 - gap;
+                }
+                ImGui::Splitter(true, gap, &split2Size1, &split2Size2, gap, gap, split1Size1);
+                ImGui::BeginChild("TopLeft", ImVec2(split1Size1, split2Size1), true);
+                    ImGui::Text("Scene.");
+                ImGui::EndChild();
+                ImGui::BeginChild("BottomLeft", ImVec2(split1Size1, split2Size2), true);
+                    ImGui::Text("Assets.");
+                ImGui::EndChild();
+            ImGui::EndChild();
+            ImGui::SameLine();
+            ImGui::BeginChild("2", ImVec2(split1Size2, splitter1Height), true);
+                if (split3Size1 <= 0) {
+                    split3Size1 = splitter1Height*0.25;
+                    split3Size2 = splitter1Height - split3Size1 - gap;
+                }
+                if (split3Size1 >= splitter1Height - gap) {
+                    split3Size1 = splitter1Height*0.25;
+                    split3Size2 = splitter1Height - split3Size1 - gap;
+                }
+                ImGui::Splitter(true, gap, &split3Size1, &split3Size2, gap, gap, split1Size2);
+                ImGui::BeginChild("TopRight", ImVec2(split1Size2, split3Size1), true);
+                    ImGui::Text("Hierarchy.");
+                ImGui::EndChild();
+                ImGui::BeginChild("BottomRight", ImVec2(split1Size2, split3Size2), true);
+                    ImGui::Text("Inspector.");
+                ImGui::EndChild();
+            ImGui::EndChild();
+
+            // Move and resize the frame to the whole actual window.
+            ImGui::SetWindowPos(ImVec2(0,0), true);
+            ImGui::SetWindowSize(ImVec2((int)windowSize.x, (int)windowSize.y), true);
         ImGui::End();
+        style = styleBackup;
+
+    }
+
+    void OnUpdate() {
+        Gui();
 
         if (Input::Inst().MouseButton(MOUSE_RIGHT) == INPUT_PRESS) {
             Input::Inst().HideCursor();
@@ -96,19 +196,6 @@ protected:
         else {
             Input::Inst().ShowCursor();
         }
-
-        const float rotSpeed = 90 * (float)Timer::Inst().DeltaTime();
-        EulerAngles euler = cube->FindComponent<Transform>()->Rotation.GetEulerAngles();
-        if (Input::Inst().Key(KEY_X) == INPUT_PRESS) {
-            euler.x += rotSpeed;
-        }
-        if (Input::Inst().Key(KEY_Y) == INPUT_PRESS) {
-            euler.y += rotSpeed;
-        }
-        if (Input::Inst().Key(KEY_Z) == INPUT_PRESS) {
-            euler.z += rotSpeed;
-        }
-        cube->FindComponent<Transform>()->Rotation.SetEulerAngles(euler);
     }
 
     void OnRender() {
@@ -123,6 +210,14 @@ private:
     Entity * cube;
     Grid * grid;
     Entity * selectedEntity;
+
+    // Gui Stuff
+    float split1Size1;
+    float split1Size2;
+    float split2Size1;
+    float split2Size2;
+    float split3Size1;
+    float split3Size2;
 };
 
 void main() {

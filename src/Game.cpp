@@ -85,8 +85,13 @@ void Starsurge::Game::Run() {
 
 void Starsurge::Game::GameLoop() {
     while (!glfwWindowShouldClose(this->gameWindow)) { // Run the game loop until the game is ready to close.
-        // Update
+        // Poll input events
+        glfwPollEvents();
+
+        // Recalculate the delta time.
         Timer::Inst().UpdateDeltaTime();
+
+        // Updatte all components.
         std::vector<Entity*> allEntities = Scene::Inst().GetAllEntities();
         for (unsigned int i = 0; i < allEntities.size(); ++i) {
             allEntities[i]->Update();
@@ -99,8 +104,9 @@ void Starsurge::Game::GameLoop() {
 
         OnUpdate();
 
-        // Rendering
+        // Begin Rendering
         ImGui::Render();
+
         // Clear color for window.
         Color clearColor = Scene::Inst().GetBgColor().ToOpenGLFormat();
         glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
@@ -108,10 +114,11 @@ void Starsurge::Game::GameLoop() {
 
         OnRender();
 
+        // Render Dear imgui last so it is on top.
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        //  Swap buffers and poll IO
+
+        // Swap buffers
         glfwSwapBuffers(this->gameWindow);
-        glfwPollEvents();
     }
 
     // Cleanup
