@@ -9,6 +9,8 @@ public:
     ~Editor() { }
 protected:
     void OnInitialize() {
+        firstUpdate = true;
+
         GameSettings::Inst().ResizeWindow(1600, 900);
 
         Scene::Inst().SetBgColor(Color(59,59,59));
@@ -45,15 +47,11 @@ protected:
         std::vector<Vector2> aspect16by9 = {
             {1024,576}, {1152,648}, {1280,720}, {1366,768}, {1600,900}, {1920,1080}, {2560,1440}, {3840,2160}
         };
-        Log("In: ("+std::to_string(w)+","+std::to_string(h)+")");
         for (int i = aspect16by9.size()-1; i >= 0; i--) {
             if (w >= aspect16by9[i].x && h >= aspect16by9[i].y) {
-                Log("Got: "+aspect16by9[i].ToString());
                 return aspect16by9[i];
             }
         }
-
-        Log("Nothing found.");
         return Vector2(w, h);
     }
 
@@ -64,9 +62,11 @@ protected:
         style.FrameRounding = 0;
         style.Colors[ImGuiCol_WindowBg].w = 1;
         style.WindowPadding = ImVec2(0,0);
+        style.ItemSpacing = ImVec2(0,0);
         ImGui::Begin("Frames", &my_tool_active, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize
                                                 | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
                                                 | ImGuiWindowFlags_NoTitleBar);
+            // Main menu
             float menuBarHeight = ImGui::GetCurrentWindow()->MenuBarHeight();
             if (ImGui::BeginMenuBar()) {
                 if (ImGui::BeginMenu("File")) {
@@ -88,51 +88,49 @@ protected:
             }
 
             Vector2 windowSize = GameSettings::Inst().GetWindowSize();
-            // Splitter 1
-            float gap = 8;
-            float splitter1Height = windowSize.y-menuBarHeight;
-            if (split1Size1 <= 0) {
-                split1Size1 = BestSceneSize(windowSize.x-gap, splitter1Height).x;
-                split1Size2 = windowSize.x - split1Size1 - gap;
+
+            // Split the frame into 4 parts.
+            float gap = 2;
+            float w = ImGui::GetWindowContentRegionMax().x-ImGui::GetWindowContentRegionMin().x;
+            float h = ImGui::GetWindowContentRegionMax().y-ImGui::GetWindowContentRegionMin().y;
+            if (split1Size1 + split1Size2 + gap != w) {
+                split1Size1 = BestSceneSize(w-gap, h).x;
+                split1Size2 = w - split1Size1 - gap;
             }
-            if (split1Size1 >= windowSize.x - gap) {
-                split1Size1 = BestSceneSize(windowSize.x-gap, splitter1Height).x;
-                split1Size2 = windowSize.x - split1Size1 - gap;
-            }
-            ImGui::Splitter(false, gap, &split1Size1, &split1Size2, gap, gap, splitter1Height);
-            ImGui::BeginChild("1", ImVec2(split1Size1, splitter1Height), true);
-                if (split2Size1 <= 0) {
-                    split2Size1 = BestSceneSize(split1Size1, splitter1Height-gap).y;
-                    split2Size2 = splitter1Height - split2Size1 - gap;
+            ImGui::Splitter(false, gap, &split1Size1, &split1Size2, 8, 8, w);
+            ImGui::BeginChild("1", ImVec2(split1Size1, h), true);
+                float w2 = ImGui::GetWindowContentRegionMax().x-ImGui::GetWindowContentRegionMin().x;
+                float h2 = ImGui::GetWindowContentRegionMax().y-ImGui::GetWindowContentRegionMin().y;
+                if (split2Size1 + split2Size2 + gap != h2) {
+                    split2Size1 = BestSceneSize(w2, h2-gap).y;
+                    split2Size2 = h2 - split2Size1 - gap;
                 }
-                if (split2Size1 >= splitter1Height - gap) {
-                    split2Size1 = BestSceneSize(split1Size1, splitter1Height-gap).y;
-                    split2Size2 = splitter1Height - split2Size1 - gap;
-                }
-                ImGui::Splitter(true, gap, &split2Size1, &split2Size2, gap, gap, split1Size1);
-                ImGui::BeginChild("TopLeft", ImVec2(split1Size1, split2Size1), true);
-                    ImGui::Text("Scene.");
+                ImGui::Splitter(true, gap, &split2Size1, &split2Size2, 8, 8, w2);
+                ImGui::BeginChild("TopLeft", ImVec2(w2, split2Size1), true);
+                    dockspaceTL = ImGui::GetID("Dockspace Top Left");
+                    ImGui::DockSpace(dockspaceTL, ImVec2(split1Size1, split2Size1), ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_NoResize);
                 ImGui::EndChild();
-                ImGui::BeginChild("BottomLeft", ImVec2(split1Size1, split2Size2), true);
-                    ImGui::Text("Assets.");
+                ImGui::BeginChild("BottomLeft", ImVec2(w2, split2Size2), true);
+                    dockspaceBL = ImGui::GetID("Dockspace Bottom Left");
+                    ImGui::DockSpace(dockspaceBL, ImVec2(split1Size1, split2Size2), ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_NoResize);
                 ImGui::EndChild();
             ImGui::EndChild();
             ImGui::SameLine();
-            ImGui::BeginChild("2", ImVec2(split1Size2, splitter1Height), true);
-                if (split3Size1 <= 0) {
-                    split3Size1 = splitter1Height*0.25;
-                    split3Size2 = splitter1Height - split3Size1 - gap;
+            ImGui::BeginChild("2", ImVec2(split1Size2, h), true);
+                float w3 = ImGui::GetWindowContentRegionMax().x-ImGui::GetWindowContentRegionMin().x;
+                float h3 = ImGui::GetWindowContentRegionMax().y-ImGui::GetWindowContentRegionMin().y;
+                if (split3Size1 + split3Size2 + gap != h3) {
+                    split3Size1 = h3*0.25;
+                    split3Size2 = h3 - split3Size1 - gap;
                 }
-                if (split3Size1 >= splitter1Height - gap) {
-                    split3Size1 = splitter1Height*0.25;
-                    split3Size2 = splitter1Height - split3Size1 - gap;
-                }
-                ImGui::Splitter(true, gap, &split3Size1, &split3Size2, gap, gap, split1Size2);
-                ImGui::BeginChild("TopRight", ImVec2(split1Size2, split3Size1), true);
-                    ImGui::Text("Hierarchy.");
+                ImGui::Splitter(true, gap, &split3Size1, &split3Size2, 8, 8, w3);
+                ImGui::BeginChild("TopRight", ImVec2(w3, split3Size1), true);
+                    dockspaceTR = ImGui::GetID("Dockspace Top Right");
+                    ImGui::DockSpace(dockspaceTR, ImVec2(split1Size2, split3Size1), ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_NoResize);
                 ImGui::EndChild();
-                ImGui::BeginChild("BottomRight", ImVec2(split1Size2, split3Size2), true);
-                    ImGui::Text("Inspector.");
+                ImGui::BeginChild("BottomRight", ImVec2(w3, split3Size2), true);
+                    dockspaceBR = ImGui::GetID("Dockspace Bottom Right");
+                    ImGui::DockSpace(dockspaceBR, ImVec2(split1Size2, split3Size2), ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_NoResize);
                 ImGui::EndChild();
             ImGui::EndChild();
 
@@ -142,6 +140,33 @@ protected:
         ImGui::End();
         style = styleBackup;
 
+        // Scene
+        if (firstUpdate)
+            ImGui::SetNextWindowDockID(dockspaceTL);
+        ImGui::Begin("Scene");
+            ImGui::Text("Scene goes here.");
+        ImGui::End();
+
+        // Assets
+        if (firstUpdate)
+            ImGui::SetNextWindowDockID(dockspaceBL);
+        ImGui::Begin("Assets");
+            ImGui::Text("Assets goes here.");
+        ImGui::End();
+
+        // Hierarchy
+        if (firstUpdate)
+            ImGui::SetNextWindowDockID(dockspaceTR);
+        ImGui::Begin("Hierarchy");
+            ImGui::Text("Hierarchy goes here.");
+        ImGui::End();
+
+        // Inspector
+        if (firstUpdate)
+            ImGui::SetNextWindowDockID(dockspaceBR);
+        ImGui::Begin("Inspector");
+            ImGui::Text("Inspector goes here.");
+        ImGui::End();
     }
 
     void OnUpdate() {
@@ -196,6 +221,8 @@ protected:
         else {
             Input::Inst().ShowCursor();
         }
+
+        firstUpdate = false;
     }
 
     void OnRender() {
@@ -212,12 +239,14 @@ private:
     Entity * selectedEntity;
 
     // Gui Stuff
+    bool firstUpdate;
     float split1Size1;
     float split1Size2;
     float split2Size1;
     float split2Size2;
     float split3Size1;
     float split3Size2;
+    ImGuiID dockspaceTL, dockspaceTR, dockspaceBL, dockspaceBR;
 };
 
 void main() {
