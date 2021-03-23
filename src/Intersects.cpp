@@ -47,12 +47,12 @@ bool Starsurge::Intersects(Ray ray1, Ray ray2, Vector3 & point) {
 
 bool Starsurge::Intersects(Ray ray, Line line, Vector3 & point) {
     Vector3 p;
-    Line temp(ray.origin, ray.direction);
+    Ray temp(line.start, line.end - line.start);
     if (!Intersects(line, temp, p)) {
         return false;
     }
 
-    if (ray.Contains(p)) {
+    if (line.Contains(p)) {
         point = p;
         return true;
     }
@@ -60,15 +60,14 @@ bool Starsurge::Intersects(Ray ray, Line line, Vector3 & point) {
 }
 
 bool Starsurge::Intersects(Ray ray, Plane plane, Vector3 & point) {
-    Vector3 p;
-    Line temp(ray.origin, ray.direction);
-    if (!Intersects(plane, temp, p)) {
-        return false;
-    }
-
-    if (ray.Contains(p)) {
-        point = p;
-        return true;
+    float fp = Vector3::Dot(plane.GetNormal(), ray.origin) + plane.d;
+    float fv = Vector3::Dot(plane.GetNormal(), ray.direction);
+    if (std::abs(fv) > 0.00001) {
+        Vector3 p = ray.origin - ray.direction * (fp / fv);
+        if (ray.Contains(p)) {
+            point = p;
+            return true;
+        }
     }
     return false;
 }
@@ -146,55 +145,74 @@ bool Starsurge::Intersects(Sphere sphere, Ray ray, Vector3 & point) {
 bool Starsurge::Intersects(Line line1, Line line2, Vector3 & point) {
     // https://math.stackexchange.com/questions/270767/find-intersection-of-two-3d-lines/271366
     // Test the trivial cases.
-    if (line2.Contains(line1.origin)) {
-        point = line1.origin;
+    if (line2.Contains(line1.start)) {
+        point = line1.start;
         return true;
     }
-    if (line1.Contains(line2.origin)) {
-        point = line2.origin;
+    if (line1.Contains(line2.start)) {
+        point = line2.start;
         return true;
     }
 
-    Vector3 g = line2.origin-line1.origin;
-    Vector3 h = Vector3::CrossProduct(line2.direction, g);
-    Vector3 k = Vector3::CrossProduct(line2.direction, line1.direction);
+    Vector3 g = line2.start-line1.start;
+    Vector3 h = Vector3::CrossProduct(line2.end-line2.start, g);
+    Vector3 k = Vector3::CrossProduct(line2.end-line2.start, line1.end-line1.start);
     if (h.Norm() == 0 || k.Norm() == 0) {
         return false;
     }
 
-    Vector3 i = (h.Norm()/k.Norm()) * line1.direction;
+    Vector3 i = (h.Norm()/k.Norm()) * (line1.end-line1.start);
     // Test if h and k point in the same direction.
     float sign = Vector3::SameDirection(h, k) ? 1 : -1;
 
-    point = line1.origin + sign*i;
+    Vector3 p = line1.start + sign*i;
+    if (line1.Contains(p) && line2.Contains(p)) {
+        point = p;
+        return true;
+    }
+    return false;
 }
 
 bool Starsurge::Intersects(Line line, Plane plane, Vector3 & point) {
-    float fp = Vector3::Dot(plane.GetNormal(), line.origin) + plane.d;
-    float fv = Vector3::Dot(plane.GetNormal(), line.direction);
-    if (std::abs(fv) > 0.00001) {
-        point = line.origin - line.direction * (fp / fv);
+    Vector3 p;
+    Ray asray = Ray(line.start, line.end-line.start);
+    if (!Intersects(asray, plane, p)) {
+        return false;
+    }
+
+    if (line.Contains(p)) {
+        point = p;
         return true;
     }
     return false;
 }
 
 bool Starsurge::Intersects(Line line, AABB box, Vector3 & point) {
-    Ray asray(line.origin, line.direction);
-    if (Intersects(box, asray, point)) {
+    Vector3 p;
+    Ray asray = Ray(line.start, line.end-line.start);
+    if (!Intersects(asray, box, p)) {
+        return false;
+    }
+
+    if (line.Contains(p)) {
+        point = p;
         return true;
     }
-    asray.direction *= -1; // Flip the ray around.
-    return Intersects(box, asray, point);
+    return false;
 }
 
 bool Starsurge::Intersects(Line line, Sphere sphere, Vector3 & point) {
-    Ray asray(line.origin, line.direction);
-    if (Intersects(sphere, asray, point)) {
+    Vector3 p;
+    Ray asray = Ray(line.start, line.end-line.start);
+    if (!Intersects(asray, sphere, p)) {
+        return false;
+    }
+
+    if (line.Contains(p)) {
+        point = p;
         return true;
     }
-    asray.direction *= -1; // Flip the ray around.
-    return Intersects(sphere, asray, point);
+    return false;
 }
 
 bool Starsurge::Intersects(Plane plane, Line line, Vector3 & point) {
@@ -256,15 +274,13 @@ bool Starsurge::Intersects(Sphere sphere, AABB box) {
     return Intersects(box, sphere);
 }
 
-bool Starsurge::Intersects(Plane plane1, Plane plane2, Line & line) {
+bool Starsurge::Intersects(Plane plane1, Plane plane2) {
     Vector3 v = Vector3::CrossProduct(plane1.GetNormal(), plane2.GetNormal());
     Vector3 vxn2 = Vector3::CrossProduct(v, plane2.GetNormal());
     Vector3 n1xv = Vector3::CrossProduct(plane1.GetNormal(), v);
 
     float det = Vector3::Dot(v, v);
     if (std::abs(det) > 0.00001) {
-        line.origin = (vxn2 * plane1.d + n1xv * plane2.d) / det;
-        line.direction = v;
         return true;
     }
     return false;

@@ -39,7 +39,7 @@ namespace Starsurge {
     bool Intersects(Sphere sphere, AABB box);
 
     // Intersection with planes.
-    bool Intersects(Plane plane1, Plane plane2, Line & line);
+    bool Intersects(Plane plane1, Plane plane2);
     bool Intersects(Plane plane1, Plane plane2, Plane plane3, Vector3 & point);
     bool Intersects(Plane plane, Sphere sphere);
     bool Intersects(Sphere sphere, Plane plane);

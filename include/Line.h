@@ -2,23 +2,24 @@
 #include "Vector.h"
 
 namespace Starsurge {
-    // L(t) = p+tv
     class Line {
     public:
-        Line(Vector3 p, Vector3 v);
+        Line(Vector3 t_start, Vector3 t_end);
 
-        bool Contains(Vector3 test);
+        bool Contains(Vector3 test) const;
         Vector3 GetPoint(float t) const;
-        float Distance(Vector3 p) const;
-        Vector3 ClosestPoint(const Vector3 point);
+        float Length() const;
+        float SquaredLength() const;
+        float Distance(Vector3 point) const;
+        Vector3 ClosestPoint(const Vector3 point) const;
 
-        std::string ToString();
+        std::string ToString() const;
 
         Vector3 operator*(float t) const {
             return GetPoint(t);
         }
 
-        Vector3 origin;
-        Vector3 direction;
+        Vector3 start;
+        Vector3 end;
     };
 };
