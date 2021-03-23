@@ -12,6 +12,7 @@ namespace Starsurge {
         void LookAt(Vector3 target);
         void SetOrthographic(float left, float right, float bottom, float top, float near, float far);
         void SetPerspective(float fov, float near, float far);
+        void SetPerspective(float fov, float aspect, float near, float far);
 
         Matrix4 GetViewMatrix();
         Matrix4 GetProjMatrix();

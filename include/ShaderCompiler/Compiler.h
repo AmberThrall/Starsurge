@@ -24,7 +24,7 @@ namespace Starsurge {
             void HandleGLSLErrors(int linenoOffset, std::string log);
             std::string TranslateCode(ASTNode * root, std::string entry);
             bool CompileVertex(ShaderPass & shaderPass, unsigned int linenoOffset, std::string vert_code);
-            bool CompileFragment(ShaderPass & shaderPass, unsigned int linenoOffset, std::string frag_code);
+            bool CompileFragment(ShaderPass & shaderPass, unsigned int linenoOffset, std::string frag_code, bool postprocessingeffect);
             void Error(unsigned int lineno, std::string msg);
             CodeStructure ParseStructure();
             void ParseUniform(ShaderPass & shaderPass, ASTNodeVariableDeclaration * var);

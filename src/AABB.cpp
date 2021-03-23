@@ -101,7 +101,7 @@ Starsurge::Vector3 Starsurge::AABB::GetCenter() const {
 }
 
 Starsurge::Vector3 Starsurge::AABB::GetSize() const {
-    return this->maximum - this->minimum;
+    return Vector3::Abs(this->maximum - this->minimum);
 }
 
 float Starsurge::AABB::GetVolume() const {

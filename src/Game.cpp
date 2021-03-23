@@ -3,6 +3,7 @@
 #include "../include/imgui/imgui_impl_opengl3.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "../include/AssetManager.h"
 #include "../include/GameSettings.h"
 #include "../include/Timer.h"
 #include "../include/RNG.h"
@@ -12,7 +13,7 @@
 
 void framebuffer_size_callback(GLFWwindow * window, int width, int height)
 {
-    glViewport(0, 0, width, height);
+    Starsurge::GameSettings::Inst().SetViewport(0, 0, width, height);
 }
 
 Starsurge::Game::Game(std::string t_gamename) : gamename (t_gamename) {
@@ -24,6 +25,14 @@ Starsurge::Game::~Game() {
 
 void Starsurge::Game::CloseGame() {
     glfwDestroyWindow(this->gameWindow);
+}
+
+Starsurge::Framebuffer * Starsurge::Game::GetFramebuffer() {
+    return this->framebuffer;
+}
+
+void Starsurge::Game::AddPostProcessingEffect(Shader * shader) {
+    this->postProcessingEffects.push_back(shader);
 }
 
 void Starsurge::Game::Run() {
@@ -62,8 +71,6 @@ void Starsurge::Game::Run() {
         return;
     }
 
-    glEnable(GL_DEPTH_TEST);
-
     // Setup Dear ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -79,14 +86,54 @@ void Starsurge::Game::Run() {
     // Load builtin data.
     AssetManager::Inst().LoadBuiltins();
 
+    // Setup our framebuffer.
+    GameSettings::Inst().SetViewport(0, 0, 800, 600);
+    this->viewport = GameSettings::Inst().GetViewport();
+    this->framebuffer = new Framebuffer(this->viewport.GetSize().x, this->viewport.GetSize().y);
+    this->framebuffer2 = new Framebuffer(this->viewport.GetSize().x, this->viewport.GetSize().y);
+    this->basicPPE.SetCode(R"(
+        PostProcessingEffect {
+            Pass {
+                color fragment() {
+                    return texture(SCREEN, UV);
+                }
+            }
+        }
+    )");
+    this->basicPPE.Compile();
+    float screenVertices[] = {
+        // positions   // texCoords
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+        -1.0f,  1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f
+    };
+    glGenVertexArrays(1, &this->screenVAO);
+    glGenBuffers(1, &this->screenVBO);
+    glBindVertexArray(this->screenVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, this->screenVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(screenVertices), &screenVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+    // Let the user initialize stuff then enter the main loop.
     OnInitialize();
     GameLoop();
 }
 
 void Starsurge::Game::GameLoop() {
     while (!glfwWindowShouldClose(this->gameWindow)) { // Run the game loop until the game is ready to close.
-        // Poll input events
-        glfwPollEvents();
+        // Update the viewport information.
+        Rect newViewport = GameSettings::Inst().GetViewport();
+        if (newViewport != viewport) {
+            this->viewport = newViewport;
+            this->framebuffer->Resize(this->viewport.GetSize().x, this->viewport.GetSize().y);
+            this->framebuffer2->Resize(this->viewport.GetSize().x, this->viewport.GetSize().y);
+        }
 
         // Recalculate the delta time.
         Timer::Inst().UpdateDeltaTime();
@@ -102,23 +149,62 @@ void Starsurge::Game::GameLoop() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        // Call the user's update.
         OnUpdate();
 
-        // Begin Rendering
-        ImGui::Render();
-
-        // Clear color for window.
+        // Render the scene to the framebuffer.
+        this->framebuffer->Bind();
         Color clearColor = Scene::Inst().GetBgColor().ToOpenGLFormat();
         glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        glEnable(GL_DEPTH_TEST);
         OnRender();
+
+        // Perform post processing effects.
+        int curFB = 1;
+        glDisable(GL_DEPTH_TEST);
+        glBindVertexArray(this->screenVAO);
+        for (unsigned int i = 0; i < this->postProcessingEffects.size(); ++i) {
+            for (unsigned int j = 0; j < this->postProcessingEffects[i]->NumberOfPasses(); ++j) {
+                if (curFB == 1) {
+                    this->framebuffer2->Bind();
+                    this->framebuffer->GetTexture()->BindTexture(0);
+                    curFB = 2;
+                }
+                else {
+                    this->framebuffer->Bind();
+                    this->framebuffer2->GetTexture()->BindTexture(0);
+                    curFB = 1;
+                }
+                this->postProcessingEffects[i]->Use(j);
+                glUniform1i(glGetUniformLocation(this->postProcessingEffects[i]->GetProgram(j), "SCREEN"), 0);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+            }
+        }
+
+        // Draw the final result.
+        if (curFB == 1) {
+            this->framebuffer->Unbind();
+            this->framebuffer->GetTexture()->BindTexture(0);
+        }
+        else {
+            this->framebuffer2->Unbind();
+            this->framebuffer2->GetTexture()->BindTexture(0);
+        }
+        ImGui::Render();
+        this->basicPPE.Use(0);
+        glUniform1i(glGetUniformLocation(this->basicPPE.GetProgram(0), "SCREEN"), 0);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
 
         // Render Dear imgui last so it is on top.
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Swap buffers
         glfwSwapBuffers(this->gameWindow);
+
+        // Poll input events
+        glfwPollEvents();
     }
 
     // Cleanup

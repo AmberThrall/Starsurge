@@ -463,7 +463,6 @@ namespace Starsurge {
             return *this;
         }
         friend Vector<N> operator/(Vector<N> lhs, const float& rhs) { return lhs /= rhs; }
-        friend Vector<N> operator/(const float& lhs, Vector<N> rhs) { return rhs /= lhs; }
         friend bool operator==(const Vector<N>& lhs, const Vector<N>& rhs) {
             for (size_t i=0; i < N; ++i) {
                 if (lhs[i] != rhs[i]) {
@@ -472,7 +471,7 @@ namespace Starsurge {
             }
             return true;
         }
-        friend bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) { return !(lhs == rhs); }\
+        friend bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) { return !(lhs == rhs); }
         friend Vector<N> operator==(const Vector<N>& lhs, float rhs) {
             Vector<N> ret;
             for (size_t i=0; i < N; ++i) {

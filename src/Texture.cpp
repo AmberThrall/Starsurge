@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "../include/Texture.h"
+#include "../include/GameSettings.h"
 
 Starsurge::Texture::Texture() {
     glGenTextures(1, &texture);
@@ -27,6 +28,17 @@ Starsurge::Texture::Texture(std::vector<Color> pixels, unsigned int width, unsig
     SetFilterMag(GL_LINEAR);
     SetBorderColor(Colors::WHITE);
 }
+Starsurge::Texture::Texture(Framebuffer * framebuffer) {
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, framebuffer->GetSize().x, framebuffer->GetSize().y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    SetWrapS(GL_REPEAT);
+    SetWrapT(GL_REPEAT);
+    SetFilterMin(GL_LINEAR);
+    SetFilterMag(GL_LINEAR);
+    SetBorderColor(Colors::WHITE);
+}
 
 void Starsurge::Texture::SetPixels(std::vector<Color> pixels, unsigned int width, unsigned int height) {
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -43,6 +55,11 @@ void Starsurge::Texture::SetPixels(std::vector<Color> pixels, unsigned int width
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, data);
     glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+void Starsurge::Texture::SetPixels(Framebuffer * framebuffer) {
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, framebuffer->GetSize().x, framebuffer->GetSize().y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 }
 
 void Starsurge::Texture::BindTexture(unsigned int textureSlot) {
@@ -102,4 +119,8 @@ int Starsurge::Texture::GetFilterMag() {
 }
 Starsurge::Color Starsurge::Texture::GetBorderColor() {
     return borderColor;
+}
+
+unsigned int Starsurge::Texture::GetTexture() {
+    return this->texture;
 }

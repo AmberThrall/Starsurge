@@ -59,7 +59,51 @@ bool Starsurge::GLSL::Compiler::Compile(Shader * shader) {
                 return false;
             }
 
-            if (!CompileFragment(shaderPass, structure.codeOffset[i], structure.passes[i])) {
+            if (!CompileFragment(shaderPass, structure.codeOffset[i], structure.passes[i], false)) {
+                for (unsigned int i = 0; i < errors.size(); ++i) {
+                    ShaderError(errors[i]);
+                }
+                shader->passes.clear();
+                return false;
+            }
+
+            int success;
+            char infoLog[512];
+            shaderPass.program = glCreateProgram();
+            glAttachShader(shaderPass.program, shaderPass.vertex);
+            glAttachShader(shaderPass.program, shaderPass.fragment);
+            glLinkProgram(shaderPass.program);
+            glGetProgramiv(shaderPass.program, GL_LINK_STATUS, &success);
+            if (!success) {
+                glGetProgramInfoLog(shaderPass.program, 512, NULL, infoLog);
+                ShaderError(infoLog);
+                return false;
+            }
+            shader->passes.push_back(shaderPass);
+        }
+        return true;
+    }
+    else if (structure.shaderType == "PostProcessingEffect") {
+        for (unsigned int i = 0; i < structure.passes.size(); ++i) {
+            ShaderPass shaderPass;
+            const char * vertex_code = R"(
+                #version 330 core
+                layout (location = 0) in vec2 pos;
+                layout (location = 1) in vec2 uv;
+
+                out vec2 UV;
+
+                void main() {
+                    gl_Position = vec4(pos.x, pos.y, 0.0, 1.0);
+                    UV = uv;
+                }
+            )";
+            shaderPass.vertex = glCreateShader(GL_VERTEX_SHADER);
+            glShaderSource(shaderPass.vertex, 1, &vertex_code, NULL);
+            glCompileShader(shaderPass.vertex);
+
+            structure.passes[i] = "in vec2 UV;\nuniform sampler2D SCREEN;\n" + structure.passes[i];
+            if (!CompileFragment(shaderPass, structure.codeOffset[i], structure.passes[i], true)) {
                 for (unsigned int i = 0; i < errors.size(); ++i) {
                     ShaderError(errors[i]);
                 }
@@ -150,18 +194,20 @@ bool Starsurge::GLSL::Compiler::CompileVertex(ShaderPass & shaderPass, unsigned 
     return true;
 }
 
-bool Starsurge::GLSL::Compiler::CompileFragment(ShaderPass & shaderPass, unsigned int linenoOffset, std::string frag_code) {
+bool Starsurge::GLSL::Compiler::CompileFragment(ShaderPass & shaderPass, unsigned int linenoOffset, std::string frag_code, bool postprocessingeffect) {
     int success;
     char infoLog[512];
 
-    frag_code = std::string(R"(
-        struct VertexData {
-            vec3 Position;
-            vec3 Normal;
-            vec2 UV;
-            color Color;
-        };
-    )") + "\n" + frag_code;
+    if (!postprocessingeffect) {
+        frag_code = std::string(R"(
+            struct VertexData {
+                vec3 Position;
+                vec3 Normal;
+                vec2 UV;
+                color Color;
+            };
+        )") + "\n" + frag_code;
+    }
 
     Parser parser;
     parser.SetCode(frag_code);

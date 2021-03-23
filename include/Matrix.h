@@ -1300,6 +1300,7 @@ namespace Starsurge {
             }
             return *this;
         }
+        friend Matrix<M,N> operator-(const Matrix<M,N>& rhs) { return -1.0f * rhs; }
         friend Matrix<M,N> operator-(Matrix<M,N> lhs, const Matrix<M,N>& rhs) { return lhs -= rhs; }
         Matrix<M,N>& operator*=(const float& rhs) {
             for (size_t i = 0; i < M*N; ++i) {
@@ -1316,7 +1317,6 @@ namespace Starsurge {
             return *this;
         }
         friend Matrix<M,N> operator/(Matrix<M,N> lhs, const float& rhs) { return lhs /= rhs; }
-        friend Matrix<M,N> operator/(const float& lhs, Matrix<M,N> rhs) { return rhs /= lhs; }
         template<size_t P>
         friend Matrix<M,P> operator*(Matrix<M,N> lhs, Matrix<N,P> rhs) {
             Matrix<M,P> ret;

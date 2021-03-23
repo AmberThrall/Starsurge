@@ -73,7 +73,7 @@ Starsurge::Vector2 Starsurge::Rect::GetCenter() const {
     return (this->max + this->min) / 2;
 }
 Starsurge::Vector2 Starsurge::Rect::GetSize() const {
-    return this->max - this->min;
+    return Vector2::Abs(this->max - this->min);
 }
 float Starsurge::Rect::GetArea() const {
     Vector2 size = GetSize();

@@ -140,6 +140,10 @@ protected:
         flashlight->AddComponent<Transform>(new Transform(camera->FindComponent<Transform>()->Position, Vector3(0,0,0), Vector3(1,1,1)));
         flashlight->AddComponent<Light>(new Light(SPOTLIGHT));
         Scene::Inst().AddEntity(flashlight);
+
+        // AddPostProcessingEffect(AssetManager::Inst().GetShader("Builtin/Inversion"));
+        // AddPostProcessingEffect(AssetManager::Inst().GetShader("Builtin/Grayscale"));
+        // AddPostProcessingEffect(AssetManager::Inst().GetShader("Builtin/Blur"));
     }
 
     void OnUpdate() {

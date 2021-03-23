@@ -52,8 +52,14 @@ void Starsurge::Camera::SetOrthographic(float left, float right, float bottom, f
 }
 
 void Starsurge::Camera::SetPerspective(float fov, float near, float far) {
-    Vector2 windowSize = GameSettings::Inst().GetWindowSize();
-    this->projMatrix = Matrix4::Perspective(Radians(fov), windowSize.x / windowSize.y, near, far);
+    Rect viewport = GameSettings::Inst().GetViewport();
+    float width = viewport.GetMaximum().x-viewport.GetMinimum().x;
+    float height = viewport.GetMaximum().y-viewport.GetMinimum().y;
+    this->projMatrix = Matrix4::Perspective(Radians(fov), width / height, near, far);
+}
+
+void Starsurge::Camera::SetPerspective(float fov, float aspect, float near, float far) {
+    this->projMatrix = Matrix4::Perspective(Radians(fov), aspect, near, far);
 }
 
 Starsurge::Matrix4 Starsurge::Camera::GetViewMatrix() {

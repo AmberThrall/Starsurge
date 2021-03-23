@@ -9,12 +9,14 @@ public:
     ~Editor() { }
 protected:
     void OnInitialize() {
+        // Initialize variables.
         firstUpdate = true;
 
+        // Window settings
         GameSettings::Inst().ResizeWindow(1600, 900);
-
         Scene::Inst().SetBgColor(Color(59,59,59));
 
+        // Grid
         grid = new Grid(1);
 
         // Sun
@@ -138,16 +140,20 @@ protected:
             ImGui::SetWindowPos(ImVec2(0,0), true);
             ImGui::SetWindowSize(ImVec2((int)windowSize.x, (int)windowSize.y), true);
         ImGui::End();
-        style = styleBackup;
 
         // Scene
         if (firstUpdate)
             ImGui::SetNextWindowDockID(dockspaceTL);
         ImGui::Begin("Scene");
-            ImGui::Text("Scene goes here.");
+            w = ImGui::GetWindowContentRegionMax().x-ImGui::GetWindowContentRegionMin().x;
+            h = ImGui::GetWindowContentRegionMax().y-ImGui::GetWindowContentRegionMin().y;
+            GameSettings::Inst().SetViewport(0,0,w,h);
+            camera->FindComponent<Camera>()->SetPerspective(60, w / h, 0.1, 100);
+            ImGui::Image((ImTextureID)GetFramebuffer()->GetTexture()->GetTexture(), ImVec2(w,h), ImVec2(0,1), ImVec2(1,0));
         ImGui::End();
 
         // Assets
+        style = styleBackup;
         if (firstUpdate)
             ImGui::SetNextWindowDockID(dockspaceBL);
         ImGui::Begin("Assets");

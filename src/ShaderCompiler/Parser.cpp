@@ -547,7 +547,8 @@ std::string Starsurge::GLSL::Parser::EvaluateType(ASTNodeExpression * expr, ASTN
             else if (lhsType == "vec2" || lhsType == "vec3" || lhsType == "vec4" || lhsType == "color" ||
                 lhsType == "bvec2" || lhsType == "bvec3" || lhsType == "bvec4" ||
                 lhsType == "ivec2" || lhsType == "ivec3" || lhsType == "ivec4" ||
-                lhsType == "uvec2" || lhsType == "uvec3" || lhsType == "uvec4") { // genType *= genType | genType *= float
+                lhsType == "uvec2" || lhsType == "uvec3" || lhsType == "uvec4" ||
+                lhsType == "gvec2" || lhsType == "gvec3" || lhsType == "gvec4") { // genType *= genType | genType *= float
                 std::string baseType = "float";
                 if (lhsType[0] == 'b') { baseType = "bool"; }
                 if (lhsType[0] == 'i') { baseType = "int"; }
@@ -561,7 +562,8 @@ std::string Starsurge::GLSL::Parser::EvaluateType(ASTNodeExpression * expr, ASTN
             else if ((rhsType == "vec2" || rhsType == "vec3" || rhsType == "vec4" || rhsType == "color" ||
                 rhsType == "bvec2" || rhsType == "bvec3" || rhsType == "bvec4" ||
                 rhsType == "ivec2" || rhsType == "ivec3" || rhsType == "ivec4" ||
-                rhsType == "uvec2" || rhsType == "uvec3" || rhsType == "uvec4") &&
+                rhsType == "uvec2" || rhsType == "uvec3" || rhsType == "uvec4" ||
+                rhsType == "gvec2" || rhsType == "gvec3" || rhsType == "gvec4") &&
                 (binary->op == "*" || binary->op == "/" || binary->op == "+" || binary->op == "-")) { // genType * genType | float * genType
                 std::string baseType = "float";
                 if (rhsType[0] == 'b') { baseType = "bool"; }

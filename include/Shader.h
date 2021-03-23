@@ -54,7 +54,7 @@ namespace Starsurge {
 
     class Shader {
     public:
-        Shader(std::string source_code);
+        Shader(std::string source_code = "");
         ~Shader();
         void SetCode(std::string source_code);
 
