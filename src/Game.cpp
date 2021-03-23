@@ -67,10 +67,12 @@ void Starsurge::Game::Run() {
     // Setup Dear ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    this->imguiIO = ImGui::GetIO();
-    this->imguiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-    this->imguiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    ImGuiIO & imguiIO = ImGui::GetIO();
+    imguiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+    imguiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
     ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 10.0f;
     ImGui_ImplGlfw_InitForOpenGL(this->gameWindow, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
@@ -107,13 +109,6 @@ void Starsurge::Game::GameLoop() {
         OnRender();
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        if (this->imguiIO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            GLFWwindow* backup_current_context = glfwGetCurrentContext();
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(backup_current_context);
-        }
         //  Swap buffers and poll IO
         glfwSwapBuffers(this->gameWindow);
         glfwPollEvents();

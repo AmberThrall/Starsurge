@@ -18,7 +18,6 @@ namespace Starsurge {
         std::string gamename;
     private:
         void GameLoop();
-        ImGuiIO imguiIO;
         GLFWwindow * gameWindow;
     };
 }
