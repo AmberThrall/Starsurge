@@ -122,7 +122,9 @@ Starsurge::Vector3 Starsurge::AABB::GetCorner(AABBCorner corner) const {
         case NEAR_LEFT_BOTTOM: return Vector3(mx, my, Mz);
         case NEAR_LEFT_TOP: return Vector3(mx, My, Mz);
         case NEAR_RIGHT_TOP: return this->maximum;
-        default: return Vector3(0,0,0);
+        default:
+            Error("Invalid corner in AABB::GetCorner(). Options: FAR_LEFT_BOTTOM, FAR_LEFT_TOP, FAR_RIGHT_TOP, FAR_RIGHT_BOTTOM, NEAR_RIGHT_BOTTOM, NEAR_LEFT_BOTTOM, NEAR_LEFT_TOP, NEAR_RIGHT_TOP");
+            return Vector3(0,0,0);
     }
 }
 std::vector<Starsurge::Vector3> Starsurge::AABB::GetAllCorners() const {
@@ -137,6 +139,7 @@ std::vector<Starsurge::Vector3> Starsurge::AABB::GetAllCorners() const {
     ret.push_back(GetCorner(NEAR_RIGHT_TOP));
     return ret;
 }
+
 Starsurge::Vector3 Starsurge::AABB::GetMinimum() const {
     return this->minimum;
 }
@@ -219,7 +222,7 @@ Starsurge::AABB Starsurge::AABB::Transform(const Matrix4 matrix) {
 }
 
 void Starsurge::AABB::CheckBounds() {
-    if (this->minimum.x > this->maximum.x || this->minimum.y > this->maximum.y || this->minimum.z > this->maximum.z) {
+    if ((this->minimum > this->maximum).Any()) {
         Error("For AABB, the minimum value must be less than or equal to the maximum value.");
         this->isNull = true;
         this->minimum = this->maximum;

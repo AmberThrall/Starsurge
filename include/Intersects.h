@@ -5,8 +5,12 @@
 #include "Plane.h"
 #include "AABB.h"
 #include "Sphere.h"
+#include "Rect.h"
 
 namespace Starsurge {
+    // Intersection with rectangles.
+    bool Intersects(Rect r1, Rect r2, Rect & area);
+
     // Intersection with ray.
     bool Intersects(Ray ray1, Ray ray2, Vector3 & point);
     bool Intersects(Ray ray, Line line, Vector3 & point);

@@ -1,5 +1,22 @@
 #include "../include/Intersects.h"
 
+bool Starsurge::Intersects(Rect r1, Rect r2, Rect & area) {
+    if (r1.IsNull() || r2.IsNull()) {
+        area = Rect::Null();
+        return false;
+    }
+
+    if (r1.GetMinimum().x <= r2.GetMaximum().x && r1.GetMaximum().x >= r2.GetMinimum().x &&
+        r1.GetMinimum().y <= r2.GetMaximum().y && r1.GetMaximum().y >= r2.GetMinimum().y) {
+        Vector2 min = Vector2::Max(r1.GetMinimum(), r2.GetMinimum());
+        Vector2 max = Vector2::Min(r1.GetMaximum(), r2.GetMaximum());
+        area = Rect(min, max);
+        return true;
+    }
+    area = Rect::Null();
+    return false;
+}
+
 bool Starsurge::Intersects(Ray ray1, Ray ray2, Vector3 & point) {
     // Trivial case.
     if (ray1.origin == ray2.origin) {
@@ -192,6 +209,7 @@ bool Starsurge::Intersects(Sphere sphere, Line line, Vector3 & point) {
 
 bool Starsurge::Intersects(AABB boxA, const AABB boxB, AABB & volume) {
     if (boxA.IsNull() || boxB.IsNull()) {
+        volume = AABB::Null();
         return false;
     }
 
@@ -203,6 +221,7 @@ bool Starsurge::Intersects(AABB boxA, const AABB boxB, AABB & volume) {
         volume = AABB(min, max);
         return true;
     }
+    volume = AABB::Null();
     return false;
 }
 
