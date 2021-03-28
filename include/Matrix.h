@@ -201,16 +201,26 @@ namespace Starsurge {
         }
 
         std::string ToString() const {
-            std::string ret = "";
+            std::string ret = std::to_string(NumRows())+"x"+std::to_string(NumColumns());
+
+            // Get the largest sized (string-wise) cell.
+            const size_t spacing = 4;
+            size_t maxLength = 0;
             for (size_t r = 0; r < this->m; ++r) {
-                if (r > 0) ret += "\n";
-                ret += "[ ";
                 for (size_t c = 0; c < this->n; ++c) {
-                    if (c > 0)
-                        ret += ",";
-                    ret += std::to_string(this->data[r*this->n+c]);
+                    size_t entryLength = Starsurge::ToString(this->data[r*this->n+c], 3).length();
+                    if (entryLength > maxLength) {
+                        maxLength = entryLength;
+                    }
                 }
-                ret += " ]";
+            }
+            for (size_t r = 0; r < this->m; ++r) {
+                ret += "\n";
+                for (size_t c = 0; c < this->n; ++c) {
+                    std::string entry = Starsurge::ToString(this->data[r*this->n+c], 3);
+                    for (size_t spaces = entry.length(); spaces < maxLength+spacing; ++spaces) { ret += " "; }
+                    ret += entry;
+                }
             }
             return ret;
         }
@@ -941,6 +951,18 @@ namespace Starsurge {
             }
 
             return ret;
+        }
+
+        template<size_t P, size_t Q>
+        static void MeshGrid(Vector<P> x, Vector<Q> y, Matrix<Q,P> & X, Matrix<Q,P> & Y) {
+            X = CreateMatrix<Q,P>(y.Size(), x.Size());
+            Y = CreateMatrix<Q,P>(y.Size(), x.Size());
+            for (size_t r = 0; r < y.Size(); ++r) {
+                X.SetRow(r, x);
+            }
+            for (size_t c = 0; c < x.Size(); ++c) {
+                Y.SetColumn(c, y);
+            }
         }
 
         static Matrix<N,N> ProjectionMatrix(Vector<N> a) {

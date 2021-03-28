@@ -155,6 +155,50 @@ float Starsurge::Lerp(float start, float end, float t) {
     return start + t*(end-start);
 }
 
+float Starsurge::Sign(float x) {
+    if (x > 0)
+        return 1;
+    if (x < 0)
+        return -1;
+    return 0;
+}
+std::string Starsurge::ToString(bool v) {
+    return (v == true) ? std::string("true") : std::string("false");
+}
+std::string Starsurge::ToString(int v) { return std::to_string(v); }
+std::string Starsurge::ToString(long v) { return std::to_string(v); }
+std::string Starsurge::ToString(long long v) { return std::to_string(v); }
+std::string Starsurge::ToString(unsigned int v) { return std::to_string(v); }
+std::string Starsurge::ToString(unsigned long v) { return std::to_string(v); }
+std::string Starsurge::ToString(unsigned long long v) { return std::to_string(v); }
+std::string Starsurge::ToString(float v, unsigned int ndigits, bool scientific) {
+    if (std::isnan(v)) return "NaN";
+    if (std::isinf(v)) return "Inf";
+    if ((std::round(v) == v || ndigits == 0) && !scientific) return ToString((int)v);
+
+    char * buffer = new char[ndigits+256];
+    sprintf(buffer, (scientific ? "%.*e" : "%.*f"), ndigits, v);
+    return std::string(buffer);
+}
+std::string Starsurge::ToString(double v, unsigned int ndigits, bool scientific) {
+    if (std::isnan(v)) return "NaN";
+    if (std::isinf(v)) return "Inf";
+    if ((std::round(v) == v || ndigits == 0) && !scientific) return ToString((int)v);
+
+    char * buffer = new char[ndigits+256];
+    sprintf(buffer, (scientific ? "%.*e" : "%.*f"), ndigits, v);
+    return std::string(buffer);
+}
+std::string Starsurge::ToString(long double v, unsigned int ndigits, bool scientific) {
+    if (std::isnan(v)) return "NaN";
+    if (std::isinf(v)) return "Inf";
+    if ((std::round(v) == v || ndigits == 0) && !scientific) return ToString((int)v);
+
+    char * buffer = new char[ndigits+256];
+    sprintf(buffer, (scientific ? "%.*e" : "%.*f"), ndigits, v);
+    return std::string(buffer);
+}
+
 std::vector<Starsurge::Match> Starsurge::FindSubstrings(std::string str, std::string regex) {
     std::smatch m;
     std::vector<Match> ret;

@@ -24,6 +24,17 @@ namespace Starsurge {
     float Clamp(float v, float min, float max);
     float Wrap(float v, float min, float max);
     float Lerp(float start, float end, float t);
+    float Sign(float x);
+    std::string ToString(bool v);
+    std::string ToString(int v);
+    std::string ToString(long v);
+    std::string ToString(long long v);
+    std::string ToString(unsigned int v);
+    std::string ToString(unsigned long v);
+    std::string ToString(unsigned long long v);
+    std::string ToString(float v, unsigned int ndigits = 6, bool scientific = false);
+    std::string ToString(double v, unsigned int ndigits = 6, bool scientific = false);
+    std::string ToString(long double v, unsigned int ndigits = 6, bool scientific = false);
 
     long Factorial(long n);
 
@@ -69,5 +80,15 @@ namespace Starsurge {
             }
         }
         return false;
+    }
+
+    template<typename T>
+    int Index(const std::vector<T> v, T query) {
+        for (unsigned int i = 0; i < v.size(); ++i) {
+            if (v[i] == query) {
+                return i;
+            }
+        }
+        return -1;
     }
 }
