@@ -34,7 +34,6 @@ namespace Starsurge {
         Vector3 Project(const Vector3 v) const;
         Plane Transform(Matrix<4,4> matrix);
 
-        Mesh CreateMesh(float size1, float size2) const;
         template<size_t M,size_t N>
         Mesh CreateMesh(Vector<M> x, Vector<N> y) const {
             std::vector<Vertex> vertices;

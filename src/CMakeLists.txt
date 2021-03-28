@@ -42,9 +42,6 @@ add_library(Starsurge STATIC Logging.cpp
     imgui/imgui_impl_glfw.cpp
     Framebuffer.cpp
     Rect.cpp
-    Quad.cpp
-    Triangle.cpp
-    Polygon.cpp
 )
 target_include_directories(Starsurge PUBLIC ${PROJECT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR} ${GLFW3_INCLUDE_DIR})
 target_link_libraries(Starsurge ${OPENGL_gl_LIBRARY} ${GLFW3_LIBRARY})

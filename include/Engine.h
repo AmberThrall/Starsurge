@@ -34,7 +34,4 @@
 #include "imgui/imgui_internal.h"
 #include "Framebuffer.h"
 #include "Rect.h"
-#include "Quad.h"
-#include "Triangle.h"
-#include "Polygon.h"
 #include "LinkedList.h"

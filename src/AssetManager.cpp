@@ -1,9 +1,8 @@
 #include "../include/AssetManager.h"
 #include "../include/stb_image.h"
-#include "../include/Triangle.h"
-#include "../include/Quad.h"
 #include "../include/AABB.h"
 #include "../include/Sphere.h"
+#include "../include/Plane.h"
 
 Starsurge::AssetManager& Starsurge::AssetManager::Inst() {
     static AssetManager instance;

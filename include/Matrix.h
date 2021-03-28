@@ -954,7 +954,7 @@ namespace Starsurge {
         }
 
         template<size_t P, size_t Q>
-        static void MeshGrid(Vector<P> x, Vector<Q> y, Matrix<Q,P> & X, Matrix<Q,P> & Y) {
+        static void Grid(Vector<P> x, Vector<Q> y, Matrix<Q,P> & X, Matrix<Q,P> & Y) {
             X = CreateMatrix<Q,P>(y.Size(), x.Size());
             Y = CreateMatrix<Q,P>(y.Size(), x.Size());
             for (size_t r = 0; r < y.Size(); ++r) {

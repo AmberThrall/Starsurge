@@ -2,7 +2,6 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "Sphere.h"
-#include "Quad.h"
 
 namespace Starsurge {
     enum AABBCorner {

@@ -111,7 +111,3 @@ std::string Starsurge::Plane::ToString(unsigned int ndigits) const {
 Starsurge::Vector3 Starsurge::Plane::Project(const Vector3 v) const {
     return v - Vector3::Dot(v, GetNormal())*GetNormal();
 }
-
-Starsurge::Mesh Starsurge::Plane::CreateMesh(float size1, float size2) const {
-    return CreateMesh(Vector2(-size1/2, size1/2), Vector2(-size2/2, size2/2));
-}

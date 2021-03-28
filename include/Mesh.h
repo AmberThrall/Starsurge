@@ -2,6 +2,7 @@
 #include <vector>
 #include "Vector.h"
 #include "Color.h"
+//#include "Matrix.h"
 
 namespace Starsurge {
     struct Vertex {
