@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <string>
 #include <initializer_list>
 #include "Logging.h"
@@ -280,6 +281,57 @@ namespace Starsurge {
                 }
             }
             return ret;
+        }
+
+        void Assign(float val) {
+            for (size_t r = 0; r < this->m; ++r) {
+                for (size_t c = 0; c < this->n; ++c) {
+                    this->data[r*this->n+c] = val;
+                }
+            }
+        }
+
+        void Assign(std::function<float(unsigned int, unsigned int)> f) {
+            for (size_t r = 0; r < this->m; ++r) {
+                for (size_t c = 0; c < this->n; ++c) {
+                    this->data[r*this->n+c] = f(r,c);
+                }
+            }
+        }
+        template<size_t P, size_t Q>
+        void Assign(Vector<P> x, Vector<Q> y, std::function<float(float,float)> f) {
+            if (this->m != y.Size() && this->n != x.Size()) {
+                Error("Couldn't assign matrix. Size mismatch.");
+                return;
+            }
+            for (size_t r = 0; r < this->m; ++r) {
+                for (size_t c = 0; c < this->n; ++c) {
+                    this->data[r*this->n+c] = f(x[c],y[r]);
+                }
+            }
+        }
+        void Assign(Matrix<M,N> a, Matrix<M,N> b, std::function<float(float,float)> f) {
+            if (this->m != a.NumRows() && this->n != a.NumColumns() && this->m != b.NumRows() && this->n != b.NumColumns()) {
+                Error("Couldn't assign matrix. Size mismatch.");
+                return;
+            }
+            for (size_t r = 0; r < this->m; ++r) {
+                for (size_t c = 0; c < this->n; ++c) {
+                    this->data[r*this->n+c] = f(a(r,c),b(r,c));
+                }
+            }
+        }
+
+        void Assign(const Matrix<M,N>& other) {
+            if (this->m != other.NumRows() && this->n != other.NumColumns()) {
+                Error("Couldn't assign matrix to matrix. Size mismatch.");
+                return;
+            }
+            for (size_t r = 0; r < this->m; ++r) {
+                for (size_t c = 0; c < this->n; ++c) {
+                    this->data[r*this->n+c] = other(r,c);
+                }
+            }
         }
 
         float Get(size_t r, size_t c) {

@@ -9,6 +9,12 @@ public:
     ~Editor() { }
 protected:
     void OnInitialize() {
+        Vector<10> X = Vector<10>::Linspace(-2, 2);
+        Vector<10> Y = X;
+        Matrix<10,10> F;
+        F.Assign(X, Y, [](float x,float y) { return x*std::exp(-x*x-y*y); });
+        Log("F = "+F.ToString());
+
         // Initialize variables.
         firstUpdate = true;
 
