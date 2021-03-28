@@ -9,28 +9,53 @@
 namespace Starsurge {
     struct Empty {};
 
+    const size_t Dynamic = 0;
+
     template<size_t N>
     class Vector {
     public:
+        template <typename = std::enable_if_t<(N==Dynamic)>>
+        Vector() { }
+        template <typename = std::enable_if_t<(N!=Dynamic)>>
         Vector(float t_val = 0) {
-            for (size_t i = 0; i < N; ++i) {
+            this->n = N;
+            this->data = new float[this->n];
+            for (size_t i = 0; i < this->n; ++i) {
+                this->data[i] = t_val;
+            }
+        }
+        template <typename = std::enable_if_t<(N==Dynamic)>>
+        Vector(size_t size, float t_val = 0) {
+            this->n = size;
+            this->data = new float[this->n];
+            for (size_t i = 0; i < this->n; ++i) {
                 this->data[i] = t_val;
             }
         }
         Vector(const Vector<N>& other) {
-            for (size_t i = 0; i < N; ++i) {
+            this->n = other.Size();
+            this->data = new float[this->n];
+            for (size_t i = 0; i < this->n; ++i) {
                 this->data[i] = other.data[i];
             }
         }
+        template <typename = std::enable_if_t<(N!=Dynamic)>>
         Vector(float t_data[N]) {
-            for (size_t i = 0; i < N; ++i) {
+            this->n = N;
+            this->data = new float[this->n];
+            for (size_t i = 0; i < this->n; ++i) {
                 this->data[i] = t_data[i];
             }
         }
         Vector(std::initializer_list<float> list) {
-            if (list.size() != N) {
+            this->n = N;
+            if (N == Dynamic) {
+                this->n = list.size();
+            }
+            this->data = new float[this->n];
+            if (list.size() != this->n) {
                 Error("Not correct amount of data.");
-                for (size_t i = 0; i < N; ++i) {
+                for (size_t i = 0; i < this->n; ++i) {
                     this->data[i] = 0;
                 }
                 return;
@@ -41,40 +66,64 @@ namespace Starsurge {
                 i++;
             }
         }
-        template <typename... Ts, typename = std::enable_if_t<(sizeof...(Ts)==N)>>
+        template <typename... Ts, typename = std::enable_if_t<(sizeof...(Ts)==N&&N!=Dynamic)>>
         Vector(Ts... ts) {
             size_t i = 0;
+            this->n = N;
+            if (N == Dynamic) { this->n = sizeof...(Ts); }
+            this->data = new float[this->n];
             ((this->data[i++] = float(ts)),...);
         }
-        template <size_t M,typename... Ts, typename = std::enable_if_t<(M+sizeof...(Ts)==N)>>
+        template <size_t M,typename... Ts, typename = std::enable_if_t<(M+sizeof...(Ts)==N||N==Dynamic||M==Dynamic)>>
         Vector(const Vector<M> v, Ts... ts) {
             size_t i = 0;
-            for (; i < M; ++i) {
+            this->n = N;
+            if (N == Dynamic) {
+                this->n = v.Size()+sizeof...(Ts);
+            }
+            this->data = new float[this->n];
+
+            if (this->n != v.Size()+sizeof...(Ts)) {
+                Error("Not correct amount of data.");
+                for (size_t i = 0; i < this->n; ++i) {
+                    this->data[i] = 0;
+                }
+                return;
+            }
+            for (; i < v.Size(); ++i) {
                 this->data[i] = v.data[i];
             }
             ((this->data[i++] = float(ts)),...);
         }
 
-        size_t Size() const { return N; }
+        size_t Size() const { return this->n; }
 
         float Head() const {
             return this->data[0];
         }
         float Tail() const {
-            return this->data[N-1];
+            return this->data[this->n-1];
         }
 
-        template <size_t M>
-        Vector<M> SubVector(size_t i = 0) {
+        template <size_t M, typename = std::enable_if_t<(M!=Dynamic)>>
+        Vector<M> SubVector(size_t i = 0) const {
             Vector<M> ret;
-            for (size_t j = i; j < M && j < N; ++j) {
+            for (size_t j = i; j < M && j < this->n; ++j) {
                 ret[j] = this->data[j];
             }
             return ret;
         }
+        Vector<Dynamic> SubVector(size_t i, size_t size) const {
+            Vector<Dynamic> ret(size, 0);
+            for (size_t j = i; j < size && j < this->n; ++j) {
+                ret[j] = this->data[j];
+            }
+            return ret;
+        }
+
         std::string ToString() const {
             std::string ret = "[";
-            for (size_t i = 0; i < N; ++i) {
+            for (size_t i = 0; i < this->n; ++i) {
                 if (i > 0)
                     ret += ",";
                 ret += std::to_string(this->data[i]);
@@ -106,7 +155,7 @@ namespace Starsurge {
         }
 
         bool All() const {
-            for (size_t i = 0; i < N; ++i) {
+            for (size_t i = 0; i < this->n; ++i) {
                 if (this->data[i] <= 0) {
                     return false;
                 }
@@ -115,7 +164,7 @@ namespace Starsurge {
         }
 
         bool Any() const {
-            for (size_t i = 0; i < N; ++i) {
+            for (size_t i = 0; i < this->n; ++i) {
                 if (this->data[i] > 0) {
                     return true;
                 }
@@ -125,7 +174,7 @@ namespace Starsurge {
 
         unsigned int Count() const {
             unsigned int count = 0;
-            for (size_t i = 0; i < N; ++i) {
+            for (size_t i = 0; i < this->n; ++i) {
                 if (this->data[i] > 0) {
                     count += 1;
                 }
@@ -134,8 +183,8 @@ namespace Starsurge {
         }
 
         Vector<N> Not() const {
-            Vector<N> ret;
-            for (size_t i = 0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(this->n, 0);
+            for (size_t i = 0; i < this->n; ++i) {
                 if (this->data[i] > 0) {
                     ret[i] = 0;
                 }
@@ -146,14 +195,21 @@ namespace Starsurge {
             return ret;
         }
 
+        template<typename = std::enable_if_t<(N!=Dynamic)>>
         static Vector<N> Zero() {
-            Vector<N> ret;
-            return ret;
+            return CreateVector<N>(N, 0);
         }
+        static Vector<Dynamic> Zero(size_t size) {
+            return CreateVector<Dynamic>(size, 0);
+        }
+        template<typename = std::enable_if_t<(N!=Dynamic)>>
         static Vector<N> One() {
-            Vector<N> ret(1);
-            return ret;
+            return CreateVector<N>(N, 1);
         }
+        static Vector<Dynamic> One(size_t size) {
+            return CreateVector<Dynamic>(size, 1);
+        }
+
         template <typename = std::enable_if_t<(N==3)>>
         static Vector<3> Right() {
             return Vector<3>(1,0,0);
@@ -167,6 +223,7 @@ namespace Starsurge {
             return Vector<3>(0,0,1);
         }
 
+        template<typename = std::enable_if_t<(N!=Dynamic)>>
         static Vector<N> Linspace(float start, float stop, bool endpoint = true) {
             float step = (stop - start) / N;
             if (endpoint) {
@@ -181,10 +238,28 @@ namespace Starsurge {
             }
             return ret;
         }
+        static Vector<Dynamic> Linspace(float start, float stop, size_t size, bool endpoint = true) {
+            float step = (stop - start) / size;
+            if (endpoint) {
+                step = (stop - start) / (size-1);
+            }
+            float v = start;
+            Vector<Dynamic> ret = CreateVector(size, 0);
+            ret[0] = v;
+            for (size_t i = 1; i < size; ++i) {
+                v += step;
+                ret[i] = v;
+            }
+            return ret;
+        }
 
-        static Vector<N> EntrywiseProduct(Vector<N> a, Vector<N> b) {
-            Vector<N> ret;
-            for (size_t i = 0; i < N; ++i) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static Vector<P> EntrywiseProduct(Vector<P> a, Vector<Q> b) {
+            if (a.Size() != b.Size()) {
+                throw "Cannot take the entrywise product of vectors with varying length.";
+            }
+            Vector<P> ret = CreateVector<P>(a.Size(), 0);
+            for (size_t i = 0; i < a.Size(); ++i) {
                 ret[i] = a[i]*b[i];
             }
             return ret;
@@ -192,7 +267,7 @@ namespace Starsurge {
 
         static float Sum(Vector<N> a) {
             float sum = 0;
-            for (size_t i = 0; i < N; ++i) {
+            for (size_t i = 0; i < a.Size(); ++i) {
                 sum += a[i];
             }
             return sum;
@@ -200,91 +275,103 @@ namespace Starsurge {
 
         static float Product(Vector<N> a) {
             float prod = 1;
-            for (size_t i = 0; i < N; ++i) {
+            for (size_t i = 0; i < a.Size(); ++i) {
                 prod *= a[i];
             }
             return prod;
         }
 
         static float Mean(Vector<N> a) {
-            return Vector<N>::Sum(a) / N;
+            return Vector<N>::Sum(a) / a.Size();
         }
 
         static float Min(Vector<N> a) {
             float min = a[0];
-            for (size_t i = 0; i < N; ++i) {
+            for (size_t i = 0; i < a.Size(); ++i) {
                 min = std::min(min, a[i]);
             }
             return min;
         }
 
-        static Vector<N> Min(Vector<N> a, Vector<N> b) {
-            Vector<N> ret;
-            for (size_t i = 0; i < N; ++i) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static Vector<P> Min(Vector<P> a, Vector<Q> b) {
+            if (a.Size() != b.Size()) {
+                throw "Cannot take the minimum of vectors with varying length.";
+            }
+            Vector<P> ret = CreateVector<P>(a.Size(), 0);
+            for (size_t i = 0; i < a.Size(); ++i) {
                 ret[i] = std::min(a[i], b[i]);
             }
             return ret;
         }
 
-        template <typename...Ts>
-        static Vector<N> Min(Vector<N> a, Vector<N> b, Ts&&... ts) {
-            Vector<N> ret = Vector<N>::Min(a,b);
-            return Vector<N>::Min(ret, std::forward<Ts>(ts)...);
+        template <size_t P, size_t Q, typename...Ts>
+        static Vector<P> Min(Vector<P> a, Vector<Q> b, Ts&&... ts) {
+            Vector<P> ret = Vector<P>::Min(a,b);
+            return Vector<P>::Min(ret, std::forward<Ts>(ts)...);
         }
 
         static float Max(Vector<N> a) {
             float max = a[0];
-            for (size_t i = 0; i < N; ++i) {
+            for (size_t i = 0; i < this->n; ++i) {
                 max = std::max(max, a[i]);
             }
             return max;
         }
 
-        static Vector<N> Max(Vector<N> a, Vector<N> b) {
-            Vector<N> ret;
-            for (size_t i = 0; i < N; ++i) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static Vector<P> Max(Vector<P> a, Vector<Q> b) {
+            if (a.Size() != b.Size()) {
+                throw "Cannot take the maximum of vectors with varying length.";
+            }
+            Vector<P> ret = CreateVector<P>(a.Size(), 0);
+            for (size_t i = 0; i < a.Size(); ++i) {
                 ret[i] = std::max(a[i], b[i]);
             }
             return ret;
         }
 
-        template <typename...Ts>
-        static Vector<N> Max(Vector<N> a, Vector<N> b, Ts&&... ts) {
-            Vector<N> ret = Vector<N>::Max(a,b);
-            return Vector<N>::Max(ret, std::forward<Ts>(ts)...);
+        template <size_t P, size_t Q, typename...Ts>
+        static Vector<P> Max(Vector<P> a, Vector<Q> b, Ts&&... ts) {
+            Vector<P> ret = Vector<P>::Max(a,b);
+            return Vector<P>::Max(ret, std::forward<Ts>(ts)...);
         }
 
-        static Vector<N> Clamp(Vector<N> a, Vector<N> min, Vector<N> max) {
-            return Vector<N>::Min(Vector<N>::Max(a, max), min);
+        template <size_t P, size_t Q, size_t R, typename = std::enable_if_t<((P==Q && P==R)||P==Dynamic||Q==Dynamic||N==Dynamic)>>
+        static Vector<P> Clamp(Vector<P> a, Vector<Q> min, Vector<R> max) {
+            if (a.Size() != min.Size() || a.Size() != max.Size()) {
+                throw "Cannot take the clamp of a vector with differing dimensions min and max.";
+            }
+            return Vector<P>::Min(Vector<P>::Max(a, max), min);
         }
 
         static Vector<N> Abs(Vector<N> a) {
-            Vector<N> ret;
-            for (size_t i = 0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(a.Size(), 0);
+            for (size_t i = 0; i < a.Size(); ++i) {
                 ret[i] = std::abs(a[i]);
             }
             return ret;
         }
 
         static Vector<N> Floor(Vector<N> a) {
-            Vector<N> ret;
-            for (size_t i = 0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(a.Size(), 0);
+            for (size_t i = 0; i < a.Size(); ++i) {
                 ret[i] = std::floor(a[i]);
             }
             return ret;
         }
 
         static Vector<N> Ceil(Vector<N> a) {
-            Vector<N> ret;
-            for (size_t i = 0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(a.Size(), 0);
+            for (size_t i = 0; i < a.Size(); ++i) {
                 ret[i] = std::ceil(a[i]);
             }
             return ret;
         }
 
         static Vector<N> Round(Vector<N> a) {
-            Vector<N> ret;
-            for (size_t i = 0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(a.Size(), 0);
+            for (size_t i = 0; i < a.Size(); ++i) {
                 ret[i] = std::round(a[i]);
             }
             return ret;
@@ -295,20 +382,22 @@ namespace Starsurge {
         }
 
         static Vector<N> Mod(Vector<N> a, float b) {
-            Vector<N> ret;
-            for (size_t i = 0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(a.Size(), 0);
+            for (size_t i = 0; i < this->n; ++i) {
                 ret[i] = std::fmod(a[i], b);
             }
             return ret;
         }
 
-        static Vector<N> Mix(Vector<N> a, Vector<N> b, float amt) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static Vector<P> Mix(Vector<P> a, Vector<Q> b, float amt) {
             return (1-amt)*a+amt*b;
         }
 
         /* Returns true if a and b point in the same direction, i.e., a = tb, t >= 0. */
-        static bool SameDirection(Vector<N> a, Vector<N> b, float eps = 0.00001) {
-            Vector<N> c = Vector<N>::Normalize(b) - Vector<N>::Normalize(a);
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static bool SameDirection(Vector<P> a, Vector<Q> b, float eps = 0.00001) {
+            Vector<P> c = Vector<Q>::Normalize(b) - Vector<P>::Normalize(a);
             if (c.Norm() < eps) {
                 return true;
             }
@@ -316,55 +405,59 @@ namespace Starsurge {
         }
 
         /* Returns true if a is parallel to b, i.e., a = tb. */
-        static bool Parallel(Vector<N> a, Vector<N> b, float eps = 0.00001) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static bool Parallel(Vector<P> a, Vector<Q> b, float eps = 0.00001) {
             return SameDirection(a,b) || SameDirection(a, -1.0f*b);
         }
 
-        static Vector<N> Lerp(Vector<N> start, Vector<N> end, float t) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static Vector<P> Lerp(Vector<P> start, Vector<Q> end, float t) {
             return start + t*(end - start);
         }
 
         static Vector<N> Normalize(const Vector<N>& v) {
-            Vector<N> ret = v;
+            Vector<N> ret(v);
             ret.Normalize();
             return ret;
         }
 
-        static Vector<N> Projection(const Vector<N> a, const Vector<N> b) {
-            return (Vector<N>::Dot(a,b)/Vector<N>::Dot(a,a))*a;
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static Vector<P> Projection(const Vector<P> a, const Vector<Q> b) {
+            return (Vector<P>::Dot(a,b)/Vector<P>::Dot(a,a))*a;
         }
-
-        static Vector<N> Rejection(const Vector<N> a, const Vector<N> b) {
-            return a - Vector<N>::Projection(a, b);
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static Vector<P> Rejection(const Vector<P> a, const Vector<Q> b) {
+            return a - Vector<P>::Projection(a, b);
         }
-
-        static Vector<N> Reflect(const Vector<N> incident, Vector<N> normal) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static Vector<P> Reflect(const Vector<P> incident, Vector<Q> normal) {
             // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/reflect.xhtml
-            return incident - 2.0f * Vector<N>::Dot(normal, incident) * normal;
+            return incident - 2.0f * Vector<P>::Dot(normal, incident) * normal;
         }
-
-        static Vector<N> Refract(const Vector<N> incident, Vector<N> normal, float eta) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static Vector<P> Refract(const Vector<P> incident, Vector<Q> normal, float eta) {
             // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/refract.xhtml
-            float k = 1.0 - eta*eta * (1.0 - std::pow(Vector<N>::Dot(normal, incident), 2))
+            float k = 1.0 - eta*eta * (1.0 - std::pow(Vector<P>::Dot(normal, incident), 2))
             if (k < 0.0) {
-                return Vector<N>::Zero();
+                return Vector<P>::Zero();
             }
-            return eta * incident - (eta * Vector<N>::Dot(normal, incident) + std::sqrt(k))*normal;
+            return eta * incident - (eta * Vector<P>::Dot(normal, incident) + std::sqrt(k))*normal;
         }
-
-        static Vector<N> FaceForward(const Vector<N> v, Vector<N> incident, Vector<N> ref) {
+        template <size_t P, size_t Q, size_t R, typename = std::enable_if_t<((P==Q&&P==R)||P==Dynamic||Q==Dynamic||R==Dynamic)>>
+        static Vector<P> FaceForward(const Vector<P> v, Vector<Q> incident, Vector<R> ref) {
             // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/faceforward.xhtml
-            if (Vector<N>::Dot(ref, incident) < 0) {
+            if (Vector<P>::Dot(ref, incident) < 0) {
                 return v;
             }
             return -v;
         }
 
         /* Skew the vector in the direction 'dir' by 'theta' degrees. It is assumed that 'perp' is perpindicular to 'dir'. */
-        static Vector<N> Skew(const Vector<N> v, Vector<N> dir, Vector<N> perp, float theta) {
+        template <size_t P, size_t Q, size_t R, typename = std::enable_if_t<((P==Q&&P==R)||P==Dynamic||Q==Dynamic||R==Dynamic)>>
+        static Vector<P> Skew(const Vector<P> v, Vector<Q> dir, Vector<R> perp, float theta) {
             dir.Normalize();
             perp.Normalize();
-            return v + dir * Vector<N>::Dot(perp, v) * std::tan(Radians(theta));
+            return v + dir * Vector<P>::Dot(perp, v) * std::tan(Radians(theta));
         }
 
         static std::vector<Vector<N>> GramSchmidt(std::vector<Vector<N>> vectors) {
@@ -389,27 +482,40 @@ namespace Starsurge {
             // https://en.wikipedia.org/wiki/Triple_product
             return Vector3::Dot(a, Vector3::CrossProduct(b, c));
         }
-        static float Dot(const Vector<N>& lhs, const Vector<N>& rhs) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static float Dot(const Vector<P>& lhs, const Vector<Q>& rhs) {
+            if (lhs.Size() != rhs.Size()) {
+                throw "Cannot take the dot product of two vector with differing dimensions.";
+            }
             float ret = 0;
-            for (size_t i = 0; i < N; ++i) {
+            for (size_t i = 0; i < lhs.Size(); ++i) {
                 ret += lhs[i]*rhs[i];
             }
             return ret;
         }
+
+        template <typename = std::enable_if_t<(N!=Dynamic)>>
         static Vector<N> Basis(size_t i) {
             Vector<N> ret;
             ret[i] = 1;
             return ret;
         }
+        static Vector<Dynamic> Basis(size_t dim, size_t i) {
+            Vector<Dynamic> ret = CreateVector<Dynamic>(dim,0);
+            ret[i] = 1;
+            return ret;
+        }
+
         static Vector<3> CrossProduct(Vector<3> a, Vector<3> b) {
             float x = a[1]*b[2] - a[2]*b[1];
             float y = -(a[0]*b[2] - a[2]*b[0]);
             float z = a[0]*b[1] - a[1]*b[0];
             return Vector<3>(x, y, z);
         }
-        static float AngleBetween(Vector<N> a, Vector<N> b) {
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static float AngleBetween(Vector<P> a, Vector<Q> b) {
             // a DOT b = ||a||*||b||*cos(theta)
-            float dot = Vector<N>::Dot(a, b);
+            float dot = Vector<P>::Dot(a, b);
             float normA = a.Norm();
             float normB = b.Norm();
             return Degrees(std::acos(dot/(normA*normB)));
@@ -423,9 +529,13 @@ namespace Starsurge {
         }
 
         // Operators:
-        Vector<N>& operator=(const Vector<N>& other) {
+        template <size_t P, typename = std::enable_if_t<(P==N||P==Dynamic||N==Dynamic)>>
+        Vector<N>& operator=(const Vector<P>& other) {
             if (this != &other) {
-                for (size_t i = 0; i < N; ++i) {
+                if (Size() != other.Size()) {
+                    throw "Cannot set vector to a different sized vector.";
+                }
+                for (size_t i = 0; i < this->n; ++i) {
                     this->data[i] = other.data[i];
                 }
             }
@@ -433,15 +543,23 @@ namespace Starsurge {
         }
         float operator [](int i) const { return this->data[i]; }
         float & operator [](int i) { return this->data[i]; }
-        Vector<N>& operator+=(const Vector<N>& rhs) {
-            for (size_t i=0; i < N; ++i) {
+        template <size_t P, typename = std::enable_if_t<(P==N||P==Dynamic||N==Dynamic)>>
+        Vector<N>& operator+=(const Vector<P>& rhs) {
+            if (Size() != rhs.Size()) {
+                throw "Cannot add vectors of differing size.";
+            }
+            for (size_t i=0; i < this->n; ++i) {
                 this->data[i] += rhs[i];
             }
             return *this;
         }
         friend Vector<N> operator+(Vector<N> lhs, const Vector<N>& rhs) { return lhs += rhs; }
-        Vector<N>& operator-=(const Vector<N>& rhs) {
-            for (size_t i=0; i < N; ++i) {
+        template <size_t P, typename = std::enable_if_t<(P==N||P==Dynamic||N==Dynamic)>>
+        Vector<N>& operator-=(const Vector<P>& rhs) {
+            if (Size() != rhs.Size()) {
+                throw "Cannot subtract vectors of differing size.";
+            }
+            for (size_t i=0; i < this->n; ++i) {
                 this->data[i] -= rhs[i];
             }
             return *this;
@@ -449,7 +567,7 @@ namespace Starsurge {
         friend Vector<N> operator-(const Vector<N>& rhs) { return -1.0f * rhs; }
         friend Vector<N> operator-(Vector<N> lhs, const Vector<N>& rhs) { return lhs -= rhs; }
         Vector<N>& operator*=(const float& rhs) {
-            for (size_t i=0; i < N; ++i) {
+            for (size_t i=0; i < this->n; ++i) {
                 this->data[i] *= rhs;
             }
             return *this;
@@ -457,14 +575,17 @@ namespace Starsurge {
         friend Vector<N> operator*(Vector<N> lhs, const float& rhs) { return lhs *= rhs; }
         friend Vector<N> operator*(const float& lhs, Vector<N> rhs) { return rhs *= lhs; }
         Vector<N>& operator/=(const float& rhs) {
-            for (size_t i=0; i < N; ++i) {
+            for (size_t i=0; i < this->n; ++i) {
                 this->data[i] /= rhs;
             }
             return *this;
         }
         friend Vector<N> operator/(Vector<N> lhs, const float& rhs) { return lhs /= rhs; }
         friend bool operator==(const Vector<N>& lhs, const Vector<N>& rhs) {
-            for (size_t i=0; i < N; ++i) {
+            if (lhs.Size() != rhs.Size()) {
+                return false;
+            }
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] != rhs[i]) {
                     return false;
                 }
@@ -473,8 +594,8 @@ namespace Starsurge {
         }
         friend bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) { return !(lhs == rhs); }
         friend Vector<N> operator==(const Vector<N>& lhs, float rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < this->n; ++i) {
                 if (lhs[i] == rhs) {
                     ret[i] = 1;
                 }
@@ -482,8 +603,8 @@ namespace Starsurge {
             return ret;
         }
         friend Vector<N> operator!=(const Vector<N>& lhs, float rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] != rhs) {
                     ret[i] = 1;
                 }
@@ -491,8 +612,11 @@ namespace Starsurge {
             return ret;
         }
         friend Vector<N> operator>(const Vector<N>& lhs, const Vector<N>& rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            if (lhs.Size() != rhs.Size()) {
+                throw "Cannot compare vectors of differing size.";
+            }
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] > rhs[i]) {
                     ret[i] = 1;
                 }
@@ -500,8 +624,8 @@ namespace Starsurge {
             return ret;
         }
         friend Vector<N> operator>(const Vector<N>& lhs, float rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] > rhs) {
                     ret[i] = 1;
                 }
@@ -509,8 +633,11 @@ namespace Starsurge {
             return ret;
         }
         friend Vector<N> operator>=(const Vector<N>& lhs, const Vector<N>& rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            if (lhs.Size() != rhs.Size()) {
+                throw "Cannot compare vectors of differing size.";
+            }
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] >= rhs[i]) {
                     ret[i] = 1;
                 }
@@ -518,8 +645,8 @@ namespace Starsurge {
             return ret;
         }
         friend Vector<N> operator>=(const Vector<N>& lhs, float rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] >= rhs) {
                     ret[i] = 1;
                 }
@@ -527,8 +654,11 @@ namespace Starsurge {
             return ret;
         }
         friend Vector<N> operator<(const Vector<N>& lhs, const Vector<N>& rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            if (lhs.Size() != rhs.Size()) {
+                throw "Cannot compare vectors of differing size.";
+            }
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] < rhs[i]) {
                     ret[i] = 1;
                 }
@@ -536,8 +666,8 @@ namespace Starsurge {
             return ret;
         }
         friend Vector<N> operator<(const Vector<N>& lhs, float rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] < rhs) {
                     ret[i] = 1;
                 }
@@ -545,8 +675,11 @@ namespace Starsurge {
             return ret;
         }
         friend Vector<N> operator<=(const Vector<N>& lhs, const Vector<N>& rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            if (lhs.Size() != rhs.Size()) {
+                throw "Cannot compare vectors of differing size.";
+            }
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] <= rhs[i]) {
                     ret[i] = 1;
                 }
@@ -554,8 +687,8 @@ namespace Starsurge {
             return ret;
         }
         friend Vector<N> operator<=(const Vector<N>& lhs, float rhs) {
-            Vector<N> ret;
-            for (size_t i=0; i < N; ++i) {
+            Vector<N> ret = CreateVector<N>(lhs.Size(), 0);
+            for (size_t i=0; i < lhs.Size(); ++i) {
                 if (lhs[i] <= rhs) {
                     ret[i] = 1;
                 }
@@ -607,7 +740,7 @@ namespace Starsurge {
                 return (*this);
             }
         private:
-            float m_data[N];
+            float * m_data;
         };
 
         template <size_t...Idx>
@@ -755,12 +888,12 @@ namespace Starsurge {
                 return data[i];
             }
 
-            float m_data[N];
+            float * m_data;
             template<size_t...> friend class swizzle;
         };
 
         union {
-            float data[N];
+            float * data;
             std::conditional_t<(N==2 || N==3 || N==4), swizzleScalar<0>, Empty> x, r;
             std::conditional_t<(N==2 || N==3 || N==4), swizzleScalar<1>, Empty> y, g;
             std::conditional_t<(N==3 || N==4), swizzleScalar<2>, Empty> z, b;
@@ -1102,6 +1235,18 @@ namespace Starsurge {
             std::conditional_t<(N==4), swizzle<3, 3, 3, 2>, Empty> wwwz, aaab;
             std::conditional_t<(N==4), swizzle<3, 3, 3, 3>, Empty> wwww, aaaa;
         };
+    private:
+        size_t n;
+        template <size_t P>
+        static typename std::enable_if<(P==Dynamic), Vector<P>>::type CreateVector(size_t size, float value = 0) {
+            Vector<Dynamic> ret(size, value);
+            return ret;
+        }
+        template <size_t P>
+        static typename std::enable_if<(P!=Dynamic), Vector<P>>::type CreateVector(size_t size, float value = 0) {
+            Vector<P> ret(value);
+            return ret;
+        }
     };
 
     using Vector2 = Vector<2>;
