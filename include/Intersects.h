@@ -6,6 +6,8 @@
 #include "AABB.h"
 #include "Sphere.h"
 #include "Rect.h"
+#include "Triangle.h"
+#include "Quad.h"
 
 namespace Starsurge {
     // Intersection with rectangles.

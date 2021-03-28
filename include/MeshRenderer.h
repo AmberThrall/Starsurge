@@ -8,8 +8,11 @@ namespace Starsurge {
     public:
         MeshRenderer(Mesh * t_mesh, Material * t_mat);
 
+        void SetWireframe(bool wire);
+
         void Render();
     private:
+        bool wireframe;
         Mesh * mesh;
         Material * material;
     };

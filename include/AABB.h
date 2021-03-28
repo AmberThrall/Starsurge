@@ -2,6 +2,7 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "Sphere.h"
+#include "Quad.h"
 
 namespace Starsurge {
     enum AABBCorner {
@@ -13,15 +14,6 @@ namespace Starsurge {
         NEAR_LEFT_BOTTOM,
         NEAR_LEFT_TOP,
         NEAR_RIGHT_TOP
-    };
-
-    enum AABBFace {
-        FACE_TOP,
-        FACE_BOTTOM,
-        FACE_LEFT,
-        FACE_RIGHT,
-        FACE_NEAR,
-        FACE_FAR
     };
 
     class AABB {

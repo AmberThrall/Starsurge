@@ -1,5 +1,7 @@
 #include "../include/AssetManager.h"
 #include "../include/stb_image.h"
+#include "../include/Triangle.h"
+#include "../include/Quad.h"
 #include "../include/AABB.h"
 #include "../include/Sphere.h"
 
@@ -56,9 +58,12 @@ bool Starsurge::AssetManager::Load(std::string path) {
 }
 
 bool Starsurge::AssetManager::LoadBuiltins() {
+    Log("AssetManager::LoadBuiltins()");
     // Meshes
-    meshes["Builtin/Triangle"] = Mesh::Triangle(Vector3(0,0,0), Vector3(0,1,0), Vector3(1,1,0));
-    meshes["Builtin/Quad"] = Mesh::Quad(Vector3(-1,-1,0), Vector3(1,-1,0), Vector3(1,1,0), Vector3(-1,1,0));
+    this->planeMesh = Plane::XZ().CreateMesh(Vector2(-0.5,0.5), Vector2(-0.5,0.5));
+    meshes["Builtin/Plane"] = &this->planeMesh;
+    this->gridMesh = Plane::XZ().CreateMesh(Vector<10>::Linspace(-1,1), Vector<10>::Linspace(-1,1));
+    meshes["Builtin/Grid"] = &this->gridMesh;
     this->cubeMesh = AABB(Vector3(-0.5,-0.5,-0.5),Vector3(0.5,0.5,0.5)).CreateMesh();
     meshes["Builtin/Cube"] = &this->cubeMesh;
     this->sphereMesh = Sphere(Vector3(0,0,0), 1).CreateMesh(3);

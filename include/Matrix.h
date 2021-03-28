@@ -200,7 +200,7 @@ namespace Starsurge {
             return count;
         }
 
-        std::string ToString() const {
+        std::string ToString(unsigned int ndigits = 3) const {
             std::string ret = std::to_string(NumRows())+"x"+std::to_string(NumColumns());
 
             // Get the largest sized (string-wise) cell.
@@ -208,7 +208,7 @@ namespace Starsurge {
             size_t maxLength = 0;
             for (size_t r = 0; r < this->m; ++r) {
                 for (size_t c = 0; c < this->n; ++c) {
-                    size_t entryLength = Starsurge::ToString(this->data[r*this->n+c], 3).length();
+                    size_t entryLength = Starsurge::ToString(this->data[r*this->n+c], ndigits).length();
                     if (entryLength > maxLength) {
                         maxLength = entryLength;
                     }
@@ -217,7 +217,7 @@ namespace Starsurge {
             for (size_t r = 0; r < this->m; ++r) {
                 ret += "\n";
                 for (size_t c = 0; c < this->n; ++c) {
-                    std::string entry = Starsurge::ToString(this->data[r*this->n+c], 3);
+                    std::string entry = Starsurge::ToString(this->data[r*this->n+c], ndigits);
                     for (size_t spaces = entry.length(); spaces < maxLength+spacing; ++spaces) { ret += " "; }
                     ret += entry;
                 }

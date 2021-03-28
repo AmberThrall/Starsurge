@@ -95,18 +95,23 @@ Starsurge::Vector3 Starsurge::Plane::GetNormal() const {
     return Vector3(this->a, this->b, this->c);
 }
 
-std::string Starsurge::Plane::ToString() const {
-    std::string ret = "Plane {"+std::to_string(this->a)+"x ";
-    if (this->b < 0) ret += "- "+std::to_string(std::abs(this->b))+"y ";
-    else ret += "+ "+std::to_string(this->b)+"y ";
-    if (this->c < 0) ret += "- "+std::to_string(std::abs(this->c))+"z ";
-    else ret += "+ "+std::to_string(this->c)+"z ";
-    if (this->d < 0) ret += "- "+std::to_string(std::abs(this->d));
-    else ret += "+ "+std::to_string(this->d);
-    ret += " = 0}";
+std::string Starsurge::Plane::ToString(unsigned int ndigits) const {
+    std::string ret = "Plane {";
+    if (this->a != 0) (this->a == 1 ? "" : Starsurge::ToString(this->a, ndigits, false))+"x ";
+    if (this->b < 0) ret += "- "+(this->b == -1 ? "" : Starsurge::ToString(std::abs(this->b), ndigits, false))+"y ";
+    else if (this->b != 0) ret += (this->a == 0 ? "" : "+ ")+(this->b == 1 ? "" : Starsurge::ToString(this->b, ndigits, false))+"y ";
+    if (this->c < 0) ret += "- "+(this->c == -1 ? "" : Starsurge::ToString(std::abs(this->c), ndigits, false))+"z ";
+    else if (this->c != 0) ret += (this->b == 0 ? "" : "+ ")+(this->c == 1 ? "" : Starsurge::ToString(this->c, ndigits, false))+"z ";
+    if (this->d < 0) ret += "- "+Starsurge::ToString(std::abs(this->d), ndigits, false)+" ";
+    else if (this->d != 0) ret += (this->c == 0 ? "" : "+ ")+Starsurge::ToString(this->d, ndigits, false)+" ";
+    ret += "= 0}";
     return ret;
 }
 
 Starsurge::Vector3 Starsurge::Plane::Project(const Vector3 v) const {
     return v - Vector3::Dot(v, GetNormal())*GetNormal();
+}
+
+Starsurge::Mesh Starsurge::Plane::CreateMesh(float size1, float size2) const {
+    return CreateMesh(Vector2(-size1/2, size1/2), Vector2(-size2/2, size2/2));
 }

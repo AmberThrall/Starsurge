@@ -21,5 +21,10 @@ namespace Starsurge {
 
         Vector3 start;
         Vector3 end;
+
+        friend bool operator==(const Line& lhs, const Line& rhs) {
+            return (lhs.start == rhs.start && lhs.end == rhs.end);
+        }
+        friend bool operator!=(const Line& lhs, const Line& rhs) { return !(lhs == rhs); }
     };
 };

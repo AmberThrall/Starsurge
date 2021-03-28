@@ -10,6 +10,11 @@
 Starsurge::MeshRenderer::MeshRenderer(Mesh * t_mesh, Material * t_mat) : Component(typeid(MeshRenderer).name()) {
     this->mesh = t_mesh;
     this->material = t_mat;
+    this->wireframe = false;
+}
+
+void Starsurge::MeshRenderer::SetWireframe(bool wire) {
+    this->wireframe = wire;
 }
 
 void Starsurge::MeshRenderer::Render() {
@@ -48,6 +53,7 @@ void Starsurge::MeshRenderer::Render() {
         this->material->Apply(i);
 
         // Actually render the mesh.
+        if (this->wireframe) { glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); }
         glBindVertexArray(this->mesh->GetVAO());
         if (this->mesh->NumberOfIndices() > 0) {
             glDrawElements(GL_TRIANGLES, this->mesh->NumberOfIndices(), GL_UNSIGNED_INT, 0);
@@ -56,5 +62,6 @@ void Starsurge::MeshRenderer::Render() {
             glDrawArrays(GL_TRIANGLES, 0, this->mesh->NumberOfVertices());
         }
         glBindVertexArray(0);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 }

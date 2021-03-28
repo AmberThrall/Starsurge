@@ -37,7 +37,8 @@ protected:
         cube = new Entity("Cube");
         Material * cubeMaterial = new Material(AssetManager::Inst().GetShader("Builtin/Phong"));
         cube->AddComponent<Transform>(new Transform(Vector3(0,0,0), EulerAngles(0,0,0), Vector3(1,1,1)));
-        cube->AddComponent<MeshRenderer>(new MeshRenderer(AssetManager::Inst().GetMesh("Builtin/Cube"), cubeMaterial));
+        cube->AddComponent<MeshRenderer>(new MeshRenderer(&yzGrid, cubeMaterial));
+        cube->FindComponent<MeshRenderer>()->SetWireframe(true);
         Scene::Inst().AddEntity(cube);
         selectedEntity = cube;
         cubeMaterial->GetUniform(0, "material.diffuse")->SetData(AssetManager::Inst().GetTexture("Builtin/White"));
@@ -243,6 +244,7 @@ private:
     Entity * cube;
     Grid * grid;
     Entity * selectedEntity;
+    Mesh yzGrid;
 
     // Gui Stuff
     bool firstUpdate;

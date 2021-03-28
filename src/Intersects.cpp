@@ -143,31 +143,18 @@ bool Starsurge::Intersects(Sphere sphere, Ray ray, Vector3 & point) {
 }
 
 bool Starsurge::Intersects(Line line1, Line line2, Vector3 & point) {
-    // https://math.stackexchange.com/questions/270767/find-intersection-of-two-3d-lines/271366
-    // Test the trivial cases.
-    if (line2.Contains(line1.start)) {
-        point = line1.start;
-        return true;
-    }
-    if (line1.Contains(line2.start)) {
-        point = line2.start;
-        return true;
-    }
-
-    Vector3 g = line2.start-line1.start;
-    Vector3 h = Vector3::CrossProduct(line2.end-line2.start, g);
-    Vector3 k = Vector3::CrossProduct(line2.end-line2.start, line1.end-line1.start);
-    if (h.Norm() == 0 || k.Norm() == 0) {
-        return false;
-    }
-
-    Vector3 i = (h.Norm()/k.Norm()) * (line1.end-line1.start);
-    // Test if h and k point in the same direction.
-    float sign = Vector3::SameDirection(h, k) ? 1 : -1;
-
-    Vector3 p = line1.start + sign*i;
-    if (line1.Contains(p) && line2.Contains(p)) {
-        point = p;
+    // s1 + t(e1-s1) = s2 + t(e2-s2)
+    // t(e1-s1) - t(e2-s2) = s2 - s1
+    // t(e1-s1-e2+s2) = s2 - s1
+    // t = (s2-s1).x/(e1-s1-e2+s2).x, t = (s2-s1).y/(e1-s1-e2+s2).y, ...
+    Vector3 sdiff = line2.start - line1.start;
+    Vector3 ddiff = line1.end-line1.start-line2.end+line2.start;
+    float t1 = sdiff.x / ddiff.x;
+    float t2 = sdiff.y / ddiff.y;
+    float t3 = sdiff.z / ddiff.z;
+    // If they intersect, all t-values should be equal and lie in [0,1].
+    if (std::abs(t1-t2) < 0.00001 && std::abs(t1-t3) < 0.00001 && t1 >=0 && t1 <= 1) {
+        point = line1.GetPoint(t1);
         return true;
     }
     return false;

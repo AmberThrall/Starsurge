@@ -24,10 +24,6 @@ namespace Starsurge {
         unsigned int NumberOfIndices();
         std::vector<Vertex> GetVertices();
         std::vector<unsigned int> GetIndices();
-
-        static Mesh * Triangle(Vector3 pt1, Vector3 pt2, Vector3 pt3);
-        static Mesh * Quad(Vector3 pt1, Vector3 pt2, Vector3 pt3, Vector3 pt4);
-        static Mesh * Cube();
     private:
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
