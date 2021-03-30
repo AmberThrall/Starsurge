@@ -21,7 +21,7 @@ namespace Starsurge {
         void SetBounds(float xmin, float ymin, float xmax, float ymax);
         void SetBounds(std::vector<Vector2> points);
 
-        std::string ToString() const;
+        std::string ToString(unsigned int ndigits = 3) const;
 
         bool IsNull() const;
         Vector2 GetMinimum() const;
@@ -35,15 +35,20 @@ namespace Starsurge {
         bool Contains(Rect r) const;
         Vector2 ClosestPoint(const Vector2 point) const;
 
-        Rect Expand(float amount);
-        Rect Expand(Vector2 amount);
+        void Expand(float amount);
+        void Expand(Vector2 amount);
+        void SetNull();
 
         static Rect Null();
-        static Rect Union(const Rect r, const Vector2 pt);
-        static Rect Union(const Rect r, const std::vector<Vector2> pts);
-        static Rect Union(const Rect r1, const Rect r2);
+        void Union(const Vector2 pt);
+        void Union(const std::vector<Vector2> pts);
+        void Union(const Rect r2);
+        void Subtract(const Vector2 pt);
+        void Subtract(const std::vector<Vector2> pts);
+        void Subtract(const Rect r2);
+        void Intersection(const Rect r2);
 
-        Rect Transform(const Matrix2 matrix);
+        void Transform(const Matrix2 matrix);
 
         Rect& operator=(const Rect& other) {
             if (this != &other) {
@@ -55,16 +60,18 @@ namespace Starsurge {
             if (IsNull() || rhs.IsNull()) {
                 return *this;
             }
-            this->min += rhs.GetMinimum();
-            this->max += rhs.GetMaximum();
+            this->minimum += rhs.GetMinimum();
+            this->maximum += rhs.GetMaximum();
+            CheckBounds(false);
             return *this;
         }
         Rect& operator+=(const Vector2& rhs) {
             if (IsNull()) {
                 return *this;
             }
-            this->min += rhs;
-            this->max += rhs;
+            this->minimum += rhs;
+            this->maximum += rhs;
+            CheckBounds(false);
             return *this;
         }
         friend Rect operator+(Rect lhs, const Rect& rhs) { return lhs += rhs; }
@@ -73,16 +80,18 @@ namespace Starsurge {
             if (IsNull() || rhs.IsNull()) {
                 return *this;
             }
-            this->min -= rhs.GetMinimum();
-            this->max -= rhs.GetMaximum();
+            this->minimum -= rhs.GetMinimum();
+            this->maximum -= rhs.GetMaximum();
+            CheckBounds(false);
             return *this;
         }
         Rect& operator-=(const Vector2& rhs) {
             if (IsNull()) {
                 return *this;
             }
-            this->min -= rhs;
-            this->max -= rhs;
+            this->minimum -= rhs;
+            this->maximum -= rhs;
+            CheckBounds(false);
             return *this;
         }
         friend Rect operator-(Rect rhs) { return -1.0f * rhs; }
@@ -92,8 +101,9 @@ namespace Starsurge {
             if (IsNull()) {
                 return *this;
             }
-            this->min *= rhs;
-            this->max *= rhs;
+            this->minimum *= rhs;
+            this->maximum *= rhs;
+            CheckBounds(false);
             return *this;
         }
         friend Rect operator*(Rect lhs, const float rhs) { return lhs *= rhs; }
@@ -102,8 +112,9 @@ namespace Starsurge {
             if (IsNull()) {
                 return *this;
             }
-            this->min /= rhs;
-            this->max /= rhs;
+            this->minimum /= rhs;
+            this->maximum /= rhs;
+            CheckBounds(false);
             return *this;
         }
         friend Rect operator/(Rect lhs, const float rhs) { return lhs /= rhs; }
@@ -118,9 +129,9 @@ namespace Starsurge {
         }
         friend bool operator!=(const Rect& lhs, const Rect& rhs) { return !(lhs == rhs); }
     private:
-        Vector2 min;
-        Vector2 max;
+        Vector2 minimum;
+        Vector2 maximum;
         bool isNull;
-        void CheckBounds();
+        void CheckBounds(bool raiseError = true);
     };
 }

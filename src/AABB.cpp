@@ -1,10 +1,9 @@
+#include <map>
 #include "../include/AABB.h"
 #include "../include/Logging.h"
 
 Starsurge::AABB::AABB() {
-    this->isNull = true;
-    this->minimum = Vector3(0,0,0);
-    this->maximum = Vector3(0,0,0);
+    SetNull();
 }
 Starsurge::AABB::AABB(const AABB& copy) {
     SetBounds(copy);
@@ -25,9 +24,9 @@ void Starsurge::AABB::SetBounds(const AABB& copy) {
     this->isNull = copy.IsNull();
     CheckBounds();
 }
-void Starsurge::AABB::SetBounds(float mx, float my, float mz, float Mx, float My, float Mz) {
-    this->minimum = Vector3(mx, my, mz);
-    this->maximum = Vector3(Mx, My, Mz);
+void Starsurge::AABB::SetBounds(float xmin, float ymin, float zmin, float xmax, float ymax, float zmax) {
+    this->minimum = Vector3(xmin, ymin, zmin);
+    this->maximum = Vector3(xmax, ymax, zmax);
     this->isNull = false;
     CheckBounds();
 }
@@ -39,9 +38,7 @@ void Starsurge::AABB::SetBounds(Vector3 min, Vector3 max) {
 }
 void Starsurge::AABB::SetBounds(std::vector<Vector3> points) {
     if (points.size() == 0) {
-        this->isNull = true;
-        this->minimum = Vector3(0,0,0);
-        this->maximum = Vector3(0,0,0);
+        SetNull();
         return;
     }
 
@@ -78,30 +75,12 @@ bool Starsurge::AABB::Contains(const AABB box) const {
             min.z >= this->minimum.z && max.z <= this->maximum.z);
 }
 
-bool Starsurge::AABB::Contains(const Sphere sphere) const {
-    if (IsNull()) {
-        return false;
-    }
-
-    // Get the 6 maximum/minimum points on the sphere.
-    Vector3 up = sphere.position + Vector3::Up()*sphere.radius;
-    Vector3 down = sphere.position - Vector3::Up()*sphere.radius;
-    Vector3 right = sphere.position + Vector3::Right()*sphere.radius;
-    Vector3 left = sphere.position - Vector3::Right()*sphere.radius;
-    Vector3 forward = sphere.position + Vector3::Forward()*sphere.radius;
-    Vector3 backward = sphere.position - Vector3::Forward()*sphere.radius;
-
-    // Test each one.
-    return (Contains(up) && Contains(down) && Contains(right) && Contains(left) &&
-            Contains(forward) && Contains(backward));
-}
-
 Starsurge::Vector3 Starsurge::AABB::GetCenter() const {
     return (this->maximum + this->minimum) / 2;
 }
 
 Starsurge::Vector3 Starsurge::AABB::GetSize() const {
-    return Vector3::Abs(this->maximum - this->minimum);
+    return this->maximum - this->minimum;
 }
 
 float Starsurge::AABB::GetVolume() const {
@@ -139,6 +118,70 @@ std::vector<Starsurge::Vector3> Starsurge::AABB::GetAllCorners() const {
     ret.push_back(GetCorner(NEAR_RIGHT_TOP));
     return ret;
 }
+Starsurge::Line Starsurge::AABB::GetEdge(AABBCorner corner1, AABBCorner corner2) const {
+    std::map<AABBCorner, std::vector<AABBCorner>> validEdges;
+    validEdges[FAR_LEFT_BOTTOM] = { FAR_LEFT_TOP, FAR_RIGHT_BOTTOM, NEAR_LEFT_BOTTOM };
+    validEdges[FAR_LEFT_TOP] = { FAR_LEFT_BOTTOM, FAR_RIGHT_TOP, NEAR_LEFT_TOP };
+    validEdges[FAR_RIGHT_TOP] = { FAR_LEFT_TOP, FAR_RIGHT_BOTTOM, NEAR_RIGHT_TOP };
+    validEdges[FAR_RIGHT_BOTTOM] = { FAR_LEFT_BOTTOM, FAR_RIGHT_TOP, NEAR_RIGHT_BOTTOM };
+    validEdges[NEAR_RIGHT_BOTTOM] = { NEAR_LEFT_BOTTOM, NEAR_RIGHT_TOP, FAR_RIGHT_BOTTOM };
+    validEdges[NEAR_LEFT_BOTTOM] = { NEAR_RIGHT_BOTTOM, NEAR_LEFT_TOP, FAR_LEFT_BOTTOM };
+    validEdges[NEAR_LEFT_TOP] = { NEAR_RIGHT_TOP, NEAR_LEFT_BOTTOM, FAR_LEFT_TOP };
+    validEdges[NEAR_RIGHT_TOP] = { NEAR_LEFT_TOP, NEAR_RIGHT_BOTTOM, FAR_RIGHT_TOP };
+
+    if (ElemOf<AABBCorner>(validEdges[corner1], corner2)) {
+        return Line(GetCorner(corner1), GetCorner(corner2));
+    }
+    else {
+        Error("Not a valid edge. Corners are not connected.");
+        return Line(Vector3(0,0,0),Vector3(0,0,0));
+    }
+}
+std::vector<Starsurge::Line> Starsurge::AABB::GetAllEdges() const {
+    std::map<AABBCorner, std::vector<AABBCorner>> validEdges;
+    validEdges[FAR_LEFT_BOTTOM] = { FAR_LEFT_TOP, FAR_RIGHT_BOTTOM, NEAR_LEFT_BOTTOM };
+    validEdges[FAR_LEFT_TOP] = { FAR_LEFT_BOTTOM, FAR_RIGHT_TOP, NEAR_LEFT_TOP };
+    validEdges[FAR_RIGHT_TOP] = { FAR_LEFT_TOP, FAR_RIGHT_BOTTOM, NEAR_RIGHT_TOP };
+    validEdges[FAR_RIGHT_BOTTOM] = { FAR_LEFT_BOTTOM, FAR_RIGHT_TOP, NEAR_RIGHT_BOTTOM };
+    validEdges[NEAR_RIGHT_BOTTOM] = { NEAR_LEFT_BOTTOM, NEAR_RIGHT_TOP, FAR_RIGHT_BOTTOM };
+    validEdges[NEAR_LEFT_BOTTOM] = { NEAR_RIGHT_BOTTOM, NEAR_LEFT_TOP, FAR_LEFT_BOTTOM };
+    validEdges[NEAR_LEFT_TOP] = { NEAR_RIGHT_TOP, NEAR_LEFT_BOTTOM, FAR_LEFT_TOP };
+    validEdges[NEAR_RIGHT_TOP] = { NEAR_LEFT_TOP, NEAR_RIGHT_BOTTOM, FAR_RIGHT_TOP };
+
+    std::vector<Line> edges;
+    for (auto const& x : validEdges) {
+        for (unsigned int i = 0; i < x.second.size(); ++i) {
+            Line line(GetCorner(x.first), GetCorner(x.second[i]));
+            if (!ElemOf<Line>(edges, line)) {
+                edges.push_back(line);
+            }
+        }
+    }
+    return edges;
+}
+Starsurge::Quad Starsurge::AABB::GetFace(AABBFace face) const {
+    switch (face) {
+        case LEFT_FACE: return Quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_LEFT_TOP), GetCorner(NEAR_LEFT_TOP), GetCorner(NEAR_LEFT_BOTTOM), Vector3(0,0,-1));
+        case TOP_FACE: return Quad(GetCorner(FAR_LEFT_TOP), GetCorner(FAR_RIGHT_TOP), GetCorner(NEAR_RIGHT_TOP), GetCorner(NEAR_LEFT_TOP), Vector3(0,1,0));
+        case RIGHT_FACE: return Quad(GetCorner(FAR_RIGHT_BOTTOM), GetCorner(FAR_RIGHT_TOP), GetCorner(NEAR_RIGHT_TOP), GetCorner(NEAR_RIGHT_BOTTOM), Vector3(0,0,1));
+        case BOTTOM_FACE: return Quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_RIGHT_BOTTOM), GetCorner(NEAR_RIGHT_BOTTOM), GetCorner(NEAR_LEFT_BOTTOM), Vector3(0,-1,0));
+        case NEAR_FACE: return Quad(GetCorner(NEAR_LEFT_BOTTOM), GetCorner(NEAR_RIGHT_BOTTOM), GetCorner(NEAR_RIGHT_TOP), GetCorner(NEAR_LEFT_TOP), Vector3(-1,0,0));
+        case FAR_FACE: return Quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_RIGHT_BOTTOM), GetCorner(FAR_RIGHT_TOP), GetCorner(FAR_LEFT_TOP), Vector3(1,0,0));
+        default:
+            Error("Invalid face in AABB::GetFace(). Options: LEFT_FACE, TOP_FACE, RIGHT_FACE, BOTTOM_FACE, NEAR_FACE, FAR_FACE");
+            return Quad(Vector3(0,0,0), Vector3(0,0,0), Vector3(0,0,0), Vector3(0,0,0), Vector3(0,0,0));
+    }
+}
+std::vector<Starsurge::Quad> Starsurge::AABB::GetAllFaces() const {
+    std::vector<Quad> faces;
+    faces.push_back(GetFace(LEFT_FACE));
+    faces.push_back(GetFace(TOP_FACE));
+    faces.push_back(GetFace(RIGHT_FACE));
+    faces.push_back(GetFace(BOTTOM_FACE));
+    faces.push_back(GetFace(NEAR_FACE));
+    faces.push_back(GetFace(FAR_FACE));
+    return faces;
+}
 
 Starsurge::Vector3 Starsurge::AABB::GetMinimum() const {
     return this->minimum;
@@ -156,69 +199,151 @@ Starsurge::Vector3 Starsurge::AABB::ClosestPoint(const Vector3 point) const {
     return Vector3::Clamp(point, this->minimum, this->maximum);
 }
 
-std::string Starsurge::AABB::ToString() {
+void Starsurge::AABB::Expand(float amount) {
+    Expand(Vector3(amount,amount,amount));
+}
+void Starsurge::AABB::Expand(Vector3 amount) {
+    this->minimum -= amount;
+    this->maximum += amount;
+}
+void Starsurge::AABB::SetNull() {
+    this->minimum = Vector3(0,0,0);
+    this->maximum = Vector3(0,0,0);
+    this->isNull = true;
+}
+
+std::string Starsurge::AABB::ToString(unsigned int ndigits) {
     if (IsNull()) {
         return "AABB {Null}";
     }
-    return "AABB {min = "+this->minimum.ToString()+", max = "+this->maximum.ToString() + "}";
+    return "AABB {min = "+this->minimum.ToString(ndigits)+", max = "+this->maximum.ToString(ndigits) + "}";
 }
 
 Starsurge::AABB Starsurge::AABB::Null() {
     AABB ret;
     return ret;
 }
-Starsurge::AABB Starsurge::AABB::Union(const AABB box, const Vector3 pt) {
-    if (box.IsNull()) {
-        return AABB(pt, pt);
+void Starsurge::AABB::Union(const Vector3 pt) {
+    if (IsNull()) {
+        this->minimum = pt;
+        this->maximum = pt;
+        this->isNull = false;
+        return;
     }
-    return AABB(Vector3::Min(box.GetMinimum(), pt), Vector3::Max(box.GetMaximum(), pt));
+    this->minimum = Vector3::Min(this->minimum, pt);
+    this->maximum = Vector3::Max(this->maximum, pt);
 }
-
-Starsurge::AABB Starsurge::AABB::Union(const AABB box, const std::vector<Vector3> pts) {
-    AABB ret(box);
+void Starsurge::AABB::Union(const std::vector<Vector3> pts) {
     for (unsigned int i = 0; i < pts.size(); ++i) {
-        ret = AABB::Union(ret, pts[i]);
+        Union(pts[i]);
     }
-    return ret;
 }
-
-Starsurge::AABB Starsurge::AABB::Union(const AABB boxA, const AABB boxB) {
-    if (boxA.IsNull()) {
-        return boxB;
+void Starsurge::AABB::Union(const AABB boxB) {
+    if (IsNull()) {
+        SetBounds(boxB);
+        return;
     }
     if (boxB.IsNull()) {
-        return boxA;
+        return;
     }
-    return AABB(Vector3::Min(boxA.GetMinimum(), boxB.GetMinimum()), Vector3::Max(boxA.GetMaximum(), boxB.GetMaximum()));
+    this->minimum = Vector3::Min(this->minimum, boxB.GetMinimum());
+    this->maximum = Vector3::Max(this->maximum, boxB.GetMaximum());
 }
 
-Starsurge::AABB Starsurge::AABB::Transform(const Matrix3 matrix) {
+void Starsurge::AABB::Subtract(const Vector3 pt) {
     if (IsNull()) {
-        return AABB::Null();
+        return;
     }
 
-    AABB ret;
+    if (this->minimum == this->maximum && this->minimum == pt) {
+        SetNull();
+        return;
+    }
+
+    if (!Contains(pt)) {
+        return;
+    }
+
+    // Get the minimal difference in x,y,z in the 6 faces.
+    float diff1 = pt.x-this->minimum.x;
+    float diff2 = pt.y-this->minimum.y;
+    float diff3 = pt.z-this->minimum.z;
+    float diff4 = this->maximum.x-pt.x;
+    float diff5 = this->maximum.y-pt.y;
+    float diff6 = this->maximum.z-pt.z;
+    float min = Min(Min(Min(diff1, diff2), Min(diff3, diff4)), Min(diff5,diff6));
+
+    // Move whatever face has the least distance to go. This should maximize volume.
+    float eps = 0.00001; // Add a bit of wiggle room so the point doesn't actually lie in the AABB anymore.
+    if (min == diff1) { this->minimum.x = pt.x+eps; }
+    else if (min == diff2) { this->minimum.y = pt.y+eps; }
+    else if (min == diff3) { this->minimum.z = pt.z+eps; }
+    else if (min == diff4) { this->maximum.x = pt.x-eps; }
+    else if (min == diff5) { this->maximum.y = pt.y-eps; }
+    else { this->maximum.z = pt.z-eps; }
+    CheckBounds(false);
+}
+void Starsurge::AABB::Subtract(const std::vector<Vector3> pts) {
+    for (unsigned int i = 0; i < pts.size(); ++i) {
+        if (IsNull())
+            break;
+        Subtract(pts[i]);
+    }
+}
+void Starsurge::AABB::Subtract(const AABB boxB) {
+    if (IsNull() || boxB.IsNull()) {
+        return;
+    }
+
+    AABB intersection(*this);
+    intersection.Intersection(boxB);
+    if (intersection.IsNull()) {
+        if (Contains(intersection.GetMinimum())) { Subtract(intersection.GetMinimum()); }
+        else { Subtract(intersection.GetMaximum()); }
+    }
+}
+
+void Starsurge::AABB::Intersection(const AABB boxB) {
+    if (IsNull() || boxB.IsNull()) {
+        SetNull();
+        return;
+    }
+
+    if (this->minimum.x <= boxB.GetMaximum().x && this->maximum.x >= boxB.GetMinimum().x &&
+        this->minimum.y <= boxB.GetMaximum().y && this->maximum.y >= boxB.GetMinimum().y &&
+        this->minimum.z <= boxB.GetMaximum().z && this->maximum.z >= boxB.GetMinimum().z) {
+        this->minimum = Vector3::Max(this->minimum, boxB.GetMinimum());
+        this->maximum = Vector3::Min(this->maximum, boxB.GetMaximum());
+    }
+    else {
+        SetNull();
+    }
+}
+
+void Starsurge::AABB::Transform(const Matrix3 matrix) {
+    if (IsNull()) {
+        return;
+    }
+
+    SetNull();
     AABBCorner corners[] = { FAR_LEFT_BOTTOM, NEAR_LEFT_BOTTOM, NEAR_LEFT_TOP, FAR_LEFT_TOP, FAR_RIGHT_TOP, NEAR_RIGHT_TOP,
         NEAR_RIGHT_BOTTOM, FAR_RIGHT_BOTTOM };
     for (unsigned int i = 0; i < 8; ++i) {
-        ret = AABB::Union(ret, matrix * GetCorner(corners[i]));
+        Union(matrix * GetCorner(corners[i]));
     }
-    return ret;
 }
 
-Starsurge::AABB Starsurge::AABB::Transform(const Matrix4 matrix) {
+void Starsurge::AABB::Transform(const Matrix4 matrix) {
     if (IsNull()) {
-        return AABB::Null();
+        return;
     }
 
-    AABB ret;
+    SetNull();
     AABBCorner corners[] = { FAR_LEFT_BOTTOM, NEAR_LEFT_BOTTOM, NEAR_LEFT_TOP, FAR_LEFT_TOP, FAR_RIGHT_TOP, NEAR_RIGHT_TOP,
         NEAR_RIGHT_BOTTOM, FAR_RIGHT_BOTTOM };
     for (unsigned int i = 0; i < 8; ++i) {
-        Vector4 corner = Vector4(GetCorner(corners[i]), 1);
-        ret = AABB::Union(ret, (matrix * corner).SubVector<3>());
+        Union((matrix * Vector4(GetCorner(corners[i]), 1)).Resize<3>());
     }
-    return ret;
 }
 
 Starsurge::Mesh Starsurge::AABB::CreateMesh() const {
@@ -356,7 +481,7 @@ Starsurge::Mesh Starsurge::AABB::CreateMesh() const {
     Vector3 size = GetSize();
     for (size_t i = 0; i < Positions.size(); ++i) {
         Vertex v;
-        v.Position = Vector3::EntrywiseProduct(Positions[i], size) + GetCenter();
+        v.Position = Vector3::EntrywiseProduct(Positions[i], size); // Mesh centered at origin.
         v.Normal = Normals[i];
         v.UV = UV[i];
         v.Color = Colors::WHITE;
@@ -366,10 +491,11 @@ Starsurge::Mesh Starsurge::AABB::CreateMesh() const {
     return Mesh(vertices, indices);
 }
 
-void Starsurge::AABB::CheckBounds() {
+void Starsurge::AABB::CheckBounds(bool raiseError) {
     if ((this->minimum > this->maximum).Any()) {
-        Error("For AABB, the minimum value must be less than or equal to the maximum value.");
-        this->isNull = true;
-        this->minimum = this->maximum;
+        if (raiseError) {
+            Error("For AABB, the minimum value must be less than or equal to the maximum value.");
+        }
+        SetNull();
     }
 }
