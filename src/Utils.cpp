@@ -21,8 +21,6 @@ std::vector<std::string> Starsurge::Explode(std::string const & str, char delim,
 
     return res;
 }
-
-
 std::vector<std::string> Starsurge::Explode(std::string const & str, std::string delim, bool include_empty) {
     std::vector<std::string> res;
     size_t index = str.find(delim);
@@ -110,93 +108,8 @@ void Starsurge::PrintCode(std::string code) {
     }
 }
 
-float Starsurge::Radians(float deg) {
-    return deg*(PI / 180.0f);
-}
-
-float Starsurge::Degrees(float rad) {
-    return rad*(180.0f / PI);
-}
-
-float Starsurge::Max(float v, float max) {
-    if (v > max)
-        return max;
-    return v;
-}
-
-float Starsurge::Min(float v, float min) {
-    if (v < min)
-        return min;
-    return v;
-}
-
-float Starsurge::Clamp(float v, float min, float max) {
-    return Min(Max(v, max), min);
-}
-
-float Starsurge::Wrap(float v, float min, float max) {
-    while (v < min) {
-        v += std::abs(max-min);
-    }
-    while (v > max) {
-        v -= std::abs(max-min);
-    }
-    return v;
-}
-
-long Starsurge::Factorial(long n) {
-    if (n == 0 || n == 1) {
-        return 1;
-    }
-    return n*Factorial(n-1);
-}
-
 float Starsurge::Lerp(float start, float end, float t) {
     return start + t*(end-start);
-}
-
-float Starsurge::Sign(float x) {
-    if (x > 0)
-        return 1;
-    if (x < 0)
-        return -1;
-    return 0;
-}
-std::string Starsurge::ToString(bool v) {
-    return (v == true) ? std::string("true") : std::string("false");
-}
-std::string Starsurge::ToString(int v) { return std::to_string(v); }
-std::string Starsurge::ToString(long v) { return std::to_string(v); }
-std::string Starsurge::ToString(long long v) { return std::to_string(v); }
-std::string Starsurge::ToString(unsigned int v) { return std::to_string(v); }
-std::string Starsurge::ToString(unsigned long v) { return std::to_string(v); }
-std::string Starsurge::ToString(unsigned long long v) { return std::to_string(v); }
-std::string Starsurge::ToString(float v, unsigned int ndigits, bool scientific) {
-    if (std::isnan(v)) return "NaN";
-    if (std::isinf(v)) return "Inf";
-    if ((std::round(v) == v || ndigits == 0) && !scientific) return ToString((int)v);
-
-    char * buffer = new char[ndigits+256];
-    sprintf(buffer, (scientific ? "%.*e" : "%.*f"), ndigits, v);
-    return std::string(buffer);
-}
-std::string Starsurge::ToString(double v, unsigned int ndigits, bool scientific) {
-    if (std::isnan(v)) return "NaN";
-    if (std::isinf(v)) return "Inf";
-    if ((std::round(v) == v || ndigits == 0) && !scientific) return ToString((int)v);
-
-    char * buffer = new char[ndigits+256];
-    sprintf(buffer, (scientific ? "%.*e" : "%.*f"), ndigits, v);
-    return std::string(buffer);
-}
-std::string Starsurge::ToString(long double v, unsigned int ndigits, bool scientific) {
-    if (std::isnan(v)) return "NaN";
-    if (std::isinf(v)) return "Inf";
-    if ((std::round(v) == v || ndigits == 0) && !scientific) return ToString((int)v);
-
-    char * buffer = new char[ndigits+256];
-    sprintf(buffer, (scientific ? "%.*e" : "%.*f"), ndigits, v);
-    return std::string(buffer);
 }
 
 std::vector<Starsurge::Match> Starsurge::FindSubstrings(std::string str, std::string regex) {
