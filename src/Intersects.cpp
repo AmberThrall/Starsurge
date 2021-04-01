@@ -92,6 +92,22 @@ bool Starsurge::Intersects(Ray ray, AABB box, Vector3 & point) {
     return true;
 }
 
+
+bool Starsurge::Intersects(Ray ray, OBB box, Vector3 & point) {
+    if (box.IsNull()) {
+        return false;
+    }
+    Vector3 p;
+    Matrix3 m = box.GetOrientation();
+    ray.origin = m.Transpose()*(ray.origin - box.Center);
+    ray.direction = m.Transpose()*ray.direction;
+    if (Intersects(ray, AABB(-box.GetExtents(), box.GetExtents()), p)) {
+        point = m*p+box.Center;
+        return true;
+    }
+    return false;
+}
+
 bool Starsurge::Intersects(Ray ray, Sphere sphere, Vector3 & point) {
     // https://gdbooks.gitbooks.io/3dcollisions/content/Chapter3/raycast_sphere.html
     Vector3 e = sphere.position - ray.origin;
@@ -173,15 +189,17 @@ bool Starsurge::Intersects(Ray ray, Cone cone, Vector3 & point) {
         return false;
     }
 
-    // Infinite cone case is easier?
-    if (cone.IsInfinite()) {
-        // TODO.
-        return false;
-    }
-
     //https://www.iquilezles.org/www/articles/intersectors/intersectors.htm
-    float ra = cone.GetRadius(0);
-    float rb = cone.GetRadius(cone.GetHeight());
+    float ra;
+    float rb;
+    if (cone.IsInfinite()) {
+        ra = Infinity();
+        rb = cone.GetRadius(0);
+    }
+    else {
+        ra = cone.GetRadius(0);
+        rb = cone.GetRadius(cone.GetHeight());
+    }
 
     Vector3 pa = cone.GetBase();
     Vector3 pb = cone.GetPeak();
@@ -268,6 +286,9 @@ bool Starsurge::Intersects(Plane plane, Ray ray, Vector3 & point) {
 bool Starsurge::Intersects(AABB box, Ray ray, Vector3 & point) {
     return Intersects(ray, box, point);
 }
+bool Starsurge::Intersects(OBB box, Ray ray, Vector3 & point) {
+    return Intersects(ray, box, point);
+}
 bool Starsurge::Intersects(Sphere sphere, Ray ray, Vector3 & point) {
     return Intersects(ray, sphere, point);
 }
@@ -331,6 +352,28 @@ bool Starsurge::Intersects(Line line, Plane plane, Vector3 & point) {
 }
 
 bool Starsurge::Intersects(Line line, AABB box, Vector3 & point) {
+    if (box.IsNull()) {
+        return false;
+    }
+
+    Vector3 p;
+    Ray asray = Ray(line.start, line.end-line.start);
+    if (!Intersects(asray, box, p)) {
+        if (line.infinite) {
+            asray.direction = -1*asray.direction;
+            return Intersects(asray, box, point);
+        }
+        return false;
+    }
+
+    if (line.Contains(p)) {
+        point = p;
+        return true;
+    }
+    return false;
+}
+
+bool Starsurge::Intersects(Line line, OBB box, Vector3 & point) {
     if (box.IsNull()) {
         return false;
     }
@@ -448,6 +491,9 @@ bool Starsurge::Intersects(Plane plane, Line line, Vector3 & point) {
 bool Starsurge::Intersects(AABB box, Line line, Vector3 & point) {
     return Intersects(line, box, point);
 }
+bool Starsurge::Intersects(OBB box, Line line, Vector3 & point) {
+    return Intersects(line, box, point);
+}
 bool Starsurge::Intersects(Sphere sphere, Line line, Vector3 & point) {
     return Intersects(line, sphere, point);
 }
@@ -468,6 +514,13 @@ bool Starsurge::Intersects(AABB boxA, const AABB boxB, AABB & volume) {
     volume.SetBounds(boxA);
     volume.Intersection(boxB);
     return !volume.IsNull();
+}
+
+bool Starsurge::Intersects(AABB boxA, OBB boxB) {
+    if (boxA.IsNull() || boxB.IsNull()) {
+        return false;
+    }
+    return Intersects(boxA.AsOBB(), boxB);
 }
 
 bool Starsurge::Intersects(AABB box, Plane plane) {
@@ -689,6 +742,9 @@ bool Starsurge::Intersects(AABB box, Quad quad) {
     return (Intersects(box, tri[0]) || Intersects(box, tri[1]));
 }
 
+bool Starsurge::Intersects(OBB boxA, AABB boxB) {
+    return Intersects(boxB, boxA);
+}
 bool Starsurge::Intersects(Plane plane, AABB box) {
     return Intersects(box, plane);
 }
@@ -708,6 +764,125 @@ bool Starsurge::Intersects(Quad quad, AABB box) {
     return Intersects(box, quad);
 }
 
+bool SAT(Starsurge::OBB boxA, Starsurge::OBB boxB, Starsurge::Vector3 axis) {
+    using namespace Starsurge;
+    // Project boxA and boxB onto axis.
+    Vector3 t = boxB.Center - boxA.Center;
+    Vector3 ua = boxA.GetAxis(0), va = boxA.GetAxis(1), wa = boxA.GetAxis(2);
+    Vector3 ub = boxB.GetAxis(0), vb = boxB.GetAxis(1), wb = boxB.GetAxis(2);
+    Vector3 ha = boxA.GetExtents(), hb = boxB.GetExtents();
+
+    float ra = ha.x*Abs(Vector3::Dot(ua, axis)) + ha.y*Abs(Vector3::Dot(va, axis)) + ha.z*Abs(Vector3::Dot(wa, axis));
+    float rb = hb.x*Abs(Vector3::Dot(ub, axis)) + hb.y*Abs(Vector3::Dot(vb, axis)) + hb.z*Abs(Vector3::Dot(wb, axis));
+
+    return (Abs(Vector3::Dot(t, axis)) > ra + rb); // Projected intervals DONT overlap when |t . axis| > ra + rb
+}
+
+bool Starsurge::Intersects(OBB boxA, OBB boxB) {
+    if (boxA.IsNull() || boxB.IsNull()) {
+        return false;
+    }
+
+    // Following Geometric Tools for Computer Graphics, section 11.12.7
+    std::vector<Vector3> axes;
+    for (unsigned int i = 0; i < 3; ++i) {
+        axes.push_back(boxA.GetAxis(i));
+        axes.push_back(boxB.GetAxis(i));
+    }
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int j = 0; j < 3; ++j) {
+            axes.push_back(Vector3::CrossProduct(boxA.GetAxis(i), boxB.GetAxis(j)));
+        }
+    }
+
+    // Test all 15 axes.
+    for (unsigned int i = 0; i < axes.size(); ++i) {
+        if (!SAT(boxA, boxB, axes[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Starsurge::Intersects(OBB box, Plane plane) {
+    if (box.IsNull()) {
+        return false;
+    }
+    Matrix3 m = box.GetOrientation().Transpose();
+    Vector3 closestPoint = plane.ClosestPoint(box.Center);
+    Plane transformedPlane(m*plane.GetNormal(), m*(closestPoint - box.Center));
+    return Intersects(AABB(-box.GetExtents(), box.GetExtents()), plane);
+}
+
+bool Starsurge::Intersects(OBB box, Sphere sphere) {
+    if (box.IsNull()) {
+        return false;
+    }
+    Vector3 pt = box.ClosestPoint(sphere.position);
+    Vector3 diff = sphere.position - pt;
+    float dist = Vector3::Dot(diff, diff);
+
+    return (dist <= sphere.radius*sphere.radius);
+}
+
+bool Starsurge::Intersects(OBB box, Cylinder cylinder) {
+    if (box.IsNull()) {
+        return false;
+    }
+    Matrix3 m = box.GetOrientation().Transpose();
+    cylinder.Origin = m*(cylinder.Origin - box.Center);
+    cylinder.SetDirection(m*cylinder.GetDirection());
+    return Intersects(AABB(-box.GetExtents(), box.GetExtents()), cylinder);
+}
+
+bool Starsurge::Intersects(OBB box, Cone cone) {
+    if (box.IsNull() || cone.IsNull()) {
+        return false;
+    }
+
+    Matrix3 m = box.GetOrientation().Transpose();
+    cone.Origin = m*(cone.Origin - box.Center);
+    cone.SetDirection(m*cone.GetDirection());
+    return Intersects(AABB(-box.GetExtents(), box.GetExtents()), cone);
+}
+
+
+bool Starsurge::Intersects(OBB box, Triangle triangle) {
+    if (box.IsNull()) {
+        return false;
+    }
+
+    Matrix3 m = box.GetOrientation().Transpose();
+    triangle.SetVertex(0, m*(triangle.GetVertex(0)-box.Center));
+    triangle.SetVertex(1, m*(triangle.GetVertex(1)-box.Center));
+    triangle.SetVertex(2, m*(triangle.GetVertex(2)-box.Center));
+    return Intersects(AABB(-box.GetExtents(), box.GetExtents()), triangle);
+}
+bool Starsurge::Intersects(OBB box, Quad quad) {
+    if (box.IsNull()) {
+        return false;
+    }
+
+    Matrix3 m = box.GetOrientation().Transpose();
+    quad.SetVertex(0, m*(quad.GetVertex(0)-box.Center));
+    quad.SetVertex(1, m*(quad.GetVertex(1)-box.Center));
+    quad.SetVertex(2, m*(quad.GetVertex(2)-box.Center));
+    quad.SetVertex(3, m*(quad.GetVertex(3)-box.Center));
+    return Intersects(AABB(-box.GetExtents(), box.GetExtents()), quad);
+}
+
+bool Starsurge::Intersects(Plane plane, OBB box) {
+    return Intersects(box, plane);
+}
+bool Starsurge::Intersects(Sphere sphere, OBB box) {
+    return Intersects(box, sphere);
+}
+bool Starsurge::Intersects(Cylinder cylinder, OBB box) {
+    return Intersects(box, cylinder);
+}
+bool Starsurge::Intersects(Cone cone, OBB box) {
+    return Intersects(box, cone);
+}
 
 bool Starsurge::Intersects(Plane plane1, Plane plane2) {
     Vector3 v = Vector3::CrossProduct(plane1.GetNormal(), plane2.GetNormal());

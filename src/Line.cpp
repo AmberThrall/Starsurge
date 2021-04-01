@@ -12,7 +12,28 @@ Starsurge::Line::Line(Vector3 p1, Vector3 p2, bool inf) {
 }
 
 bool Starsurge::Line::Contains(Vector3 test) const {
-    return (Distance(test) < 0.00001);
+    if (this->start == this->end) {
+        return (this->start == test);
+    }
+
+    float eps = 0.00001;
+
+    // Solve: start + t*dir = test
+    Vector3 dir = this->end - this->start;
+    Vector3 d = test-this->start;
+    float tx = d.x / dir.x;
+    float ty = d.y / dir.y;
+    float tz = d.z / dir.z;
+
+    if ((IsInfinite(tx) && Abs(d.x) > eps) || (IsInfinite(ty) && Abs(d.y) > eps) || (IsInfinite(tz) && Abs(d.z) > eps)) {
+        Log("d = "+d.ToString());
+        return false;
+    }
+    if (IsInfinite(tx)) { tx = (!IsInfinite(ty) ? ty : tz); }
+    if (IsInfinite(ty)) { ty = (!IsInfinite(tx) ? tx : tz); }
+    if (IsInfinite(tz)) { tz = (!IsInfinite(tx) ? tx : ty); }
+
+    return (Abs(tx-ty) < eps && Abs(tx-tz) < eps && ((tx >= 0 && tx <= 1) || this->infinite));
 }
 
 Starsurge::Vector3 Starsurge::Line::GetPoint(float t) const {

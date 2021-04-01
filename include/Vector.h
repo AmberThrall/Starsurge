@@ -257,6 +257,13 @@ namespace Starsurge {
         static Vector<3> Forward() {
             return Vector<3>(0,0,1);
         }
+        template<typename = std::enable_if_t<(N!=Dynamic)>>
+        static Vector<N> Infinity() {
+            return CreateVector<N>(N, Starsurge::Infinity());
+        }
+        static Vector<Dynamic> Infinity(size_t size) {
+            return CreateVector<Dynamic>(size, Starsurge::Infinity());
+        }
 
         template<typename = std::enable_if_t<(N!=Dynamic)>>
         static Vector<N> Linspace(float start, float stop, bool endpoint = true) {
@@ -507,16 +514,15 @@ namespace Starsurge {
             for (size_t i = 0; i < vectors.size(); ++i) {
                 Vector<N> ui = vectors[i];
                 for (size_t j = 0; j < i; j++) {
-                    ui -= Vector<N>::Projection(u[j], vectors[i]);
+                    ui -= Vector<N>::Projection(vectors[i], u[j]);
                 }
+                if (ui.SquaredMagnitude() == 0) { // Our set of vecctors wasn't linearly independent. Error out by returning an empty set.
+                    u.clear();
+                    return u;
+                }
+                ui.Normalize();
                 u.push_back(ui);
             }
-
-            // Normalize all the u's.
-            for (size_t i = 0; i < u.size(); ++i) {
-                u[i].Normalize();
-            }
-
             return u;
         }
 

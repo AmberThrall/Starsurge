@@ -4,22 +4,13 @@
 #include "Line.h"
 #include "Sphere.h"
 #include "Quad.h"
+#include "OBB.h"
 
 namespace Starsurge {
-    enum AABBCorner {
-        FAR_LEFT_BOTTOM,
-        FAR_LEFT_TOP,
-        FAR_RIGHT_TOP,
-        FAR_RIGHT_BOTTOM,
-        NEAR_RIGHT_BOTTOM,
-        NEAR_LEFT_BOTTOM,
-        NEAR_LEFT_TOP,
-        NEAR_RIGHT_TOP
-    };
-
-    enum AABBFace {
-        LEFT_FACE, TOP_FACE, RIGHT_FACE, BOTTOM_FACE, NEAR_FACE, FAR_FACE
-    };
+    // Predefine classes due to circular depenendencies
+    class OBB;
+    enum BoxCorner;
+    enum BoxFace;
 
     class AABB {
     public:
@@ -35,21 +26,22 @@ namespace Starsurge {
         void SetBounds(std::vector<Vector3> points);
 
         bool Contains(const Vector3 pt) const;
-        bool Contains(const AABB box) const;
+        bool Contains(const AABB box) const;;
+        Vector3 ClosestPoint(const Vector3 point) const;
+        float Distance(const Vector3 point) const;
         Vector3 GetCenter() const;
         Vector3 GetSize() const;
         Vector3 GetExtents() const;
         float GetVolume() const;
-        Vector3 GetCorner(AABBCorner corner) const;
+        Vector3 GetCorner(BoxCorner corner) const;
         std::vector<Vector3> GetAllCorners() const;
-        Line GetEdge(AABBCorner corner1, AABBCorner corner2) const;
+        Line GetEdge(BoxCorner corner1, BoxCorner corner2) const;
         std::vector<Line> GetAllEdges() const;
-        Quad GetFace(AABBFace face) const;
+        Quad GetFace(BoxFace face) const;
         std::vector<Quad> GetAllFaces() const;
         Vector3 GetMinimum() const;
         Vector3 GetMaximum() const;
         bool IsNull() const;
-        Vector3 ClosestPoint(const Vector3 point) const;
 
         void Expand(float amount);
         void Expand(Vector3 amount);
@@ -65,6 +57,8 @@ namespace Starsurge {
         void Subtract(const std::vector<Vector3> pts);
         void Subtract(const AABB boxB);
         void Intersection(const AABB boxB);
+
+        OBB AsOBB() const;
 
         void Transform(const Matrix<3,3> matrix);
         void Transform(const Matrix<4,4> matrix);

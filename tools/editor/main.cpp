@@ -8,7 +8,37 @@ public:
     Editor() : Game("Starsurge Editor") { }
     ~Editor() { }
 protected:
+    // Broken: Cone-AABB?
     void OnInitialize() {
+        Vector3 p, p2;
+        Ray ray(Vector3(5,0,0), Vector3(-1,0,0));
+        Line line(Vector3(0,5,0), Vector3(0,0,0));
+        AABB aabb(Vector3(0,0,0), Vector3(2,2,2));
+        OBB obb(2, Vector3(0,0,0), Vector3(1,1,1));
+        Plane plane(Vector3(0,1,1), Vector3(0,1,0));
+        Sphere sphere(Vector3(0,1.5,0), 0.5);
+        Cylinder cylinder(0.5, 1, Vector3(0,0,2), Vector3(0,0,1));
+        Cone cone(Vector3(0,0,1), Vector3(0,0,1));
+        Quad quad(Vector3(0,0.5,0), Vector3(2,0.5,0), Vector3(2,0.5,2), Vector3(0,0.5,2));
+        Vector3 closest = obb.ClosestPoint(Vector3(0,2,0));
+        Matrix3 A = obb.GetOrientation();
+        Intersects(ray, obb, p);
+        Intersects(line, obb, p2);
+        Log("OBB: "+obb.ToString());
+        Log("Contains [0,0,1]? "+ToString(obb.Contains(Vector3(0,0,1))));
+        Log("Contains [0,2,0]? "+ToString(obb.Contains(Vector3(0,2,0))));
+        Log("Closest to [0,2,0]: "+closest.ToString());
+        Log("Contains "+closest.ToString()+"? "+ToString(obb.Contains(closest)));
+        Log("AA^T = "+(A*A.Transpose()).ToString());
+        Log("Intersects (Ray-OBB): "+p.ToString());
+        Log("Intersects (Line-OBB): "+p2.ToString());
+        Log("Intersects (AABB-OBB): "+ToString(Intersects(obb, aabb)));
+        Log("Intersects (Plane-OBB): "+ToString(Intersects(obb, plane)));
+        Log("Intersects (Sphere-OBB): "+ToString(Intersects(obb, sphere)));
+        Log("Intersects (Cylinder-OBB): "+ToString(Intersects(obb, cylinder)));
+        Log("Intersects (Cone-OBB): "+ToString(Intersects(obb, cone)));
+        Log("Intersects (Quad-OBB): "+ToString(Intersects(obb, quad)));
+        obbMesh = obb.CreateMesh();
         // Initialize variables.
         firstUpdate = true;
 
@@ -38,7 +68,7 @@ protected:
         cube = new Entity("Cube");
         Material * cubeMaterial = new Material(AssetManager::Inst().GetShader("Builtin/Phong"));
         cube->AddComponent<Transform>(new Transform(Vector3(0,0,0), EulerAngles(0,0,0), Vector3(1,1,1)));
-        cube->AddComponent<MeshRenderer>(new MeshRenderer(AssetManager::Inst().GetMesh("Builtin/Cube"), cubeMaterial));
+        cube->AddComponent<MeshRenderer>(new MeshRenderer(&obbMesh, cubeMaterial));
         Scene::Inst().AddEntity(cube);
         selectedEntity = cube;
         cubeMaterial->GetUniform(0, "material.diffuse")->SetData(AssetManager::Inst().GetTexture("Builtin/Checker"));
@@ -244,6 +274,7 @@ private:
     Entity * cube;
     Grid * grid;
     Entity * selectedEntity;
+    Mesh obbMesh;
 
     // Gui Stuff
     bool firstUpdate;

@@ -21,6 +21,17 @@ void Starsurge::Triangle::SetVertices(Vector3 p1, Vector3 p2, Vector3 p3) {
     this->normal = Vector3::CrossProduct(p2 - p1, p3 - p1);
     this->normal.Normalize();
 }
+void Starsurge::Triangle::SetVertex(unsigned int i, Vector3 p) {
+    switch (i) {
+        case 0: SetVertices(p, this->point2, this->point3); break;
+        case 1: SetVertices(this->point1, p, this->point3); break;
+        case 2: SetVertices(this->point1, this->point2, p); break;
+        default:
+            Error("Invalid vertex id in Triangle::SetVertex(). Options: 0, 1, 2");
+            break;
+    }
+}
+
 Starsurge::Vector3 Starsurge::Triangle::GetVertex(unsigned int i) const {
     switch (i) {
         case 0: return this->point1;

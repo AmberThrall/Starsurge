@@ -75,6 +75,20 @@ bool Starsurge::AABB::Contains(const AABB box) const {
             min.z >= this->minimum.z && max.z <= this->maximum.z);
 }
 
+Starsurge::Vector3 Starsurge::AABB::ClosestPoint(const Vector3 point) const {
+    if (IsNull() || Contains(point)) {
+        return point;
+    }
+    return Vector3::Clamp(point, this->minimum, this->maximum);
+}
+float Starsurge::AABB::Distance(const Vector3 point) const {
+    if (IsNull()) {
+        return -1;
+    }
+    Vector3 closest = ClosestPoint(point);
+    return (closest - point).Magnitude();
+}
+
 Starsurge::Vector3 Starsurge::AABB::GetCenter() const {
     return (this->maximum + this->minimum) / 2;
 }
@@ -90,7 +104,7 @@ float Starsurge::AABB::GetVolume() const {
     return size.x*size.y*size.z;
 }
 
-Starsurge::Vector3 Starsurge::AABB::GetCorner(AABBCorner corner) const {
+Starsurge::Vector3 Starsurge::AABB::GetCorner(BoxCorner corner) const {
     float mx = this->minimum.x, my = this->minimum.y, mz = this->minimum.z;
     float Mx = this->maximum.x, My = this->maximum.y, Mz = this->maximum.z;
 
@@ -120,8 +134,8 @@ std::vector<Starsurge::Vector3> Starsurge::AABB::GetAllCorners() const {
     ret.push_back(GetCorner(NEAR_RIGHT_TOP));
     return ret;
 }
-Starsurge::Line Starsurge::AABB::GetEdge(AABBCorner corner1, AABBCorner corner2) const {
-    std::map<AABBCorner, std::vector<AABBCorner>> validEdges;
+Starsurge::Line Starsurge::AABB::GetEdge(BoxCorner corner1, BoxCorner corner2) const {
+    std::map<BoxCorner, std::vector<BoxCorner>> validEdges;
     validEdges[FAR_LEFT_BOTTOM] = { FAR_LEFT_TOP, FAR_RIGHT_BOTTOM, NEAR_LEFT_BOTTOM };
     validEdges[FAR_LEFT_TOP] = { FAR_LEFT_BOTTOM, FAR_RIGHT_TOP, NEAR_LEFT_TOP };
     validEdges[FAR_RIGHT_TOP] = { FAR_LEFT_TOP, FAR_RIGHT_BOTTOM, NEAR_RIGHT_TOP };
@@ -131,7 +145,7 @@ Starsurge::Line Starsurge::AABB::GetEdge(AABBCorner corner1, AABBCorner corner2)
     validEdges[NEAR_LEFT_TOP] = { NEAR_RIGHT_TOP, NEAR_LEFT_BOTTOM, FAR_LEFT_TOP };
     validEdges[NEAR_RIGHT_TOP] = { NEAR_LEFT_TOP, NEAR_RIGHT_BOTTOM, FAR_RIGHT_TOP };
 
-    if (ElemOf<AABBCorner>(validEdges[corner1], corner2)) {
+    if (ElemOf<BoxCorner>(validEdges[corner1], corner2)) {
         return Line(GetCorner(corner1), GetCorner(corner2));
     }
     else {
@@ -140,7 +154,7 @@ Starsurge::Line Starsurge::AABB::GetEdge(AABBCorner corner1, AABBCorner corner2)
     }
 }
 std::vector<Starsurge::Line> Starsurge::AABB::GetAllEdges() const {
-    std::map<AABBCorner, std::vector<AABBCorner>> validEdges;
+    std::map<BoxCorner, std::vector<BoxCorner>> validEdges;
     validEdges[FAR_LEFT_BOTTOM] = { FAR_LEFT_TOP, FAR_RIGHT_BOTTOM, NEAR_LEFT_BOTTOM };
     validEdges[FAR_LEFT_TOP] = { FAR_LEFT_BOTTOM, FAR_RIGHT_TOP, NEAR_LEFT_TOP };
     validEdges[FAR_RIGHT_TOP] = { FAR_LEFT_TOP, FAR_RIGHT_BOTTOM, NEAR_RIGHT_TOP };
@@ -161,7 +175,7 @@ std::vector<Starsurge::Line> Starsurge::AABB::GetAllEdges() const {
     }
     return edges;
 }
-Starsurge::Quad Starsurge::AABB::GetFace(AABBFace face) const {
+Starsurge::Quad Starsurge::AABB::GetFace(BoxFace face) const {
     switch (face) {
         case LEFT_FACE: {
             Quad quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_LEFT_TOP), GetCorner(NEAR_LEFT_TOP), GetCorner(NEAR_LEFT_BOTTOM));
@@ -215,12 +229,6 @@ Starsurge::Vector3 Starsurge::AABB::GetMaximum() const {
 bool Starsurge::AABB::IsNull() const {
     return this->isNull;
 }
-Starsurge::Vector3 Starsurge::AABB::ClosestPoint(const Vector3 point) const {
-    if (Contains(point)) {
-        return point;
-    }
-    return Vector3::Clamp(point, this->minimum, this->maximum);
-}
 
 void Starsurge::AABB::Expand(float amount) {
     Expand(Vector3(amount,amount,amount));
@@ -228,10 +236,9 @@ void Starsurge::AABB::Expand(float amount) {
 void Starsurge::AABB::Expand(Vector3 amount) {
     this->minimum -= amount;
     this->maximum += amount;
+    CheckBounds(false);
 }
 void Starsurge::AABB::SetNull() {
-    this->minimum = Vector3(0,0,0);
-    this->maximum = Vector3(0,0,0);
     this->isNull = true;
 }
 
@@ -244,6 +251,7 @@ std::string Starsurge::AABB::ToString(unsigned int ndigits) {
 
 Starsurge::AABB Starsurge::AABB::Null() {
     AABB ret;
+    ret.SetNull();
     return ret;
 }
 void Starsurge::AABB::Union(const Vector3 pt) {
@@ -343,16 +351,23 @@ void Starsurge::AABB::Intersection(const AABB boxB) {
     }
 }
 
+
+Starsurge::OBB Starsurge::AABB::AsOBB() const {
+    if (IsNull()) {
+        return OBB::Null();
+    }
+    return OBB(GetSize(), GetCenter(), Vector3(1,0,0), Vector3(0,1,0), Vector3(0,0,1));
+}
+
 void Starsurge::AABB::Transform(const Matrix3 matrix) {
     if (IsNull()) {
         return;
     }
 
+    std::vector<Vector3> corners = GetAllCorners();
     SetNull();
-    AABBCorner corners[] = { FAR_LEFT_BOTTOM, NEAR_LEFT_BOTTOM, NEAR_LEFT_TOP, FAR_LEFT_TOP, FAR_RIGHT_TOP, NEAR_RIGHT_TOP,
-        NEAR_RIGHT_BOTTOM, FAR_RIGHT_BOTTOM };
     for (unsigned int i = 0; i < 8; ++i) {
-        Union(matrix * GetCorner(corners[i]));
+        Union(matrix * corners[i]);
     }
 }
 
@@ -361,157 +376,15 @@ void Starsurge::AABB::Transform(const Matrix4 matrix) {
         return;
     }
 
+    std::vector<Vector3> corners = GetAllCorners();
     SetNull();
-    AABBCorner corners[] = { FAR_LEFT_BOTTOM, NEAR_LEFT_BOTTOM, NEAR_LEFT_TOP, FAR_LEFT_TOP, FAR_RIGHT_TOP, NEAR_RIGHT_TOP,
-        NEAR_RIGHT_BOTTOM, FAR_RIGHT_BOTTOM };
     for (unsigned int i = 0; i < 8; ++i) {
-        Union((matrix * Vector4(GetCorner(corners[i]), 1)).Resize<3>());
+        Union((matrix * Vector4(corners[i], 1)).Resize<3>());
     }
 }
 
 Starsurge::Mesh Starsurge::AABB::CreateMesh() const {
-    std::vector<Vector3> Positions = {
-        Vector3(-0.5f, -0.5f, -0.5f),
-        Vector3( 0.5f,  0.5f, -0.5f),
-        Vector3( 0.5f, -0.5f, -0.5f),
-        Vector3( 0.5f,  0.5f, -0.5f),
-        Vector3(-0.5f, -0.5f, -0.5f),
-        Vector3(-0.5f,  0.5f, -0.5f),
-
-        Vector3(-0.5f, -0.5f,  0.5f),
-        Vector3( 0.5f, -0.5f,  0.5f),
-        Vector3( 0.5f,  0.5f,  0.5f),
-        Vector3( 0.5f,  0.5f,  0.5f),
-        Vector3(-0.5f,  0.5f,  0.5f),
-        Vector3(-0.5f, -0.5f,  0.5f),
-
-        Vector3(-0.5f,  0.5f,  0.5f),
-        Vector3(-0.5f,  0.5f, -0.5f),
-        Vector3(-0.5f, -0.5f, -0.5f),
-        Vector3(-0.5f, -0.5f, -0.5f),
-        Vector3(-0.5f, -0.5f,  0.5f),
-        Vector3(-0.5f,  0.5f,  0.5f),
-
-        Vector3( 0.5f,  0.5f,  0.5f),
-        Vector3( 0.5f, -0.5f, -0.5f),
-        Vector3( 0.5f,  0.5f, -0.5f),
-        Vector3( 0.5f, -0.5f, -0.5f),
-        Vector3( 0.5f,  0.5f,  0.5f),
-        Vector3( 0.5f, -0.5f,  0.5f),
-
-        Vector3(-0.5f, -0.5f, -0.5f),
-        Vector3( 0.5f, -0.5f, -0.5f),
-        Vector3( 0.5f, -0.5f,  0.5f),
-        Vector3( 0.5f, -0.5f,  0.5f),
-        Vector3(-0.5f, -0.5f,  0.5f),
-        Vector3(-0.5f, -0.5f, -0.5f),
-
-        Vector3(-0.5f,  0.5f, -0.5f),
-        Vector3( 0.5f,  0.5f,  0.5f),
-        Vector3( 0.5f,  0.5f, -0.5f),
-        Vector3( 0.5f,  0.5f,  0.5f),
-        Vector3(-0.5f,  0.5f, -0.5f),
-        Vector3(-0.5f,  0.5f,  0.5f)
-    };
-    std::vector<Vector2> UV = {
-        Vector2(0.0f, 0.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(1.0f, 0.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(0.0f, 0.0f),
-        Vector2(0.0f, 1.0f),
-
-        Vector2(0.0f, 0.0f),
-        Vector2(1.0f, 0.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(0.0f, 1.0f),
-        Vector2(0.0f, 0.0f),
-
-        Vector2(1.0f, 0.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(0.0f, 1.0f),
-        Vector2(0.0f, 1.0f),
-        Vector2(0.0f, 0.0f),
-        Vector2(1.0f, 0.0f),
-
-        Vector2(1.0f, 0.0f),
-        Vector2(0.0f, 1.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(0.0f, 1.0f),
-        Vector2(1.0f, 0.0f),
-        Vector2(0.0f, 0.0f),
-
-        Vector2(0.0f, 1.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(1.0f, 0.0f),
-        Vector2(1.0f, 0.0f),
-        Vector2(0.0f, 0.0f),
-        Vector2(0.0f, 1.0f),
-
-        Vector2(0.0f, 1.0f),
-        Vector2(1.0f, 0.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(1.0f, 0.0f),
-        Vector2(0.0f, 1.0f),
-        Vector2(0.0f, 0.0f)
-    };
-    std::vector<Vector3> Normals = {
-        Vector3( 0.0f,  0.0f, -1.0f),
-        Vector3( 0.0f,  0.0f, -1.0f),
-        Vector3( 0.0f,  0.0f, -1.0f),
-        Vector3( 0.0f,  0.0f, -1.0f),
-        Vector3( 0.0f,  0.0f, -1.0f),
-        Vector3( 0.0f,  0.0f, -1.0f),
-
-        Vector3( 0.0f,  0.0f,  1.0f),
-        Vector3( 0.0f,  0.0f,  1.0f),
-        Vector3( 0.0f,  0.0f,  1.0f),
-        Vector3( 0.0f,  0.0f,  1.0f),
-        Vector3( 0.0f,  0.0f,  1.0f),
-        Vector3( 0.0f,  0.0f,  1.0f),
-
-        Vector3(-1.0f,  0.0f,  0.0f),
-        Vector3(-1.0f,  0.0f,  0.0f),
-        Vector3(-1.0f,  0.0f,  0.0f),
-        Vector3(-1.0f,  0.0f,  0.0f),
-        Vector3(-1.0f,  0.0f,  0.0f),
-        Vector3(-1.0f,  0.0f,  0.0f),
-
-        Vector3( 1.0f,  0.0f,  0.0f),
-        Vector3( 1.0f,  0.0f,  0.0f),
-        Vector3( 1.0f,  0.0f,  0.0f),
-        Vector3( 1.0f,  0.0f,  0.0f),
-        Vector3( 1.0f,  0.0f,  0.0f),
-        Vector3( 1.0f,  0.0f,  0.0f),
-
-        Vector3( 0.0f, -1.0f,  0.0f),
-        Vector3( 0.0f, -1.0f,  0.0f),
-        Vector3( 0.0f, -1.0f,  0.0f),
-        Vector3( 0.0f, -1.0f,  0.0f),
-        Vector3( 0.0f, -1.0f,  0.0f),
-        Vector3( 0.0f, -1.0f,  0.0f),
-
-        Vector3( 0.0f,  1.0f,  0.0f),
-        Vector3( 0.0f,  1.0f,  0.0f),
-        Vector3( 0.0f,  1.0f,  0.0f),
-        Vector3( 0.0f,  1.0f,  0.0f),
-        Vector3( 0.0f,  1.0f,  0.0f),
-        Vector3( 0.0f,  1.0f,  0.0f)
-    };
-
-    std::vector<Vertex> vertices;
-    Vector3 size = GetSize();
-    for (size_t i = 0; i < Positions.size(); ++i) {
-        Vertex v;
-        v.Position = Vector3::EntrywiseProduct(Positions[i], size); // Mesh centered at origin.
-        v.Normal = Normals[i];
-        v.UV = UV[i];
-        v.Color = Colors::WHITE;
-        vertices.push_back(v);
-    }
-    std::vector<unsigned int> indices;
-    return Mesh(vertices, indices);
+    return AsOBB().CreateMesh();
 }
 
 void Starsurge::AABB::CheckBounds(bool raiseError) {

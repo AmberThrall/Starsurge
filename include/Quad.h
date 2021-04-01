@@ -15,6 +15,7 @@ namespace Starsurge {
 
         void SetVertices(const Quad& other);
         void SetVertices(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4);
+        void SetVertex(unsigned int i, Vector3 p);
 
         Vector3 GetVertex(unsigned int i) const;
         bool Contains(Vector3 point) const;

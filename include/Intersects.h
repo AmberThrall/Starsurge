@@ -4,6 +4,7 @@
 #include "Line.h"
 #include "Plane.h"
 #include "AABB.h"
+#include "OBB.h"
 #include "Sphere.h"
 #include "Rect.h"
 #include "Cylinder.h"
@@ -20,6 +21,7 @@ namespace Starsurge {
     bool Intersects(Ray ray, Line line, Vector3 & point);
     bool Intersects(Ray ray, Plane plane, Vector3 & point);
     bool Intersects(Ray ray, AABB box, Vector3 & point);
+    bool Intersects(Ray ray, OBB box, Vector3 & point);
     bool Intersects(Ray ray, Sphere sphere, Vector3 & point);
     bool Intersects(Ray ray, Cylinder cylinder, Vector3 & point);
     bool Intersects(Ray ray, Cone cone, Vector3 & point);
@@ -28,6 +30,7 @@ namespace Starsurge {
     bool Intersects(Line line, Ray ray, Vector3 & point);
     bool Intersects(Plane plane, Ray ray, Vector3 & point);
     bool Intersects(AABB box, Ray ray, Vector3 & point);
+    bool Intersects(OBB box, Ray ray, Vector3 & point);
     bool Intersects(Sphere sphere, Ray ray, Vector3 & point);
     bool Intersects(Cylinder cylinder, Ray ray, Vector3 & point);
     bool Intersects(Cone cone, Ray ray, Vector3 & point);
@@ -38,6 +41,7 @@ namespace Starsurge {
     bool Intersects(Line line1, Line line2, Vector3 & point);
     bool Intersects(Line line, Plane plane, Vector3 & point);
     bool Intersects(Line line, AABB box, Vector3 & point);
+    bool Intersects(Line line, OBB box, Vector3 & point);
     bool Intersects(Line line, Sphere sphere, Vector3 & point);
     bool Intersects(Line line, Cylinder cylinder, Vector3 & point);
     bool Intersects(Line line, Cone cone, Vector3 & point);
@@ -45,6 +49,7 @@ namespace Starsurge {
     bool Intersects(Line line, Quad quad, Vector3 & point);
     bool Intersects(Plane plane, Line line, Vector3 & point);
     bool Intersects(AABB box, Line line, Vector3 & point);
+    bool Intersects(OBB box, Line line, Vector3 & point);
     bool Intersects(Sphere sphere, Line line, Vector3 & point);
     bool Intersects(Cylinder cylinder, Line line, Vector3 & point);
     bool Intersects(Cone cone, Line line, Vector3 & point);
@@ -52,19 +57,36 @@ namespace Starsurge {
     bool Intersects(Quad quad, Line line, Vector3 & point);
 
     // Intersection with axis-aligned bounding boxes.
-    bool Intersects(AABB boxA, const AABB boxB, AABB & volume);
+    bool Intersects(AABB boxA, AABB boxB, AABB & volume);
+    bool Intersects(AABB boxA, OBB boxB);
     bool Intersects(AABB box, Plane plane);
     bool Intersects(AABB box, Sphere sphere);
     bool Intersects(AABB box, Cylinder cylinder);
     bool Intersects(AABB box, Cone cone);
     bool Intersects(AABB box, Triangle triangle);
     bool Intersects(AABB box, Quad quad);
+    bool Intersects(OBB boxA, AABB boxB);
     bool Intersects(Plane plane, AABB box);
     bool Intersects(Sphere sphere, AABB box);
     bool Intersects(Cylinder cylinder, AABB box);
     bool Intersects(Cone cone, AABB box);
     bool Intersects(Triangle triangle, AABB box);
     bool Intersects(Quad quad, AABB box);
+
+    // Intersection with oriented bounding boxes.
+    bool Intersects(OBB boxA, OBB boxB);
+    bool Intersects(OBB box, Plane plane);
+    bool Intersects(OBB box, Sphere sphere);
+    bool Intersects(OBB box, Cylinder cylinder);
+    bool Intersects(OBB box, Cone cone);
+    bool Intersects(OBB box, Triangle triangle);
+    bool Intersects(OBB box, Quad quad);
+    bool Intersects(Plane plane, OBB box);
+    bool Intersects(Sphere sphere, OBB box);
+    bool Intersects(Cylinder cylinder, OBB box);
+    bool Intersects(Cone cone, OBB box);
+    bool Intersects(Triangle triangle, OBB box);
+    bool Intersects(Quad quad, OBB box);
 
     // Intersection with planes.
     bool Intersects(Plane plane1, Plane plane2);

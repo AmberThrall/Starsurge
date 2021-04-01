@@ -9,13 +9,13 @@ void Starsurge::Log(std::string message) {
 }
 
 void Starsurge::Error(std::string message) {
-    std::cerr << "[Error] " << std::endl;
+    std::cout << "[Error] " << message << std::endl;
 }
 
 void Starsurge::FatalError(std::string message) {
-    std::cerr << "[FATAL] " <<  message << std::endl;
+    std::cout << "[FATAL] " <<  message << std::endl;
 }
 
 void Starsurge::ShaderError(std::string message) {
-    std::cerr << "[SHADER] " <<  message << std::endl;
+    std::cout << "[SHADER] " <<  message << std::endl;
 }

@@ -43,6 +43,18 @@ void Starsurge::Quad::SetVertices(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4
     // Set the normal to the new points.
     this->normal = plane.GetNormal();
 }
+void Starsurge::Quad::SetVertex(unsigned int i, Vector3 p) {
+    switch (i) {
+        case 0: SetVertices(p, this->point2, this->point3, this->point4); break;
+        case 1: SetVertices(this->point1, p, this->point3, this->point4); break;
+        case 2: SetVertices(this->point1, this->point2, p, this->point4); break;
+        case 3: SetVertices(this->point1, this->point2, this->point3, p); break;
+        default:
+            Error("Invalid vertex id in Quad::SetVertex(). Options: 0, 1, 2, 3");
+            return;
+    }
+}
+
 Starsurge::Vector3 Starsurge::Quad::GetVertex(unsigned int i) const {
     switch (i) {
         case 0: return this->point1;
