@@ -119,6 +119,55 @@ bool Starsurge::Intersects(Ray ray, Sphere sphere, Vector3 & point) {
     return true;
 }
 
+bool Starsurge::Intersects(Ray ray, Cylinder cylinder, Vector3 & point) {
+    // https://www.iquilezles.org/www/articles/intersectors/intersectors.htm
+    if (cylinder.IsInfinite()) {
+        Vector3 oc = ray.origin - cylinder.Origin;
+        float card = Vector3::Dot(cylinder.GetDirection(), ray.direction);
+        float caoc = Vector3::Dot(cylinder.GetDirection(), oc);
+        float a = 1.0 - card*card;
+        float b = Vector3::Dot(oc, ray.direction) - caoc*card;
+        float c = Vector3::Dot(oc, oc) - caoc*caoc - cylinder.GetRadius()*cylinder.GetRadius();
+        float h = b*b - a*c;
+        if (h < 0) {
+            return false;
+        }
+        h = Sqrt(h);
+        point = ray.GetPoint((-b-h)/a);
+        return true;
+    }
+
+    Vector3 ca = cylinder.GetBottom() - cylinder.GetTop();
+    Vector3 oc = ray.origin - cylinder.GetTop();
+    float caca = Vector3::Dot(ca, ca);
+    float card = Vector3::Dot(ca, ray.direction);
+    float caoc = Vector3::Dot(ca, oc);
+    float a = caca - card*card;
+    float b = caca*Vector3::Dot(oc, ray.direction) - caoc*card;
+    float c = caca*Vector3::Dot(oc, oc) - caoc*caoc - cylinder.GetRadius()*cylinder.GetRadius()*caca;
+    float h = b*b - a*c;
+    if (h < 0) {
+        return false;
+    }
+    h = Sqrt(h);
+    float t = (-b-h)/a;
+
+    // Body:
+    float y = caoc + t*card;
+    if (y > 0 && y < caca) {
+        point = ray.GetPoint(t);
+        return true;
+    }
+
+    // Caps
+    t = (((y < 0) ? 0 : caca) - caoc)/card;
+    if (Abs(b+a*t) < h) {
+        point = ray.GetPoint(t);
+        return true;
+    }
+    return false;
+}
+
 bool Starsurge::Intersects(Ray ray, Cone cone, Vector3 & point) {
     if (cone.IsNull()) {
         return false;
@@ -222,6 +271,9 @@ bool Starsurge::Intersects(AABB box, Ray ray, Vector3 & point) {
 bool Starsurge::Intersects(Sphere sphere, Ray ray, Vector3 & point) {
     return Intersects(ray, sphere, point);
 }
+bool Starsurge::Intersects(Cylinder cylinder, Ray ray, Vector3 & point) {
+    return Intersects(ray, cylinder, point);
+}
 bool Starsurge::Intersects(Cone cone, Ray ray, Vector3 & point) {
     return Intersects(ray, cone, point);
 }
@@ -318,6 +370,23 @@ bool Starsurge::Intersects(Line line, Sphere sphere, Vector3 & point) {
     return false;
 }
 
+bool Starsurge::Intersects(Line line, Cylinder cylinder, Vector3 & point) {
+    Vector3 p;
+    Ray asray = Ray(line.start, line.end-line.start);
+    if (!Intersects(asray, cylinder, p)) {
+        if (line.infinite) {
+            asray.direction = -1*asray.direction;
+            return Intersects(asray, cylinder, point);
+        }
+        return false;
+    }
+    if (line.Contains(p)) {
+        point = p;
+        return true;
+    }
+    return false;
+}
+
 bool Starsurge::Intersects(Line line, Cone cone, Vector3 & point) {
     if (cone.IsNull()) {
         return false;
@@ -382,6 +451,9 @@ bool Starsurge::Intersects(AABB box, Line line, Vector3 & point) {
 bool Starsurge::Intersects(Sphere sphere, Line line, Vector3 & point) {
     return Intersects(line, sphere, point);
 }
+bool Starsurge::Intersects(Cylinder cylinder, Line line, Vector3 & point) {
+    return Intersects(line, cylinder, point);
+}
 bool Starsurge::Intersects(Cone cone, Line line, Vector3 & point) {
     return Intersects(line, cone, point);
 }
@@ -426,6 +498,64 @@ bool Starsurge::Intersects(AABB box, Sphere sphere) {
     return (dist <= sphere.radius*sphere.radius);
 }
 
+bool Starsurge::Intersects(AABB box, Cylinder cylinder) {
+    if (box.IsNull()) {
+        return false;
+    }
+
+    // Quick bounding box check.
+    AABB volume;
+    AABB cylinderAABB = cylinder.BoundingBox();
+    if (!Intersects(cylinderAABB, box, volume)) {
+        return false;
+    }
+    // Test it the entire cone is inside the box.
+    if (box.Contains(cylinderAABB)) {
+        return true;
+    }
+
+    // Test if the cone's axis intersects.
+    Vector3 p;
+    if (cylinder.IsInfinite()) {
+        Line axis(cylinder.Origin, cylinder.Origin+cylinder.GetDirection(), true);
+        if (Intersects(axis, box, p)) {
+            return true;
+        }
+    }
+    else {
+        Line axis(cylinder.GetTop(), cylinder.GetBottom());
+        if (Intersects(axis, box, p)) {
+            return true;
+        }
+    }
+
+    // Test the box's corners.
+    std::vector<Vector3> corners = box.GetAllCorners();
+    for (unsigned int i = 0; i < corners.size(); ++i) {
+        if (cylinder.Contains(corners[i])) {
+            return true;
+        }
+    }
+
+    // Test the box's edges.
+    std::vector<Line> edges = box.GetAllEdges();
+    for (unsigned int i = 0; i < edges.size(); ++i) {
+        if (Intersects(edges[i], cylinder, p)) {
+            return true;
+        }
+    }
+
+    // Test the box's faces.
+    std::vector<Quad> faces = box.GetAllFaces();
+    for (unsigned int i = 0; i < faces.size(); ++i) {
+        if (Intersects(cylinder, faces[i])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool Starsurge::Intersects(AABB box, Cone cone) {
     if (box.IsNull() || cone.IsNull()) {
         return false;
@@ -444,11 +574,17 @@ bool Starsurge::Intersects(AABB box, Cone cone) {
 
     // Test if the cone's axis intersects.
     Vector3 p;
-    Vector3 top = cone.GetPeak();
-    Vector3 bottom = cone.GetBase();
-    Line coneAxis(top, bottom);
-    if (Intersects(coneAxis, box, p)) {
-        return true;
+    if (cone.IsInfinite()) {
+        Line axis(cone.Origin, cone.Origin+cone.GetDirection(), true);
+        if (Intersects(axis, box, p)) {
+            return true;
+        }
+    }
+    else {
+        Line axis(cone.GetPeak(), cone.GetBase());
+        if (Intersects(axis, box, p)) {
+            return true;
+        }
     }
 
     // Test the box's corners.
@@ -559,6 +695,9 @@ bool Starsurge::Intersects(Plane plane, AABB box) {
 bool Starsurge::Intersects(Sphere sphere, AABB box) {
     return Intersects(box, sphere);
 }
+bool Starsurge::Intersects(Cylinder cylinder, AABB box) {
+    return Intersects(box, cylinder);
+}
 bool Starsurge::Intersects(Cone cone, AABB box) {
     return Intersects(box, cone);
 }
@@ -600,6 +739,38 @@ bool Starsurge::Intersects(Plane plane, Sphere sphere) {
     float dist = Vector3::Dot(diff, diff);
 
     return (dist <= sphere.radius*sphere.radius);
+}
+
+bool Starsurge::Intersects(Plane plane, Cylinder cylinder) {
+    Vector3 axis = cylinder.GetDirection();
+    if (Abs(Vector3::Dot(plane.GetNormal(), axis)) < 0.00001) { // Plane is perpindicular to the cylinder.
+        float height = plane.Distance(cylinder.Origin);
+        return (Abs(height) <= cylinder.GetHeight() / 2);
+    }
+    if (Vector3::Parallel(plane.GetNormal(), axis)) { // Plane is parallel to the cylinder.
+        float dist = Abs(plane.Distance(cylinder.Origin));
+        return (dist <= cylinder.GetRadius());
+    }
+    // Test the axis.
+    Vector3 p;
+    if (cylinder.IsInfinite()) {
+        if (Intersects(Line(cylinder.Origin, cylinder.Origin+axis, true), plane, p)) { return true; }
+    }
+    else {
+        if (Intersects(Line(cylinder.GetBottom(), cylinder.GetTop()), plane, p)) { return true; }
+    }
+    // Skew case. (Taken from Geometric Tools for Computer Graphics, pg.567)
+    Line axisline(cylinder.Origin, axis, true);
+    Vector3 ia;
+    if (!Intersects(axisline, plane, ia)) {
+        return false; // No skew case.
+    }
+
+    Vector3 w = Vector3::CrossProduct(axis, Vector3::CrossProduct(plane.GetNormal(), axis));
+    float a = (ia - cylinder.GetBottom()).Magnitude()-cylinder.GetHeight();
+    float c = a / Vector3::Dot(plane.GetNormal(), w);
+    float bb = c*c - a*a;
+    return (bb <= cylinder.GetRadius()*cylinder.GetRadius());
 }
 
 bool Starsurge::Intersects(Plane plane, Cone cone) {
@@ -697,6 +868,9 @@ bool Starsurge::Intersects(Plane plane, Quad quad) {
 bool Starsurge::Intersects(Sphere sphere, Plane plane) {
     return Intersects(plane, sphere);
 }
+bool Starsurge::Intersects(Cylinder cylinder, Plane plane) {
+    return Intersects(plane, cylinder);
+}
 bool Starsurge::Intersects(Cone cone, Plane plane) {
     return Intersects(plane, cone);
 }
@@ -713,6 +887,14 @@ bool Starsurge::Intersects(Sphere sphere1, Sphere sphere2) {
     float maxDist = sphere1.radius + sphere2.radius;
 
     return (dist <= maxDist*maxDist);
+}
+
+bool Starsurge::Intersects(Sphere sphere, Cylinder cylinder) {
+    Vector3 pt = cylinder.ClosestPoint(sphere.position);
+    Vector3 diff = sphere.position - pt;
+    float dist = Vector3::Dot(diff, diff);
+
+    return (dist <= sphere.radius*sphere.radius);
 }
 
 bool Starsurge::Intersects(Sphere sphere, Cone cone) {
@@ -740,6 +922,9 @@ bool Starsurge::Intersects(Sphere sphere, Quad quad) {
     return (Intersects(sphere, tri[0]) || Intersects(sphere, tri[1]));
 }
 
+bool Starsurge::Intersects(Cylinder cylinder, Sphere sphere) {
+    return Intersects(sphere, cylinder);
+}
 bool Starsurge::Intersects(Cone cone, Sphere sphere) {
     return Intersects(sphere, cone);
 }
@@ -748,6 +933,37 @@ bool Starsurge::Intersects(Triangle triangle, Sphere sphere) {
 }
 bool Starsurge::Intersects(Quad quad, Sphere sphere) {
     return Intersects(sphere, quad);
+}
+
+bool Starsurge::Intersects(Cylinder cylinder, Triangle triangle) {
+    // Test the vertices.
+    Vector3 p1 = triangle.GetVertex(0);
+    Vector3 p2 = triangle.GetVertex(1);
+    Vector3 p3 = triangle.GetVertex(2);
+    if (cylinder.Contains(p1) || cylinder.Contains(p2) || cylinder.Contains(p3)) {
+        return true;
+    }
+
+    // Test the edges.
+    Vector3 p;
+    std::vector<Line> edges = triangle.GetAllEdges();
+    if (Intersects(cylinder, edges[0], p) || Intersects(cylinder, edges[1], p) || Intersects(cylinder, edges[2], p)) {
+        return true;
+    }
+
+    // Is it some point on the face?
+    Vector3 pt = cylinder.ClosestPoint(triangle.GetCenter());
+    return triangle.Contains(pt);
+}
+bool Starsurge::Intersects(Cylinder cylinder, Quad quad) {
+    std::vector<Triangle> tri = quad.Triangulate();
+    return (Intersects(cylinder, tri[0]) || Intersects(cylinder, tri[1]));
+}
+bool Starsurge::Intersects(Triangle triangle, Cylinder cylinder) {
+    return Intersects(cylinder, triangle);
+}
+bool Starsurge::Intersects(Quad quad, Cylinder cylinder) {
+    return Intersects(cylinder, quad);
 }
 
 bool Starsurge::Intersects(Cone cone1, Cone cone2) {

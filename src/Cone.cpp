@@ -295,18 +295,11 @@ float Starsurge::Cone::GetHMax() const {
 }
 
 Starsurge::AABB Starsurge::Cone::BoundingBox() const {
-    if (IsInfinite()) {
-        Vector3 a = GetDirection();
-        float dot = Vector3::Dot(a, a);
-        Vector3 b = GetBase(), t = GetPeak();
-
-    }
-
     // https://iquilezles.org/www/articles/diskbbox/diskbbox.htm
     Vector3 a = GetDirection();
     Vector3 b = GetBase(), t = GetPeak();
-    float dot = Vector3::Dot(a, a);
-    Vector3 e = Vector3(1.0-a.x*a.x/dot, 1.0-a.y*a.y/dot, 1.0-a.z*a.z/dot);
+    Vector3 e = Vector3::EntrywiseProduct(a,a);
+    e.Assign([](size_t i, float v) { return Sqrt(1-v); });
     if (IsInfinite()) {
         float r = GetRadius(0);
         return AABB(Vector3::Min(b, t-r*e), // t may or may not be be infinite here.
@@ -321,10 +314,9 @@ Starsurge::AABB Starsurge::Cone::BoundingBox() const {
 }
 
 std::string Starsurge::Cone::ToString(unsigned int ndigits) const {
-    //Cone(V,D,theta,hmin,hmax)
     std::string ret = "Cone";
     ret += " {V = "+this->Origin.ToString(ndigits);
-    ret += ", D = "+this->Direction.ToString();
+    ret += ", D = "+this->Direction.ToString(ndigits);
     ret += ", theta = "+Starsurge::ToString(Degrees(this->Angle), ndigits, false);
     ret += ", "+Starsurge::ToString(this->HMin, ndigits, false);
     ret += "<=h<="+Starsurge::ToString(this->HMax, ndigits, false);

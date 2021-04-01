@@ -3,6 +3,7 @@
 #include "../include/AABB.h"
 #include "../include/Sphere.h"
 #include "../include/Plane.h"
+#include "../include/Cylinder.h"
 #include "../include/Cone.h"
 
 Starsurge::AssetManager& Starsurge::AssetManager::Inst() {
@@ -68,8 +69,8 @@ bool Starsurge::AssetManager::LoadBuiltins() {
     meshes["Builtin/Cube"] = &this->cubeMesh;
     this->coneMesh = Cone(1, 2).CreateMesh();
     meshes["Builtin/Cone"] = &this->coneMesh;
-    //this->cylinderMesh = Cone(1, 1, 2).CreateMesh();
-    //meshes["Builtin/Cylinder"] = &this->cylinderMesh;
+    this->cylinderMesh = Cylinder(1, 2).CreateMesh();
+    meshes["Builtin/Cylinder"] = &this->cylinderMesh;
     this->sphereMesh = Sphere(Vector3(0,0,0), 1).CreateMesh(3);
     meshes["Builtin/Sphere"] = &this->sphereMesh;
 

@@ -9,27 +9,6 @@ public:
     ~Editor() { }
 protected:
     void OnInitialize() {
-        Vector3 p;
-        Ray ray1(Vector3(1.5,0,0), Vector3(0,0,1));
-        AABB box(Vector3(0.7,0,-1), Vector3(1,0.5,1));
-        Sphere sphere(Vector3(1,1,1), 1);
-        Cone cone(1, 2, Vector3(0,0,0), Vector3(1,0,0));
-        cone.SetRadii(0.5, 1);
-        Log("Cone: "+cone.ToString());
-        Log("Radius Base: "+ToString(cone.GetRadius(0)));
-        Log("Radius Peak: "+ToString(cone.GetRadius(cone.GetHeight())));
-        Log("Height: "+ToString(cone.GetHeight()));
-        Log("Volume: "+ToString(cone.GetVolume()));
-        Log("Peak: "+cone.GetPeak().ToString());
-        Log("Base: "+cone.GetBase().ToString());
-        Log("Contains? "+ToString(cone.Contains(Vector3(1.5,0,0))));
-        Intersects(ray1, cone, p);
-        Log("Intersection (Ray-Cone): "+p.ToString());
-        Log("Intersection (Cone-AABB): "+ToString(Intersects(cone, box)));
-        Log("Intersection (Cone-Sphere): "+ToString(Intersects(cone, sphere)));
-        coneMesh = cone.CreateMesh();
-        boxMesh = box.CreateMesh();
-
         // Initialize variables.
         firstUpdate = true;
 
@@ -59,7 +38,7 @@ protected:
         cube = new Entity("Cube");
         Material * cubeMaterial = new Material(AssetManager::Inst().GetShader("Builtin/Phong"));
         cube->AddComponent<Transform>(new Transform(Vector3(0,0,0), EulerAngles(0,0,0), Vector3(1,1,1)));
-        cube->AddComponent<MeshRenderer>(new MeshRenderer(&coneMesh, cubeMaterial));
+        cube->AddComponent<MeshRenderer>(new MeshRenderer(AssetManager::Inst().GetMesh("Builtin/Cube"), cubeMaterial));
         Scene::Inst().AddEntity(cube);
         selectedEntity = cube;
         cubeMaterial->GetUniform(0, "material.diffuse")->SetData(AssetManager::Inst().GetTexture("Builtin/Checker"));
@@ -265,7 +244,6 @@ private:
     Entity * cube;
     Grid * grid;
     Entity * selectedEntity;
-    Mesh coneMesh, boxMesh;
 
     // Gui Stuff
     bool firstUpdate;

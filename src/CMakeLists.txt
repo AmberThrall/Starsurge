@@ -43,6 +43,7 @@ add_library(Starsurge STATIC Logging.cpp
     imgui/imgui_impl_glfw.cpp
     Framebuffer.cpp
     Rect.cpp
+    Cylinder.cpp
     Cone.cpp
     Triangle.cpp
     Quad.cpp

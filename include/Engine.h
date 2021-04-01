@@ -36,6 +36,7 @@
 #include "Framebuffer.h"
 #include "Rect.h"
 #include "LinkedList.h"
+#include "Cylinder.h"
 #include "Cone.h"
 #include "Triangle.h"
 #include "Quad.h"

@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -127,6 +128,30 @@ namespace Starsurge {
                 ret[j] = this->data[j];
             }
             return ret;
+        }
+
+        void Assign(float val) {
+            for (size_t i = 0; i < this->n; ++i) {
+                this->data[i] = val;
+            }
+        }
+
+        void Assign(std::function<float(size_t)> f) {
+            for (size_t i = 0; i < this->n; ++i) {
+                this->data[i] = f(i);
+            }
+        }
+
+        void Assign(std::function<float(size_t, float)> f) {
+            for (size_t i = 0; i < this->n; ++i) {
+                this->data[i] = f(i, this->data[i]);
+            }
+        }
+
+        void ForEach(std::function<void(float)> f) {
+            for (size_t i = 0; i < this->n; ++i) {
+                f(this->data[i]);
+            }
         }
 
         std::string ToString(unsigned int ndigits = 3) const {
