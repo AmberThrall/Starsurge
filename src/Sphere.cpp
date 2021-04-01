@@ -85,9 +85,9 @@ Starsurge::Mesh Starsurge::Sphere::CreateMesh(unsigned int nsubdivisions) const 
     std::vector<Vertex> vertices;
     for (unsigned int i = 0; i < positions.size(); ++i) {
         Vertex vertex;
-        vertex.Position = this->radius*positions[i] + this->position;
-        vertex.Normal = Vector3::Normalize(vertex.Position-this->position);
-        Vector3 d = Vector3::Normalize(this->position - vertex.Position);
+        vertex.Position = this->radius*positions[i];
+        vertex.Normal = Vector3::Normalize(vertex.Position);
+        Vector3 d = Vector3::Normalize(-1*vertex.Position);
         vertex.UV = Vector2(0.5 + std::atan2(d.x, d.z) / (2*PI), 0.5 - std::asin(d.y) / PI);
         vertex.Color = Colors::WHITE;
         vertices.push_back(vertex);

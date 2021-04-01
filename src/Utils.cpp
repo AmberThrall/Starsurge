@@ -108,10 +108,6 @@ void Starsurge::PrintCode(std::string code) {
     }
 }
 
-float Starsurge::Lerp(float start, float end, float t) {
-    return start + t*(end-start);
-}
-
 std::vector<Starsurge::Match> Starsurge::FindSubstrings(std::string str, std::string regex) {
     std::smatch m;
     std::vector<Match> ret;

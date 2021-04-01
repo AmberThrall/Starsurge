@@ -3,6 +3,7 @@
 #include "../include/AABB.h"
 #include "../include/Sphere.h"
 #include "../include/Plane.h"
+#include "../include/Cone.h"
 
 Starsurge::AssetManager& Starsurge::AssetManager::Inst() {
     static AssetManager instance;
@@ -65,12 +66,31 @@ bool Starsurge::AssetManager::LoadBuiltins() {
     meshes["Builtin/Grid"] = &this->gridMesh;
     this->cubeMesh = AABB(Vector3(-0.5,-0.5,-0.5),Vector3(0.5,0.5,0.5)).CreateMesh();
     meshes["Builtin/Cube"] = &this->cubeMesh;
+    this->coneMesh = Cone(1, 2).CreateMesh();
+    meshes["Builtin/Cone"] = &this->coneMesh;
+    //this->cylinderMesh = Cone(1, 1, 2).CreateMesh();
+    //meshes["Builtin/Cylinder"] = &this->cylinderMesh;
     this->sphereMesh = Sphere(Vector3(0,0,0), 1).CreateMesh(3);
     meshes["Builtin/Sphere"] = &this->sphereMesh;
 
     // Textures
     textures["Builtin/White"] = new Texture(std::vector<Color>({Colors::WHITE}), 1, 1);
     textures["Builtin/Black"] = new Texture(std::vector<Color>({Colors::BLACK}), 1, 1);
+    std::vector<Color> texChecker;
+    for (unsigned int y = 0; y < 256; ++y) {
+        for (unsigned int x = 0; x < 256; ++x) {
+            int i = (int)std::floor(x / 32);
+            int j = (int)std::floor(y / 32);
+
+            if ((i+j) % 2 == 0) {
+                texChecker.push_back(Colors::DARK_GRAY);
+            }
+            else {
+                texChecker.push_back(Colors::WHITE);
+            }
+        }
+    }
+    textures["Builtin/Checker"] = new Texture(texChecker, 256, 256);
 
     // Shaders
     shaders["Builtin/BasicShader"] = &Shaders::BasicShader;

@@ -6,6 +6,9 @@
 #include "AABB.h"
 #include "Sphere.h"
 #include "Rect.h"
+#include "Cone.h"
+#include "Triangle.h"
+#include "Quad.h"
 
 namespace Starsurge {
     // Intersection with rectangles.
@@ -17,33 +20,78 @@ namespace Starsurge {
     bool Intersects(Ray ray, Plane plane, Vector3 & point);
     bool Intersects(Ray ray, AABB box, Vector3 & point);
     bool Intersects(Ray ray, Sphere sphere, Vector3 & point);
+    bool Intersects(Ray ray, Cone cone, Vector3 & point);
+    bool Intersects(Ray ray, Triangle triangle, Vector3 & point);
+    bool Intersects(Ray ray, Quad quad, Vector3 & point);
     bool Intersects(Line line, Ray ray, Vector3 & point);
     bool Intersects(Plane plane, Ray ray, Vector3 & point);
     bool Intersects(AABB box, Ray ray, Vector3 & point);
     bool Intersects(Sphere sphere, Ray ray, Vector3 & point);
+    bool Intersects(Cone cone, Ray ray, Vector3 & point);
+    bool Intersects(Triangle triangle, Ray ray, Vector3 & point);
+    bool Intersects(Quad quad, Ray ray, Vector3 & point);
 
     // Intersection with lines.
     bool Intersects(Line line1, Line line2, Vector3 & point);
     bool Intersects(Line line, Plane plane, Vector3 & point);
     bool Intersects(Line line, AABB box, Vector3 & point);
     bool Intersects(Line line, Sphere sphere, Vector3 & point);
+    bool Intersects(Line line, Cone cone, Vector3 & point);
+    bool Intersects(Line line, Triangle triangle, Vector3 & point);
+    bool Intersects(Line line, Quad quad, Vector3 & point);
     bool Intersects(Plane plane, Line line, Vector3 & point);
     bool Intersects(AABB box, Line line, Vector3 & point);
     bool Intersects(Sphere sphere, Line line, Vector3 & point);
+    bool Intersects(Cone cone, Line line, Vector3 & point);
+    bool Intersects(Triangle triangle, Line line, Vector3 & point);
+    bool Intersects(Quad quad, Line line, Vector3 & point);
 
     // Intersection with axis-aligned bounding boxes.
     bool Intersects(AABB boxA, const AABB boxB, AABB & volume);
     bool Intersects(AABB box, Plane plane);
     bool Intersects(AABB box, Sphere sphere);
+    bool Intersects(AABB box, Cone cone);
+    bool Intersects(AABB box, Triangle triangle);
+    bool Intersects(AABB box, Quad quad);
     bool Intersects(Plane plane, AABB box);
     bool Intersects(Sphere sphere, AABB box);
+    bool Intersects(Cone cone, AABB box);
+    bool Intersects(Triangle triangle, AABB box);
+    bool Intersects(Quad quad, AABB box);
 
     // Intersection with planes.
     bool Intersects(Plane plane1, Plane plane2);
     bool Intersects(Plane plane1, Plane plane2, Plane plane3, Vector3 & point);
     bool Intersects(Plane plane, Sphere sphere);
+    bool Intersects(Plane plane, Cone cone);
+    bool Intersects(Plane plane, Triangle triangle);
+    bool Intersects(Plane plane, Quad quad);
     bool Intersects(Sphere sphere, Plane plane);
+    bool Intersects(Cone cone, Plane plane);
+    bool Intersects(Triangle triangle, Plane plane);
+    bool Intersects(Quad quad, Plane plane);
 
     // Intersection with spheres.
     bool Intersects(Sphere sphere1, Sphere sphere2);
+    bool Intersects(Sphere sphere, Cone cone);
+    bool Intersects(Sphere sphere, Triangle triangle);
+    bool Intersects(Sphere sphere, Quad quad);
+    bool Intersects(Cone cone, Sphere sphere);
+    bool Intersects(Triangle triangle, Sphere sphere);
+    bool Intersects(Quad quad, Sphere sphere);
+
+    // Intersection with cones.
+    bool Intersects(Cone cone1, Cone cone2);
+    bool Intersects(Cone cone, Triangle triangle);
+    bool Intersects(Cone cone, Quad quad);
+    bool Intersects(Triangle triangle, Cone cone);
+    bool Intersects(Quad quad, Cone cone);
+
+    // Intersection with triangles.
+    bool Intersects(Triangle triangle1, Triangle triangle2);
+    bool Intersects(Triangle triangle, Quad quad);
+    bool Intersects(Quad quad, Triangle triangle);
+
+    // Intersection with quads.
+    bool Intersects(Quad quad1, Quad quad2);
 };

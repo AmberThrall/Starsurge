@@ -17,8 +17,8 @@ namespace Starsurge {
         Plane(Vector3 n, Vector3 p);
         Plane(Vector3 p1, Vector3 p2, Vector3 p3);
 
-        bool Above(Vector3 test);
-        bool Below(Vector3 test);
+        bool IsAbove(Vector3 test);
+        bool IsBelow(Vector3 test);
         bool Contains(Vector3 test);
         void Normalize();
         Vector3 ClosestPoint(const Vector3 point);

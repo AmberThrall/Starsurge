@@ -17,8 +17,6 @@ namespace Starsurge {
     std::string Replace(std::string const str, std::string regex, const std::string & to);
     void PrintCode(std::string code);
 
-    float Lerp(float start, float end, float t);
-
     // Select various elements from an tuple
     template <typename Tuple, size_t... Idx>
     auto Select(Tuple&& tuple, std::index_sequence<Idx...>) {

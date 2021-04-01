@@ -23,6 +23,6 @@ namespace Starsurge {
         std::map<std::string, Mesh*> meshes;
         std::map<std::string, Shader*> shaders;
 
-        Mesh planeMesh, gridMesh, cubeMesh, sphereMesh;
+        Mesh planeMesh, gridMesh, cubeMesh, coneMesh, cylinderMesh, sphereMesh;
     };
 }

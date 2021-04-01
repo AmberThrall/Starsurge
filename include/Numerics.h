@@ -14,6 +14,8 @@ namespace Starsurge {
     float Ceil(float x);
     float Floor(float x);
     float Round(float x);
+    float Trunc(float x);
+    float Fract(float x);
     float Max(float a, float b);
     template <typename...Ts>
     float Max(float a, float b, Ts&&... ts) {
@@ -60,11 +62,18 @@ namespace Starsurge {
     float ASech(float x);
     float ACoth(float x);
     float Exp(float x);
+    float Exp2(float x);
     float Log(float x);
     float Log(float x, float base);
     float Log10(float x);
+    float Log2(float x);
     float Pow(float x, float exp);
-    long Factorial(long n);
+    float Step(float edge, float x);
+    float Smoothstep(float edge0, float edge1, float x);
+    float Smootherstep(float edge0, float edge1, float x);
+    float InverseSmoothstep(float y);
+    float Lerp(float start, float end, float t);
+    float Spline(float p0, float m0, float p1, float m1, float t);
     std::string ToString(bool v);
     std::string ToString(int v);
     std::string ToString(long v);

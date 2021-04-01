@@ -31,6 +31,12 @@ float Starsurge::Floor(float x) {
 float Starsurge::Round(float x) {
     return std::round(x);
 }
+float Starsurge::Trunc(float x) {
+    return std::trunc(x);
+}
+float Starsurge::Fract(float x) {
+    return x - Floor(x);
+}
 
 float Starsurge::Max(float a, float b) {
     if (a > b)
@@ -56,13 +62,6 @@ float Starsurge::Wrap(float v, float min, float max) {
         v -= std::abs(max-min);
     }
     return v;
-}
-
-long Starsurge::Factorial(long n) {
-    if (n == 0 || n == 1) {
-        return 1;
-    }
-    return n*Factorial(n-1);
 }
 
 float Starsurge::Sign(float x) {
@@ -169,6 +168,9 @@ float Starsurge::ACoth(float x) {
 float Starsurge::Exp(float x) {
     return std::exp(x);
 }
+float Starsurge::Exp2(float x) {
+    return std::exp2(x);
+}
 float Starsurge::Log(float x) {
     return std::log(x);
 }
@@ -178,8 +180,38 @@ float Starsurge::Log(float x, float base) {
 float Starsurge::Log10(float x) {
     return std::log10(x);
 }
+float Starsurge::Log2(float x) {
+    return std::log2(x);
+}
 float Starsurge::Pow(float x, float exp) {
     return std::pow(x, exp);
+}
+
+float Starsurge::Step(float edge, float x) {
+    if (x < edge) {
+        return 0;
+    }
+    return 1;
+}
+float Starsurge::Smoothstep(float edge0, float edge1, float x) {
+    x = Clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    return x * x * (3 - 2 * x); // 3x^2-2x^3
+}
+float Starsurge::Smootherstep(float edge0, float edge1, float x) {
+    x = Clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    return x * x * x * (x * (x * 6 - 15) + 10); // 6x^5-15x^4+10x^3
+}
+float Starsurge::InverseSmoothstep(float y) {
+    return 0.5 - Sin(ASin(1.0 - 2.0*y) / 3.0);
+}
+
+float Starsurge::Lerp(float start, float end, float t) {
+    t = Clamp(t, 0, 1);
+    return start + t*(end-start);
+}
+float Starsurge::Spline(float p0, float m0, float p1, float m1, float t) {
+    t = Clamp(t, 0, 1);
+    return (1+2*t)*(1-t)*(1-t)*p0 + t*(1-t)*(1-t)*m0 + t*t*(3-2*t)*p1+t*t*(t-1)*m1;
 }
 
 std::string Starsurge::ToString(bool v) {

@@ -3,6 +3,7 @@
 #include "Matrix.h"
 #include "Line.h"
 #include "Sphere.h"
+#include "Quad.h"
 
 namespace Starsurge {
     enum AABBCorner {
@@ -18,13 +19,6 @@ namespace Starsurge {
 
     enum AABBFace {
         LEFT_FACE, TOP_FACE, RIGHT_FACE, BOTTOM_FACE, NEAR_FACE, FAR_FACE
-    };
-
-    struct Quad {
-        Quad() {}
-        Quad(Vector3 _v1, Vector3 _v2, Vector3 _v3, Vector3 _v4, Vector3 _normal) : v1(_v1), v2(_v2), v3(_v3), v4(_v4), normal(_normal) {}
-        Vector3 v1, v2, v3, v4;
-        Vector3 normal;
     };
 
     class AABB {
@@ -44,6 +38,7 @@ namespace Starsurge {
         bool Contains(const AABB box) const;
         Vector3 GetCenter() const;
         Vector3 GetSize() const;
+        Vector3 GetExtents() const;
         float GetVolume() const;
         Vector3 GetCorner(AABBCorner corner) const;
         std::vector<Vector3> GetAllCorners() const;

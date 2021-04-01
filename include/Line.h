@@ -4,10 +4,12 @@
 namespace Starsurge {
     class Line {
     public:
-        Line(Vector3 t_start, Vector3 t_end);
+        Line();
+        Line(Vector3 p1, Vector3 p2, bool inf = false);
 
         bool Contains(Vector3 test) const;
         Vector3 GetPoint(float t) const;
+        float GetT(Vector3 point) const;
         float Length() const;
         float SquaredLength() const;
         float Distance(Vector3 point) const;
@@ -15,15 +17,16 @@ namespace Starsurge {
 
         std::string ToString() const;
 
-        Vector3 operator*(float t) const {
-            return GetPoint(t);
-        }
+        static Line XAxis();
+        static Line YAxis();
+        static Line ZAxis();
 
         Vector3 start;
         Vector3 end;
+        bool infinite;
 
         friend bool operator==(const Line& lhs, const Line& rhs) {
-            return (lhs.start == rhs.start && lhs.end == rhs.end);
+            return ((lhs.start == rhs.start && lhs.end == rhs.end && lhs.infinite == rhs.infinite) || (lhs.start == rhs.end && lhs.end == rhs.start && lhs.infinite == rhs.infinite));
         }
         friend bool operator!=(const Line& lhs, const Line& rhs) { return !(lhs == rhs); }
     };

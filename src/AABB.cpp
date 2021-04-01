@@ -78,9 +78,11 @@ bool Starsurge::AABB::Contains(const AABB box) const {
 Starsurge::Vector3 Starsurge::AABB::GetCenter() const {
     return (this->maximum + this->minimum) / 2;
 }
-
 Starsurge::Vector3 Starsurge::AABB::GetSize() const {
     return this->maximum - this->minimum;
+}
+Starsurge::Vector3 Starsurge::AABB::GetExtents() const {
+    return this->maximum - GetCenter();
 }
 
 float Starsurge::AABB::GetVolume() const {
@@ -161,15 +163,36 @@ std::vector<Starsurge::Line> Starsurge::AABB::GetAllEdges() const {
 }
 Starsurge::Quad Starsurge::AABB::GetFace(AABBFace face) const {
     switch (face) {
-        case LEFT_FACE: return Quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_LEFT_TOP), GetCorner(NEAR_LEFT_TOP), GetCorner(NEAR_LEFT_BOTTOM), Vector3(0,0,-1));
-        case TOP_FACE: return Quad(GetCorner(FAR_LEFT_TOP), GetCorner(FAR_RIGHT_TOP), GetCorner(NEAR_RIGHT_TOP), GetCorner(NEAR_LEFT_TOP), Vector3(0,1,0));
-        case RIGHT_FACE: return Quad(GetCorner(FAR_RIGHT_BOTTOM), GetCorner(FAR_RIGHT_TOP), GetCorner(NEAR_RIGHT_TOP), GetCorner(NEAR_RIGHT_BOTTOM), Vector3(0,0,1));
-        case BOTTOM_FACE: return Quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_RIGHT_BOTTOM), GetCorner(NEAR_RIGHT_BOTTOM), GetCorner(NEAR_LEFT_BOTTOM), Vector3(0,-1,0));
-        case NEAR_FACE: return Quad(GetCorner(NEAR_LEFT_BOTTOM), GetCorner(NEAR_RIGHT_BOTTOM), GetCorner(NEAR_RIGHT_TOP), GetCorner(NEAR_LEFT_TOP), Vector3(-1,0,0));
-        case FAR_FACE: return Quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_RIGHT_BOTTOM), GetCorner(FAR_RIGHT_TOP), GetCorner(FAR_LEFT_TOP), Vector3(1,0,0));
+        case LEFT_FACE: {
+            Quad quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_LEFT_TOP), GetCorner(NEAR_LEFT_TOP), GetCorner(NEAR_LEFT_BOTTOM));
+            quad.FlipNormal();
+            return quad;
+        }
+        case TOP_FACE: {
+            Quad quad(GetCorner(FAR_LEFT_TOP), GetCorner(FAR_RIGHT_TOP), GetCorner(NEAR_RIGHT_TOP), GetCorner(NEAR_LEFT_TOP));
+            return quad;
+        }
+        case RIGHT_FACE: {
+            Quad quad(GetCorner(FAR_RIGHT_BOTTOM), GetCorner(FAR_RIGHT_TOP), GetCorner(NEAR_RIGHT_TOP), GetCorner(NEAR_RIGHT_BOTTOM));
+            return quad;
+        }
+        case BOTTOM_FACE: {
+            Quad quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_RIGHT_BOTTOM), GetCorner(NEAR_RIGHT_BOTTOM), GetCorner(NEAR_LEFT_BOTTOM));
+            quad.FlipNormal();
+            return quad;
+        }
+        case NEAR_FACE: {
+            Quad quad(GetCorner(NEAR_LEFT_BOTTOM), GetCorner(NEAR_RIGHT_BOTTOM), GetCorner(NEAR_RIGHT_TOP), GetCorner(NEAR_LEFT_TOP));
+            quad.FlipNormal();
+            return quad;
+        }
+        case FAR_FACE: {
+            Quad quad(GetCorner(FAR_LEFT_BOTTOM), GetCorner(FAR_RIGHT_BOTTOM), GetCorner(FAR_RIGHT_TOP), GetCorner(FAR_LEFT_TOP));
+            return quad;
+        }
         default:
             Error("Invalid face in AABB::GetFace(). Options: LEFT_FACE, TOP_FACE, RIGHT_FACE, BOTTOM_FACE, NEAR_FACE, FAR_FACE");
-            return Quad(Vector3(0,0,0), Vector3(0,0,0), Vector3(0,0,0), Vector3(0,0,0), Vector3(0,0,0));
+            return Quad();
     }
 }
 std::vector<Starsurge::Quad> Starsurge::AABB::GetAllFaces() const {

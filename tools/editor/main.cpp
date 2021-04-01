@@ -9,11 +9,26 @@ public:
     ~Editor() { }
 protected:
     void OnInitialize() {
-        Vector<10> X = Vector<10>::Linspace(-2, 2);
-        Vector<10> Y = X;
-        Matrix<10,10> F;
-        F.Assign(X, Y, [](float x,float y) { return x*std::exp(-x*x-y*y); });
-        Log("F = "+F.ToString());
+        Vector3 p;
+        Ray ray1(Vector3(1.5,0,0), Vector3(0,0,1));
+        AABB box(Vector3(0.7,0,-1), Vector3(1,0.5,1));
+        Sphere sphere(Vector3(1,1,1), 1);
+        Cone cone(1, 2, Vector3(0,0,0), Vector3(1,0,0));
+        cone.SetRadii(0.5, 1);
+        Log("Cone: "+cone.ToString());
+        Log("Radius Base: "+ToString(cone.GetRadius(0)));
+        Log("Radius Peak: "+ToString(cone.GetRadius(cone.GetHeight())));
+        Log("Height: "+ToString(cone.GetHeight()));
+        Log("Volume: "+ToString(cone.GetVolume()));
+        Log("Peak: "+cone.GetPeak().ToString());
+        Log("Base: "+cone.GetBase().ToString());
+        Log("Contains? "+ToString(cone.Contains(Vector3(1.5,0,0))));
+        Intersects(ray1, cone, p);
+        Log("Intersection (Ray-Cone): "+p.ToString());
+        Log("Intersection (Cone-AABB): "+ToString(Intersects(cone, box)));
+        Log("Intersection (Cone-Sphere): "+ToString(Intersects(cone, sphere)));
+        coneMesh = cone.CreateMesh();
+        boxMesh = box.CreateMesh();
 
         // Initialize variables.
         firstUpdate = true;
@@ -39,15 +54,15 @@ protected:
         Scene::Inst().SetActiveCamera(camera);
         camera->FindComponent<Camera>()->LookAt(Vector3(0,0,0));
 
+        // TODO: Fix UV for MeshGrid and Sphere
         // Simple Cube
         cube = new Entity("Cube");
         Material * cubeMaterial = new Material(AssetManager::Inst().GetShader("Builtin/Phong"));
         cube->AddComponent<Transform>(new Transform(Vector3(0,0,0), EulerAngles(0,0,0), Vector3(1,1,1)));
-        cube->AddComponent<MeshRenderer>(new MeshRenderer(&yzGrid, cubeMaterial));
-        cube->FindComponent<MeshRenderer>()->SetWireframe(true);
+        cube->AddComponent<MeshRenderer>(new MeshRenderer(&coneMesh, cubeMaterial));
         Scene::Inst().AddEntity(cube);
         selectedEntity = cube;
-        cubeMaterial->GetUniform(0, "material.diffuse")->SetData(AssetManager::Inst().GetTexture("Builtin/White"));
+        cubeMaterial->GetUniform(0, "material.diffuse")->SetData(AssetManager::Inst().GetTexture("Builtin/Checker"));
         cubeMaterial->GetUniform(0, "material.specular")->SetData(AssetManager::Inst().GetTexture("Builtin/Black"));
         cubeMaterial->GetUniform(0, "material.shininess")->SetData(32);
     }
@@ -250,7 +265,7 @@ private:
     Entity * cube;
     Grid * grid;
     Entity * selectedEntity;
-    Mesh yzGrid;
+    Mesh coneMesh, boxMesh;
 
     // Gui Stuff
     bool firstUpdate;

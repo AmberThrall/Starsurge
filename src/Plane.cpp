@@ -61,11 +61,11 @@ Starsurge::Plane Starsurge::Plane::Transform(Matrix4 m) {
     );
 }
 
-bool Starsurge::Plane::Above(Vector3 test) {
+bool Starsurge::Plane::IsAbove(Vector3 test) {
     return (Plane::Distance(test) > 0.00001);
 }
 
-bool Starsurge::Plane::Below(Vector3 test) {
+bool Starsurge::Plane::IsBelow(Vector3 test) {
     return (Plane::Distance(test) < -0.00001);
 }
 

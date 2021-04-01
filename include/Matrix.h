@@ -1685,6 +1685,18 @@ namespace Starsurge {
             }
             return ret;
         }
+        template<size_t P, typename = std::enable_if<(M==P||M==Dynamic||P==Dynamic)>>
+        friend Vector<N> operator*(Vector<P> lhs, Matrix<M,N> rhs) {
+            if (rhs.NumRows() != lhs.Size()) {
+                throw "Invalid sizes for matrix-vector multiplication.";
+            }
+            Vector<N> ret = CreateVector<N>(rhs.NumColumns(), 0);
+            for (size_t c = 0; c < rhs.NumColumns(); ++c) {
+                Vector<M> column = rhs.GetColumn(c);
+                ret[c] = Vector<M>::Dot(lhs, column);
+            }
+            return ret;
+        }
         Matrix<M,N>& operator*=(const Matrix<N,N>& rhs) {
             *this = *this * rhs;
             return *this;
