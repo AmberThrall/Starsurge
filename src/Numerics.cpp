@@ -13,6 +13,12 @@ bool Starsurge::IsInfinite(float x) {
 bool Starsurge::IsNaN(float x) {
     return std::isnan(x);
 }
+bool Starsurge::IsZero(float v, float eps) {
+    return (Abs(v) < eps);
+}
+bool Starsurge::IsSame(float a, float b, float eps) {
+    return IsZero(a-b, eps);
+}
 
 float Starsurge::Radians(float deg) {
     return deg*(PI / 180.0f);

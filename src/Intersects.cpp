@@ -40,16 +40,42 @@ bool Starsurge::Intersects(Line2D line1, Line2D line2, Vector2 & point) {
 }
 
 bool Starsurge::Intersects(Line2D line, Rect rect, Vector2 & point) {
-    Line2D edge1 = rect.GetEdge(TOP_LEFT, TOP_RIGHT);
-    Line2D edge2 = rect.GetEdge(TOP_RIGHT, BOTTOM_RIGHT);
-    Line2D edge3 = rect.GetEdge(BOTTOM_RIGHT, BOTTOM_LEFT);
-    Line2D edge4 = rect.GetEdge(BOTTOM_LEFT, TOP_LEFT);
-    return (Intersects(line, edge1, point) || Intersects(line, edge2, point) || Intersects(line, edge3, point) ||
-            Intersects(line, edge4, point));
+    std::vector<Line2D> edges = rect.GetAllEdges();
+    return (Intersects(line, edges[0], point) || Intersects(line, edges[1], point) || Intersects(line, edges[2], point) ||
+            Intersects(line, edges[3], point));
+}
+
+bool Starsurge::Intersects(Line2D line, Circle circle, Vector2 & point) {
+    // Circle: (x-x0)^2 + (y-y0)^2 = r^2        Line: y=mx+b
+    // Solve: (x-x0)^2 + (mx+b-y0)^2 = r^2 for x
+    float m = line.GetSlope();
+    float b = line.GetYIntercept();
+    float x0 = circle.Position.x;
+    float y0 = circle.Position.y;
+    float r = circle.GetRadius();
+    float discr = -b*b+r*r+m*m*r*r-2*b*m*x0-m*m*x0*x0+2*b*y0+2*m*x0*y0-y0*y0;
+    if (discr < 0) { // Imaginary solution.
+        return false;
+    }
+    float x1 = (-b*m+x0+m*y0-Sqrt(discr))/(1+m*m);
+    float x2 = (-b*m+x0+m*y0+Sqrt(discr))/(1+m*m);
+    float t1 = line.GetT(Vector2(x1, m*x1+b));
+    float t2 = line.GetT(Vector2(x2, m*x2+b));
+
+    if ((t1 < 0 || t1 > 1) && !line.infinite) {
+        if ((t2 < 0 || t2 > 1) && !line.infinite) { return false; }
+        point = line.GetPoint(t2);
+        return true;
+    }
+    point = line.GetPoint(t1);
+    return true;
 }
 
 bool Starsurge::Intersects(Rect rect, Line2D line, Vector2 & point) {
-    return Intersects(rect, line, point);
+    return Intersects(line, rect, point);
+}
+bool Starsurge::Intersects(Circle circle, Line2D line, Vector2 & point) {
+    return Intersects(line, circle, point);
 }
 
 /// Rectangles
@@ -57,6 +83,22 @@ bool Starsurge::Intersects(Rect r1, Rect r2, Rect & area) {
     area.SetBounds(r1);
     area.Intersection(r2);
     return !area.IsNull();
+}
+
+bool Starsurge::Intersects(Rect rect, Circle circle) {
+    Vector2 p = rect.ClosestPoint(circle.Position);
+    Vector2 diff = p - circle.Position;
+    return (diff.SquaredNorm() < circle.GetRadius()*circle.GetRadius());
+}
+bool Starsurge::Intersects(Circle circle, Rect rect) {
+    return Intersects(rect, circle);
+}
+
+/// Circles
+bool Starsurge::Intersects(Circle c1, Circle c2) {
+    Vector2 diff = c2.Position - c1.Position;
+    float r1 = c1.GetRadius(), r2 = c2.GetRadius();
+    return (diff.SquaredNorm() < (r1+r2)*(r1+r2));
 }
 
 /// Rays
@@ -575,15 +617,15 @@ bool Starsurge::Intersects(Quad quad, Line line, Vector3 & point) {
     return Intersects(line, quad, point);
 }
 
+/// AABB Boxes
+Starsurge::Vector2 Starsurge::Project(AABB box, Vector3 axis) {
+    return Project(box.AsOBB(), axis);
+}
+
 bool Starsurge::Intersects(AABB boxA, const AABB boxB, AABB & volume) {
     volume.SetBounds(boxA);
     volume.Intersection(boxB);
     return !volume.IsNull();
-}
-
-/// AABB Boxes
-Starsurge::Vector2 Starsurge::Project(AABB box, Vector3 axis) {
-    return Project(box.AsOBB(), axis);
 }
 
 bool Starsurge::Intersects(AABB boxA, OBB boxB) {
@@ -632,46 +674,38 @@ bool Starsurge::Intersects(AABB box, Cylinder cylinder) {
     if (!Intersects(cylinderAABB, box, volume)) {
         return false;
     }
-    // Test it the entire cone is inside the box.
-    if (box.Contains(cylinderAABB)) {
-        return true;
-    }
 
-    // Test if the cone's axis intersects.
-    Vector3 p;
-    if (cylinder.IsInfinite()) {
-        Line axis(cylinder.Origin, cylinder.Origin+cylinder.GetDirection(), true);
-        if (Intersects(axis, box, p)) {
-            return true;
-        }
-    }
-    else {
-        Line axis(cylinder.GetTop(), cylinder.GetBottom());
-        if (Intersects(axis, box, p)) {
-            return true;
-        }
-    }
+    Vector3 d = cylinder.GetDirection();
 
-    // Test the box's corners.
-    std::vector<Vector3> corners = box.GetAllCorners();
-    for (unsigned int i = 0; i < corners.size(); ++i) {
-        if (cylinder.Contains(corners[i])) {
-            return true;
-        }
+    std::vector<Vector3> axes;
+    unsigned int nsides = 16;
+    // Faces (we view the cylinder as a 3d polygon)
+    Vector3 boxFaces[] = { Vector3(1,0,0), Vector3(0,1,0), Vector3(0,0,1) };
+    Vector3 normal;
+    if (d.x != 0 && d.z == 0) { normal = Vector3(0,0,1); }
+    else if (d.x == 0 && d.z == 0) { normal = Vector3(1,0,0); }
+    else { normal = Vector3(1,0,-d.x/d.z); }
+    for (unsigned int i = 0; i < nsides; ++i) {
+        Matrix3 rot = Matrix3::Rotate(i*2*PI/nsides, d);
+        axes.push_back(rot*normal);
     }
+    if (!cylinder.IsInfinite()) { axes.push_back(d); } // Caps
+    axes.push_back(boxFaces[0]);
+    axes.push_back(boxFaces[1]);
+    axes.push_back(boxFaces[2]);
 
-    // Test the box's edges.
-    std::vector<Line> edges = box.GetAllEdges();
-    for (unsigned int i = 0; i < edges.size(); ++i) {
-        if (Intersects(edges[i], cylinder, p)) {
-            return true;
-        }
-    }
+    // Edges, cylinder has only one edge in the direction d.
+    axes.push_back(Vector3::CrossProduct(boxFaces[0], d));
+    axes.push_back(Vector3::CrossProduct(boxFaces[1], d));
+    axes.push_back(Vector3::CrossProduct(boxFaces[2], d));
 
-    // Test the box's faces.
-    std::vector<Quad> faces = box.GetAllFaces();
-    for (unsigned int i = 0; i < faces.size(); ++i) {
-        if (Intersects(cylinder, faces[i])) {
+    // Perform the tests.
+    for (unsigned int i = 0; i < axes.size(); ++i) {
+        if (axes[i].SquaredNorm() == 0)
+            continue;
+        Vector2 projectA = Project(box, axes[i]);
+        Vector2 projectC = Project(cylinder, axes[i]);
+        if (SATOverlap(projectA, projectC)) {
             return true;
         }
     }
@@ -1160,7 +1194,9 @@ Starsurge::Vector2 Starsurge::Project(Cylinder cylinder, Vector3 axis) {
             float r = cylinder.GetRadius();
             return Vector2(o-r, o+r);
         }
-        return Vector2(-Infinity(), Infinity());
+        else if (Vector3::Parallel(cylinder.GetDirection(), axis)) {
+            return Vector2(-Infinity(), Infinity());
+        }
     }
 
     //https://www.geometrictools.com/Documentation/IntersectionOfCylinders.pdf
@@ -1171,7 +1207,7 @@ Starsurge::Vector2 Starsurge::Project(Cylinder cylinder, Vector3 axis) {
     float dc = Vector3::Dot(d, c);
     float dw = Vector3::Dot(d, w);
     float r = cylinder.GetRadius();
-    float h = cylinder.GetHeight();
+    float h = cylinder.IsInfinite() ? 10000 : cylinder.GetHeight(); // For infinite cylinder's, just make them really high.
 
     float min = dc - r*Sqrt(dd-dw*dw) - (h/2)*Abs(dw);
     float max = dc + r*Sqrt(dd-dw*dw) + (h/2)*Abs(dw);
@@ -1179,29 +1215,78 @@ Starsurge::Vector2 Starsurge::Project(Cylinder cylinder, Vector3 axis) {
 }
 
 bool Starsurge::Intersects(Cylinder cylinder1, Cylinder cylinder2) {
-    // TODO.
+    Vector3 d1 = cylinder1.GetDirection();
+    Vector3 d2 = cylinder2.GetDirection();
+
+    std::vector<Vector3> axes;
+    unsigned int nsides = 16;
+    // Faces (we view the cylinders as 3d polygons)
+    Vector3 normal1, normal2;
+    if (d1.x != 0 && d1.z == 0) { normal1 = Vector3(0,0,1); }
+    else if (d1.x == 0 && d1.z == 0) { normal1 = Vector3(1,0,0); }
+    else { normal1 = Vector3(1,0,-d1.x/d1.z); }
+    if (d2.x != 0 && d2.z == 0) { normal2 = Vector3(0,0,1); }
+    else if (d2.x == 0 && d2.z == 0) { normal2 = Vector3(1,0,0); }
+    else { normal2 = Vector3(1,0,-d2.x/d2.z); }
+    for (unsigned int i = 0; i < nsides; ++i) {
+        Matrix3 rot1 = Matrix3::Rotate(i*2*PI/nsides, d1);
+        Matrix3 rot2 = Matrix3::Rotate(i*2*PI/nsides, d2);
+        axes.push_back(rot1*normal1);
+        axes.push_back(rot2*normal2);
+    }
+    if (!cylinder1.IsInfinite()) { axes.push_back(d1); } // Caps
+    if (!cylinder2.IsInfinite()) { axes.push_back(d2); } // Caps
+
+    // Edges (They all have the same direction, d1/d2)
+    axes.push_back(Vector3::CrossProduct(d1, d2));
+
+    // Perform the tests.
+    for (unsigned int i = 0; i < axes.size(); ++i) {
+        if (axes[i].SquaredNorm() == 0) // Bad axis, ignore it.
+            continue;
+        Vector2 project1 = Project(cylinder1, axes[i]);
+        Vector2 project2 = Project(cylinder2, axes[i]);
+        if (SATOverlap(project1, project2)) {
+            return true;
+        }
+    }
     return false;
 }
 
 bool Starsurge::Intersects(Cylinder cylinder, Triangle triangle) {
-    // Test the vertices.
-    Vector3 p1 = triangle.GetVertex(0);
-    Vector3 p2 = triangle.GetVertex(1);
-    Vector3 p3 = triangle.GetVertex(2);
-    if (cylinder.Contains(p1) || cylinder.Contains(p2) || cylinder.Contains(p3)) {
-        return true;
-    }
+    Vector3 d = cylinder.GetDirection();
 
-    // Test the edges.
-    Vector3 p;
-    std::vector<Line> edges = triangle.GetAllEdges();
-    if (Intersects(cylinder, edges[0], p) || Intersects(cylinder, edges[1], p) || Intersects(cylinder, edges[2], p)) {
-        return true;
+    std::vector<Vector3> axes;
+    unsigned int nsides = 16;
+    // Faces (we view the cylinder as a 3d polygon)
+    Vector3 normal;
+    if (d.x != 0 && d.z == 0) { normal = Vector3(0,0,1); }
+    else if (d.x == 0 && d.z == 0) { normal = Vector3(1,0,0); }
+    else { normal = Vector3(1,0,-d.x/d.z); }
+    for (unsigned int i = 0; i < nsides; ++i) {
+        Matrix3 rot = Matrix3::Rotate(i*2*PI/nsides, d);
+        axes.push_back(rot*normal);
     }
+    if (!cylinder.IsInfinite()) { axes.push_back(d); } // Caps
+    axes.push_back(triangle.GetNormal());
 
-    // Is it some point on the face?
-    Vector3 pt = cylinder.ClosestPoint(triangle.GetCenter());
-    return triangle.Contains(pt);
+    // Edges (They all have the same direction, d1/d2)
+    std::vector<Line> tedges = triangle.GetAllEdges();
+    axes.push_back(Vector3::CrossProduct(d, tedges[0].end - tedges[0].start));
+    axes.push_back(Vector3::CrossProduct(d, tedges[1].end - tedges[1].start));
+    axes.push_back(Vector3::CrossProduct(d, tedges[2].end - tedges[2].start));
+
+    // Perform the tests.
+    for (unsigned int i = 0; i < axes.size(); ++i) {
+        if (axes[i].SquaredNorm() == 0) // Bad axis, ignore it.
+            continue;
+        Vector2 projectC = Project(cylinder, axes[i]);
+        Vector2 projectT = Project(triangle, axes[i]);
+        if (SATOverlap(projectC, projectT)) {
+            return true;
+        }
+    }
+    return false;
 }
 bool Starsurge::Intersects(Cylinder cylinder, Quad quad) {
     std::vector<Triangle> tri = quad.Triangulate();

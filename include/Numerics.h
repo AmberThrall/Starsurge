@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "Vector.h"
 
 namespace Starsurge {
     static long double PI = 3.141592653589793238462643383279502884L;
@@ -9,6 +10,8 @@ namespace Starsurge {
     float NaN();
     bool IsInfinite(float x);
     bool IsNaN(float x);
+    bool IsZero(float v, float eps = 0.00001);
+    bool IsSame(float a, float b, float eps = 0.00001);
     float Radians(float deg);
     float Degrees(float rad);
     float Ceil(float x);

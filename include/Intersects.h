@@ -12,15 +12,23 @@
 #include "Triangle.h"
 #include "Quad.h"
 #include "Line2D.h"
+#include "Circle.h"
 
 namespace Starsurge {
     // Intersection with 2d lines.
     bool Intersects(Line2D line1, Line2D line2, Vector2 & point);
     bool Intersects(Line2D line, Rect rect, Vector2 & point);
+    bool Intersects(Line2D line, Circle circle, Vector2 & point);
     bool Intersects(Rect rect, Line2D line, Vector2 & point);
+    bool Intersects(Circle circle, Line2D line, Vector2 & point);
 
     // Intersection with rectangles.
     bool Intersects(Rect r1, Rect r2, Rect & area);
+    bool Intersects(Rect rect, Circle circle);
+    bool Intersects(Circle circle, Rect rect);
+
+    // Intersection with circles.
+    bool Intersects(Circle c1, Circle c2);
 
     // Intersection with ray.
     bool Intersects(Ray ray1, Ray ray2, Vector3 & point);

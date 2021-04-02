@@ -230,6 +230,63 @@ namespace Starsurge {
             return ret;
         }
 
+        float Sum() {
+            float sum = 0;
+            for (size_t i = 0; i < this->n; ++i) {
+                sum += this->data[i];
+            }
+            return sum;
+        }
+
+        float Product() {
+            float prod = 1;
+            for (size_t i = 0; i < this->n; ++i) {
+                prod *= this->data[i];
+            }
+            return prod;
+        }
+
+        float Mean() {
+            return (Sum() / this->n);
+        }
+
+        float GeometricMean() {
+            return Pow(Product(), 1/this->n);
+        }
+
+        float Variance() {
+            float mean = Mean();
+            float sum = 0;
+            for (size_t i = 0; i < this->n; ++i) {
+                sum += (this->data[i] - mean);
+            }
+            return sum / this->n;
+        }
+
+        float StdDev() {
+            return Sqrt(Variance());
+        }
+
+        float Min() {
+            float min = this->data[0];
+            for (size_t i = 0; i < this->n; ++i) {
+                min = Starsurge::Min(min, this->data[i]);
+            }
+            return min;
+        }
+
+        float Max() {
+            float max = this->data[0];
+            for (size_t i = 0; i < this->n; ++i) {
+                max = Starsurge::Max(max, this->data[i]);
+            }
+            return max;
+        }
+
+        bool IsZero(float eps = 0.00001) {
+            return Starsurge::IsZero(SquaredNorm(), eps);
+        }
+
         template<typename = std::enable_if_t<(N!=Dynamic)>>
         static Vector<N> Zero() {
             return CreateVector<N>(N, 0);
@@ -296,6 +353,14 @@ namespace Starsurge {
         }
 
         template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static bool IsSame(Vector<P> a, Vector<Q> b, float eps = 0.00001) {
+            if (a.Size() != b.Size()) {
+                return false;
+            }
+            return (a-b).IsZero(eps);
+        }
+
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
         static Vector<P> EntrywiseProduct(Vector<P> a, Vector<Q> b) {
             if (a.Size() != b.Size()) {
                 throw "Cannot take the entrywise product of vectors with varying length.";
@@ -305,34 +370,6 @@ namespace Starsurge {
                 ret[i] = a[i]*b[i];
             }
             return ret;
-        }
-
-        static float Sum(Vector<N> a) {
-            float sum = 0;
-            for (size_t i = 0; i < a.Size(); ++i) {
-                sum += a[i];
-            }
-            return sum;
-        }
-
-        static float Product(Vector<N> a) {
-            float prod = 1;
-            for (size_t i = 0; i < a.Size(); ++i) {
-                prod *= a[i];
-            }
-            return prod;
-        }
-
-        static float Mean(Vector<N> a) {
-            return Vector<N>::Sum(a) / a.Size();
-        }
-
-        static float Min(Vector<N> a) {
-            float min = a[0];
-            for (size_t i = 0; i < a.Size(); ++i) {
-                min = Starsurge::Min(min, a[i]);
-            }
-            return min;
         }
 
         template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
@@ -351,14 +388,6 @@ namespace Starsurge {
         static Vector<P> Min(Vector<P> a, Vector<Q> b, Ts&&... ts) {
             Vector<P> ret = Vector<P>::Min(a,b);
             return Vector<P>::Min(ret, std::forward<Ts>(ts)...);
-        }
-
-        static float Max(Vector<N> a) {
-            float max = a[0];
-            for (size_t i = 0; i < this->n; ++i) {
-                max = Starsurge::Max(max, a[i]);
-            }
-            return max;
         }
 
         template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>

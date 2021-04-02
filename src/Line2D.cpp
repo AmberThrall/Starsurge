@@ -39,13 +39,13 @@ Starsurge::Vector2 Starsurge::Line2D::GetPoint(float t) const {
 }
 float Starsurge::Line2D::GetT(Vector2 point) const {
     if (!Contains(point)) {
-        return 0;
+        return -1;
     }
     // Solve: point = start+t*dir
     Vector2 dir = this->end - this->start;
     if (dir.x != 0) { return (point.x - this->start.x) / dir.x; }
     if (dir.y != 0) { return (point.y - this->start.y) / dir.y; }
-    return 0;
+    return -1;
 }
 float Starsurge::Line2D::Length() const {
     if (this->infinite) {

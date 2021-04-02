@@ -10,19 +10,6 @@ public:
 protected:
     // Broken: Cone-AABB?
     void OnInitialize() {
-        Vector2 p, p2;
-        Line2D line(Vector2(0,0), Vector2(1600,900));
-        Line2D line2(Vector2(0,900), Vector2(1600,0));
-        Rect rect(Vector2(800,450)-Vector2(50,50), Vector2(800,450)+Vector2(50,50));
-        Intersects(line, line2, p);
-        Intersects(line, rect, p2);
-        Log("Line2D: "+line.ToString());
-        Log("Contains [1600,900]? "+ToString(line.Contains(Vector2(1600,900))));
-        Log("Closest to [0,900]: "+line.ClosestPoint(Vector2(0,900)).ToString());
-        Log("Point-slope form: y="+ToString(line.GetSlope())+"x + "+ToString(line.GetYIntercept()));
-        Log("Intersection (Line2D-Line2D): "+p.ToString());
-        Log("Intersection (Rect-Line2D): "+p2.ToString());
-
         // Initialize variables.
         firstUpdate = true;
 

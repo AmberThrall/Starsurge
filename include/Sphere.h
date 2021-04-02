@@ -13,8 +13,9 @@ namespace Starsurge {
         float GetVolume() const;
         float GetSurfaceArea() const;
         Vector3 ClosestPoint(const Vector3 point) const;
+        float Distance(const Vector3 point) const;
 
-        std::string ToString() const;
+        std::string ToString(unsigned int ndigits = 3) const;
 
         Mesh CreateMesh(unsigned int nsubdivisions) const;
 

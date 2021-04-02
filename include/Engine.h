@@ -42,3 +42,4 @@
 #include "Quad.h"
 #include "OBB.h"
 #include "Line2D.h"
+#include "Circle.h"

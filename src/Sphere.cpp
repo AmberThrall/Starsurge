@@ -1,4 +1,5 @@
 #include "../include/Sphere.h"
+#include "../include/Utils.h"
 
 Starsurge::Sphere::Sphere() {
     this->position = Vector3(0,0,0);
@@ -10,7 +11,7 @@ Starsurge::Sphere::Sphere(const Sphere& copy) {
 }
 Starsurge::Sphere::Sphere(Vector3 p, float r) {
     this->position = p;
-    this->radius = std::max(0.0f, r);
+    this->radius = Max(0.0f, r);
 }
 
 bool Starsurge::Sphere::Contains(const Vector3 pt) const {
@@ -25,36 +26,43 @@ float Starsurge::Sphere::GetSurfaceArea() const {
     return 4*PI*this->radius*this->radius;
 }
 Starsurge::Vector3 Starsurge::Sphere::ClosestPoint(const Vector3 point) const {
+    if (Vector3::IsSame(point, this->position)) {
+        return this->position + Vector3(this->radius,0,0);
+    }
     Vector3 relativePoint = point - this->position;
     relativePoint.Normalize();
     relativePoint *= this->radius;
     return this->position + relativePoint;
 }
+float Starsurge::Sphere::Distance(const Vector3 point) const {
+    Vector3 closest = ClosestPoint(point);
+    return (closest - this->position).Magnitude();
+}
 
-std::string Starsurge::Sphere::ToString() const {
+std::string Starsurge::Sphere::ToString(unsigned int ndigits) const {
     std::string ret = "Sphere {";
     if (this->position.x != 0) {
         ret += "(x";
-        if (this->position.x < 0) ret += "+"+std::to_string(std::abs(this->position.x));
-        else ret += "-"+std::to_string(this->position.x);
+        if (this->position.x < 0) ret += "+"+Starsurge::ToString(Abs(this->position.x), ndigits, false);
+        else ret += "-"+Starsurge::ToString(this->position.x, ndigits, false);
         ret += ")^2+";
     }
     else ret += "x^2+";
-    if (this->position.x != 0) {
+    if (this->position.y != 0) {
         ret += "(y";
-        if (this->position.y < 0) ret += "+"+std::to_string(std::abs(this->position.y));
-        else ret += "-"+std::to_string(this->position.y);
-        ret += ")^2+";
+        if (this->position.y < 0) ret += "+"+Starsurge::ToString(Abs(this->position.y), ndigits, false);
+        else ret += "-"+Starsurge::ToString(this->position.y, ndigits, false);
+        ret += ")^2=";
     }
     else ret += "y^2+";
     if (this->position.z != 0) {
         ret += "(z";
-        if (this->position.z < 0) ret += "+"+std::to_string(std::abs(this->position.z));
-        else ret += "-"+std::to_string(this->position.z);
+        if (this->position.z < 0) ret += "+"+Starsurge::ToString(Abs(this->position.z), ndigits, false);
+        else ret += "-"+Starsurge::ToString(this->position.z, ndigits, false);
         ret += ")^2=";
     }
     else ret += "z^2=";
-    ret += std::to_string(this->radius);
+    ret += Starsurge::ToString(this->radius, ndigits, false);
     ret += "^2}";
     return ret;
 }
