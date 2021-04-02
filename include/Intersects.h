@@ -11,8 +11,14 @@
 #include "Cone.h"
 #include "Triangle.h"
 #include "Quad.h"
+#include "Line2D.h"
 
 namespace Starsurge {
+    // Intersection with 2d lines.
+    bool Intersects(Line2D line1, Line2D line2, Vector2 & point);
+    bool Intersects(Line2D line, Rect rect, Vector2 & point);
+    bool Intersects(Rect rect, Line2D line, Vector2 & point);
+
     // Intersection with rectangles.
     bool Intersects(Rect r1, Rect r2, Rect & area);
 
@@ -57,6 +63,7 @@ namespace Starsurge {
     bool Intersects(Quad quad, Line line, Vector3 & point);
 
     // Intersection with axis-aligned bounding boxes.
+    Vector2 Project(AABB box, Vector3 axis);
     bool Intersects(AABB boxA, AABB boxB, AABB & volume);
     bool Intersects(AABB boxA, OBB boxB);
     bool Intersects(AABB box, Plane plane);
@@ -74,6 +81,7 @@ namespace Starsurge {
     bool Intersects(Quad quad, AABB box);
 
     // Intersection with oriented bounding boxes.
+    Vector2 Project(OBB box, Vector3 axis);
     bool Intersects(OBB boxA, OBB boxB);
     bool Intersects(OBB box, Plane plane);
     bool Intersects(OBB box, Sphere sphere);
@@ -114,6 +122,8 @@ namespace Starsurge {
     bool Intersects(Quad quad, Sphere sphere);
 
     // Intersection with cylinders.
+    Vector2 Project(Cylinder cylinder, Vector3 axis);
+    bool Intersects(Cylinder cylinder1, Cylinder cylinder2);
     bool Intersects(Cylinder cylinder, Triangle triangle);
     bool Intersects(Cylinder cylinder, Quad quad);
     bool Intersects(Triangle triangle, Cylinder cylinder);
@@ -127,6 +137,7 @@ namespace Starsurge {
     bool Intersects(Quad quad, Cone cone);
 
     // Intersection with triangles.
+    Vector2 Project(Triangle triangle, Vector3 axis);
     bool Intersects(Triangle triangle1, Triangle triangle2);
     bool Intersects(Triangle triangle, Quad quad);
     bool Intersects(Quad quad, Triangle triangle);

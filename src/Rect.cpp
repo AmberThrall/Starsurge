@@ -97,6 +97,23 @@ std::vector<Starsurge::Vector2> Starsurge::Rect::GetAllCorners() const {
     ret.push_back(GetCorner(BOTTOM_RIGHT));
     return ret;
 }
+Starsurge::Line2D Starsurge::Rect::GetEdge(RectCorner corner1, RectCorner corner2) const {
+    if (corner2 == (corner1-1)%4 || corner2 == (corner1+1)%4) {
+        return Line2D(GetCorner(corner1), GetCorner(corner2));
+    }
+    else {
+        Error("Invalid edge in Rect::GetEdge(). Options: (corner1,(corner1-1)%4), (corner1,(corner1+1)%4).");
+        return Line2D(Vector2(0,0), Vector2(0,0));
+    }
+}
+std::vector<Starsurge::Line2D> Starsurge::Rect::GetAllEdges() const {
+    std::vector<Line2D> ret;
+    ret.push_back(GetEdge(TOP_LEFT, TOP_RIGHT));
+    ret.push_back(GetEdge(TOP_RIGHT, BOTTOM_RIGHT));
+    ret.push_back(GetEdge(BOTTOM_RIGHT, BOTTOM_LEFT));
+    ret.push_back(GetEdge(BOTTOM_LEFT, TOP_LEFT));
+    return ret;
+}
 
 bool Starsurge::Rect::Contains(Vector2 p) const {
     if (IsNull()) {

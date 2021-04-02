@@ -9,10 +9,10 @@ Starsurge::Triangle::Triangle(Vector3 p1, Vector3 p2, Vector3 p3) {
 }
 
 void Starsurge::Triangle::SetVertices(const Triangle& other) {
-    this->point1 = GetVertex(0);
-    this->point2 = GetVertex(1);
-    this->point3 = GetVertex(2);
-    this->normal = GetNormal();
+    this->point1 = other.GetVertex(0);
+    this->point2 = other.GetVertex(1);
+    this->point3 = other.GetVertex(2);
+    this->normal = other.GetNormal();
 }
 void Starsurge::Triangle::SetVertices(Vector3 p1, Vector3 p2, Vector3 p3) {
     this->point1 = p1;

@@ -41,3 +41,4 @@
 #include "Triangle.h"
 #include "Quad.h"
 #include "OBB.h"
+#include "Line2D.h"

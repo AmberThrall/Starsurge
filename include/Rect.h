@@ -2,10 +2,11 @@
 #include <vector>
 #include "Vector.h"
 #include "Matrix.h"
+#include "Line2D.h"
 
 namespace Starsurge {
     enum RectCorner {
-        TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
+        TOP_LEFT = 0, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
     };
 
     class Rect {
@@ -31,6 +32,8 @@ namespace Starsurge {
         float GetArea() const;
         Vector2 GetCorner(RectCorner corner) const;
         std::vector<Vector2> GetAllCorners() const;
+        Line2D GetEdge(RectCorner corner1, RectCorner corner2) const;
+        std::vector<Line2D> GetAllEdges() const;
         bool Contains(Vector2 p) const;
         bool Contains(Rect r) const;
         Vector2 ClosestPoint(const Vector2 point) const;

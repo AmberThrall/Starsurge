@@ -1,12 +1,65 @@
 #include "../include/Intersects.h"
 #include "../include/Utils.h"
 
+// Helper function for SAT tests.
+bool SATOverlap(Starsurge::Vector2 a, Starsurge::Vector2 b) {
+    return ((a.x <= b.x && a.y >= b.x) || (a.x <= b.y && a.y >= b.y) || (b.x <= a.x && b.y >= a.x) || (b.x <= a.y && b.y >= a.y));
+}
+
+/// Line2Ds
+bool Starsurge::Intersects(Line2D line1, Line2D line2, Vector2 & point) {
+    // m1*x+b1 = m2*x+b2
+    // x*(m1-m2) = b2 - b1
+    // x = (b2-b1)/(m1-m2);
+    float m1 = line1.GetSlope();
+    float m2 = line2.GetSlope();
+    float b1 = line1.GetYIntercept();
+    float b2 = line2.GetYIntercept();
+    if (Abs(m1-m2) < 0.00001) { // The lines are parallel.
+        if (Abs(b1-b2) < 0.00001) { // The extended-lines are on top of each other.
+            if (line1.infinite) { point = line2.start; return true; }
+            if (line2.infinite) { point = line1.start; return true; }
+            if (line1.Contains(line2.start)) { point = line2.start; return true; }
+            if (line1.Contains(line2.end)) { point = line2.end; return true; }
+            if (line2.Contains(line1.start)) { point = line1.start; return true; }
+            if (line2.Contains(line1.end)) { point = line1.end; return true; }
+        }
+        return false;
+    }
+
+    float x = (b2-b1)/(m1-m2);
+    float y = m1*x + b1;
+    float t1 = line1.GetT(Vector2(x, y));
+    float t2 = line2.GetT(Vector2(x, y));
+
+    if ((t1 < 0 || t1 > 1) && !line1.infinite) { return false; }
+    if ((t2 < 0 || t2 > 1) && !line2.infinite) { return false; }
+
+    point = Vector2(x, y);
+    return true;
+}
+
+bool Starsurge::Intersects(Line2D line, Rect rect, Vector2 & point) {
+    Line2D edge1 = rect.GetEdge(TOP_LEFT, TOP_RIGHT);
+    Line2D edge2 = rect.GetEdge(TOP_RIGHT, BOTTOM_RIGHT);
+    Line2D edge3 = rect.GetEdge(BOTTOM_RIGHT, BOTTOM_LEFT);
+    Line2D edge4 = rect.GetEdge(BOTTOM_LEFT, TOP_LEFT);
+    return (Intersects(line, edge1, point) || Intersects(line, edge2, point) || Intersects(line, edge3, point) ||
+            Intersects(line, edge4, point));
+}
+
+bool Starsurge::Intersects(Rect rect, Line2D line, Vector2 & point) {
+    return Intersects(rect, line, point);
+}
+
+/// Rectangles
 bool Starsurge::Intersects(Rect r1, Rect r2, Rect & area) {
     area.SetBounds(r1);
     area.Intersection(r2);
     return !area.IsNull();
 }
 
+/// Rays
 bool Starsurge::Intersects(Ray ray1, Ray ray2, Vector3 & point) {
     // Trivial case.
     if (ray1.origin == ray2.origin) {
@@ -305,32 +358,44 @@ bool Starsurge::Intersects(Quad quad, Ray ray, Vector3 & point) {
     return Intersects(ray, quad, point);
 }
 
+
+/// Lines
 bool Starsurge::Intersects(Line line1, Line line2, Vector3 & point) {
-    // s1 + t(e1-s1) = s2 + t(e2-s2)
-    // t(e1-s1) - t(e2-s2) = s2 - s1
-    // t(e1-s1-e2+s2) = s2 - s1
-    // t = (s2-s1).x/(e1-s1-e2+s2).x, t = (s2-s1).y/(e1-s1-e2+s2).y, ...
-    Vector3 sdiff = line2.start - line1.start;
-    Vector3 ddiff = line1.end-line1.start-line2.end+line2.start;
-    float t1 = sdiff.x / ddiff.x;
-    float t2 = sdiff.y / ddiff.y;
-    float t3 = sdiff.z / ddiff.z;
-    // If they intersect, all t-values should be equal and lie in [0,1] (unless one of them is infinite).
-    if (std::abs(t1-t2) < 0.00001 && std::abs(t1-t3) < 0.00001) {
-        if (line1.infinite) {
-            point = line1.GetPoint(t1);
-            return true;
-        }
-        if (line2.infinite) {
-            point = line2.GetPoint(t1);
-            return true;
-        }
-        if (t1 >= 0 && t1 <= 1) {
-            point = line1.GetPoint(t1);
-            return true;
-        }
-    }
-    return false;
+    // s1 + t*d1 = s2 + u*d2
+    // (s1 + t*d1) x d2 = (s2 + u*d2) x d2
+    // (s1 x d2) + t*(d1 x d2) = (s2 x d2) + u*(d2 x d2)
+    // t*(d1 x d2) = (s2 x d2) - (s1 x d2)
+    Vector3 d1 = line1.end - line1.start;
+    Vector3 d2 = line2.end - line2.start;
+    Vector3 d1xd2 = Vector3::CrossProduct(d1, d2);
+    Vector3 s1xd2 = Vector3::CrossProduct(line1.start, d2);
+    Vector3 s2xd2 = Vector3::CrossProduct(line2.start, d2);
+    Vector3 rhs = s2xd2 - s1xd2;
+    if (!Vector3::Parallel(d1xd2, rhs)) { return false; }
+
+    float t;
+    if (d1xd2.x != 0) { t = rhs.x / d1xd2.x; }
+    else if (d1xd2.y != 0) { t = rhs.y / d1xd2.y; }
+    else if (d1xd2.z != 0) { t = rhs.z / d1xd2.z; }
+    else { return false; }
+
+    if ((t < 0 || t > 1) && !line1.infinite) { return false; }
+
+    // Now we solve for u.
+    // u*d2 = s1 + t*d1 - s2
+    Vector3 pt = line1.start + t*d1;
+    rhs = pt - line2.start;
+    float u;
+    if (d2.x != 0) { u = rhs.x / d2.x; }
+    else if (d2.y != 0) { u = rhs.y / d2.y; }
+    else if (d2.z != 0) { u = rhs.z / d2.z; }
+    else { return false; }
+
+    if ((u < 0 || u > 1) && !line2.infinite) { return false; }
+
+    // Intersection!
+    point = pt;
+    return true;
 }
 
 bool Starsurge::Intersects(Line line, Plane plane, Vector3 & point) {
@@ -516,6 +581,11 @@ bool Starsurge::Intersects(AABB boxA, const AABB boxB, AABB & volume) {
     return !volume.IsNull();
 }
 
+/// AABB Boxes
+Starsurge::Vector2 Starsurge::Project(AABB box, Vector3 axis) {
+    return Project(box.AsOBB(), axis);
+}
+
 bool Starsurge::Intersects(AABB boxA, OBB boxB) {
     if (boxA.IsNull() || boxB.IsNull()) {
         return false;
@@ -667,74 +737,45 @@ bool Starsurge::Intersects(AABB box, Cone cone) {
     return false;
 }
 
-bool _SATTest(Starsurge::AABB box, Starsurge::Triangle triangle, Starsurge::Vector3 axis) {
-    // Get the AABB's center and extents.
-    Starsurge::Vector3 c = box.GetCenter();
-    Starsurge::Vector3 e = box.GetExtents();
-
-    // Center the triangle about c.
-    Starsurge::Vector3 v0 = triangle.GetVertex(0) - c;
-    Starsurge::Vector3 v1 = triangle.GetVertex(1) - c;
-    Starsurge::Vector3 v2 = triangle.GetVertex(2) - c;
-
-    // Get the face normals of the AABB.
-    Starsurge::Vector3 u0 = Starsurge::Vector3(1,0,0);
-    Starsurge::Vector3 u1 = Starsurge::Vector3(0,1,0);
-    Starsurge::Vector3 u2 = Starsurge::Vector3(0,0,1);
-
-    // Project all 3 vertices of the triangle onto the axis.
-    float p0 = Starsurge::Vector3::Dot(v0, axis);
-    float p1 = Starsurge::Vector3::Dot(v1, axis);
-    float p2 = Starsurge::Vector3::Dot(v2, axis);
-
-    // Project AABB onto the axis.
-    float r = e.x * Starsurge::Abs(Starsurge::Vector3::Dot(u0, axis)) +
-                e.y * Starsurge::Abs(Starsurge::Vector3::Dot(u1, axis)) +
-                e.z * Starsurge::Abs(Starsurge::Vector3::Dot(u2, axis));
-
-    // Now test.
-    return (Starsurge::Max(-Starsurge::Max(p0, p1, p2), Starsurge::Min(p0, p1, p2)) <= r);
-}
-
 bool Starsurge::Intersects(AABB box, Triangle triangle) {
     //https://gdbooks.gitbooks.io/3dcollisions/content/Chapter4/aabb-triangle.html
-    // Get the AABB's center and extents.
-    Vector3 c = box.GetCenter();
-    Vector3 e = box.GetExtents();
-
-    // Center the triangle about c.
-    Vector3 v0 = triangle.GetVertex(0) - c;
-    Vector3 v1 = triangle.GetVertex(1) - c;
-    Vector3 v2 = triangle.GetVertex(2) - c;
+    // Get the triangles vertices.
+    Vector3 v0 = triangle.GetVertex(0);
+    Vector3 v1 = triangle.GetVertex(1);
+    Vector3 v2 = triangle.GetVertex(2);
 
     // Get the triangles edges.
+    Vector3 edges[] = { v1-v0, v2-v1, v0-v2 };
     Vector3 f0 = v1 - v0;
     Vector3 f1 = v2 - v1;
     Vector3 f2 = v0 - v2;
 
     // Get the face normals of the AABB.
-    Vector3 u0 = Vector3(1,0,0);
-    Vector3 u1 = Vector3(0,1,0);
-    Vector3 u2 = Vector3(0,0,1);
+    Vector3 faces[] = { Vector3(1,0,0), Vector3(0,1,0), Vector3(0,0,1) };
 
     // There are 13 axii to test.
-    Vector3 axis_u0_f0 = Vector3::CrossProduct(u0, f0);
-    Vector3 axis_u0_f1 = Vector3::CrossProduct(u0, f1);
-    Vector3 axis_u0_f2 = Vector3::CrossProduct(u0, f2);
-    Vector3 axis_u1_f0 = Vector3::CrossProduct(u1, f0);
-    Vector3 axis_u1_f1 = Vector3::CrossProduct(u1, f1);
-    Vector3 axis_u1_f2 = Vector3::CrossProduct(u2, f2);
-    Vector3 axis_u2_f0 = Vector3::CrossProduct(u2, f0);
-    Vector3 axis_u2_f1 = Vector3::CrossProduct(u2, f1);
-    Vector3 axis_u2_f2 = Vector3::CrossProduct(u2, f2);
-    // u0, u1, u2
-    Vector3 triangleNormal = triangle.GetNormal();
+    std::vector<Vector3> axes;
+    axes.push_back(faces[0]);
+    axes.push_back(faces[1]);
+    axes.push_back(faces[2]);
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int j = 0; j < 3; ++j) {
+            axes.push_back(Vector3::CrossProduct(faces[i], edges[j]));
+        }
+    }
+    axes.push_back(triangle.GetNormal());
 
-    return (_SATTest(box, triangle, axis_u0_f0) && _SATTest(box, triangle, axis_u0_f1) && _SATTest(box, triangle, axis_u0_f2) &&
-            _SATTest(box, triangle, axis_u1_f0) && _SATTest(box, triangle, axis_u1_f1) && _SATTest(box, triangle, axis_u1_f2) &&
-            _SATTest(box, triangle, axis_u2_f0) && _SATTest(box, triangle, axis_u2_f1) && _SATTest(box, triangle, axis_u2_f2) &&
-            _SATTest(box, triangle, u0) && _SATTest(box, triangle, u1) && _SATTest(box, triangle, u2) &&
-            _SATTest(box, triangle, triangleNormal));
+    // Do the tests.
+    for (unsigned int i = 0; i < axes.size(); ++i) {
+        if (axes[i].SquaredMagnitude() == 0) // Skip past this axis.
+            continue;
+        Vector2 projectA = Project(box, axes[i]);
+        Vector2 projectB = Project(triangle, axes[i]);
+        if (SATOverlap(projectA, projectB)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Starsurge::Intersects(AABB box, Quad quad) {
@@ -764,18 +805,15 @@ bool Starsurge::Intersects(Quad quad, AABB box) {
     return Intersects(box, quad);
 }
 
-bool SAT(Starsurge::OBB boxA, Starsurge::OBB boxB, Starsurge::Vector3 axis) {
-    using namespace Starsurge;
-    // Project boxA and boxB onto axis.
-    Vector3 t = boxB.Center - boxA.Center;
-    Vector3 ua = boxA.GetAxis(0), va = boxA.GetAxis(1), wa = boxA.GetAxis(2);
-    Vector3 ub = boxB.GetAxis(0), vb = boxB.GetAxis(1), wb = boxB.GetAxis(2);
-    Vector3 ha = boxA.GetExtents(), hb = boxB.GetExtents();
-
-    float ra = ha.x*Abs(Vector3::Dot(ua, axis)) + ha.y*Abs(Vector3::Dot(va, axis)) + ha.z*Abs(Vector3::Dot(wa, axis));
-    float rb = hb.x*Abs(Vector3::Dot(ub, axis)) + hb.y*Abs(Vector3::Dot(vb, axis)) + hb.z*Abs(Vector3::Dot(wb, axis));
-
-    return (Abs(Vector3::Dot(t, axis)) > ra + rb); // Projected intervals DONT overlap when |t . axis| > ra + rb
+/// OBB
+Starsurge::Vector2 Starsurge::Project(OBB box, Vector3 axis) {
+    Vector3 u = box.GetAxis(0);
+    Vector3 v = box.GetAxis(1);
+    Vector3 w = box.GetAxis(2);
+    Vector3 e = box.GetExtents();
+    float c = Vector3::Dot(box.Center, axis);
+    float r = e.x*Abs(Vector3::Dot(u, axis)) + e.y*Abs(Vector3::Dot(v, axis)) + e.z*Abs(Vector3::Dot(w, axis));
+    return Vector2(c-r,c+r);
 }
 
 bool Starsurge::Intersects(OBB boxA, OBB boxB) {
@@ -797,7 +835,9 @@ bool Starsurge::Intersects(OBB boxA, OBB boxB) {
 
     // Test all 15 axes.
     for (unsigned int i = 0; i < axes.size(); ++i) {
-        if (!SAT(boxA, boxB, axes[i])) {
+        Vector2 projectA = Project(boxA, axes[i]);
+        Vector2 projectB = Project(boxB, axes[i]);
+        if (SATOverlap(projectA, projectB)) {
             return true;
         }
     }
@@ -884,6 +924,7 @@ bool Starsurge::Intersects(Cone cone, OBB box) {
     return Intersects(box, cone);
 }
 
+/// Planes
 bool Starsurge::Intersects(Plane plane1, Plane plane2) {
     Vector3 v = Vector3::CrossProduct(plane1.GetNormal(), plane2.GetNormal());
     Vector3 vxn2 = Vector3::CrossProduct(v, plane2.GetNormal());
@@ -1056,6 +1097,7 @@ bool Starsurge::Intersects(Quad quad, Plane plane) {
     return Intersects(plane, quad);
 }
 
+/// Spheres
 bool Starsurge::Intersects(Sphere sphere1, Sphere sphere2) {
     Vector3 diff = sphere1.position - sphere2.position;
     float dist = Vector3::Dot(diff, diff);
@@ -1110,6 +1152,37 @@ bool Starsurge::Intersects(Quad quad, Sphere sphere) {
     return Intersects(sphere, quad);
 }
 
+/// Cylinder
+Starsurge::Vector2 Starsurge::Project(Cylinder cylinder, Vector3 axis) {
+    if (cylinder.IsInfinite()) {
+        if (Vector3::Perpindicular(cylinder.GetDirection(), axis)) {
+            float o = Vector3::Dot(cylinder.Origin, axis);
+            float r = cylinder.GetRadius();
+            return Vector2(o-r, o+r);
+        }
+        return Vector2(-Infinity(), Infinity());
+    }
+
+    //https://www.geometrictools.com/Documentation/IntersectionOfCylinders.pdf
+    Vector3 d = axis;
+    Vector3 c = cylinder.Origin;
+    Vector3 w = cylinder.GetDirection();
+    float dd = Vector3::Dot(d, d);
+    float dc = Vector3::Dot(d, c);
+    float dw = Vector3::Dot(d, w);
+    float r = cylinder.GetRadius();
+    float h = cylinder.GetHeight();
+
+    float min = dc - r*Sqrt(dd-dw*dw) - (h/2)*Abs(dw);
+    float max = dc + r*Sqrt(dd-dw*dw) + (h/2)*Abs(dw);
+    return Vector2(min, max);
+}
+
+bool Starsurge::Intersects(Cylinder cylinder1, Cylinder cylinder2) {
+    // TODO.
+    return false;
+}
+
 bool Starsurge::Intersects(Cylinder cylinder, Triangle triangle) {
     // Test the vertices.
     Vector3 p1 = triangle.GetVertex(0);
@@ -1141,6 +1214,8 @@ bool Starsurge::Intersects(Quad quad, Cylinder cylinder) {
     return Intersects(cylinder, quad);
 }
 
+
+/// Cones
 bool Starsurge::Intersects(Cone cone1, Cone cone2) {
     if (cone1.IsNull() || cone2.IsNull()) {
         return false;
@@ -1273,13 +1348,38 @@ bool Starsurge::Intersects(Quad quad, Cone cone) {
     return Intersects(cone, quad);
 }
 
+/// Triangles
+Starsurge::Vector2 Starsurge::Project(Triangle triangle, Vector3 axis) {
+    float p0 = Vector3::Dot(triangle.GetVertex(0), axis);
+    float p1 = Vector3::Dot(triangle.GetVertex(1), axis);
+    float p2 = Vector3::Dot(triangle.GetVertex(2), axis);
+    return Vector2(Min(p0, p1, p2), Max(p0, p1, p2));
+}
+
 bool Starsurge::Intersects(Triangle triangle1, Triangle triangle2) {
-    // Test the edges.
-    Vector3 p;
     std::vector<Line> edges1 = triangle1.GetAllEdges();
     std::vector<Line> edges2 = triangle2.GetAllEdges();
-    return (Intersects(triangle1, edges2[0], p) || Intersects(triangle1, edges2[1], p) || Intersects(triangle1, edges2[2], p) ||
-            Intersects(triangle2, edges1[0], p) || Intersects(triangle2, edges1[1], p) || Intersects(triangle2, edges1[2], p));
+    std::vector<Vector3> axes;
+    axes.push_back(triangle1.GetNormal());
+    axes.push_back(triangle2.GetNormal());
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int j = 0; j < 3; ++j) {
+            Vector3 axis = Vector3::CrossProduct(edges1[i].end-edges1[i].start, edges2[j].end-edges2[j].start);
+            if (axis.SquaredNorm() < 0.00001) { // Use a different cross product.
+                axis = Vector3::CrossProduct(edges1[i].end-edges1[i].start, triangle2.GetNormal());
+            }
+            axes.push_back(axis);
+        }
+    }
+
+    for (unsigned int i = 0; i < axes.size(); ++i) {
+        Vector2 project1 = Project(triangle1, axes[i]);
+        Vector2 project2 = Project(triangle2, axes[i]);
+        if (SATOverlap(project1, project2)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Starsurge::Intersects(Triangle triangle, Quad quad) {

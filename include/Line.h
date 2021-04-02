@@ -15,7 +15,7 @@ namespace Starsurge {
         float Distance(Vector3 point) const;
         Vector3 ClosestPoint(const Vector3 point) const;
 
-        std::string ToString() const;
+        std::string ToString(unsigned int ndigits = 3) const;
 
         static Line XAxis();
         static Line YAxis();

@@ -439,17 +439,25 @@ namespace Starsurge {
         /* Returns true if a and b point in the same direction, i.e., a = tb, t >= 0. */
         template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
         static bool SameDirection(Vector<P> a, Vector<Q> b, float eps = 0.00001) {
-            Vector<P> c = Vector<Q>::Normalize(b) - Vector<P>::Normalize(a);
-            if (c.Norm() < eps) {
-                return true;
-            }
-            return false;
+            float aa = a.SquaredLength();
+            float bb = b.SquaredLength();
+            float ab = Vector<P>::Dot(a, b);
+            return (Starsurge::Abs(ab*ab-aa*bb) < eps);
         }
 
         /* Returns true if a is parallel to b, i.e., a = tb. */
         template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
         static bool Parallel(Vector<P> a, Vector<Q> b, float eps = 0.00001) {
-            return SameDirection(a,b) || SameDirection(a, -1.0f*b);
+            float aa = a.SquaredLength();
+            float bb = b.SquaredLength();
+            float ab = Vector<P>::Dot(a, b);
+            return (Starsurge::Abs(Starsurge::Abs(ab*ab)-aa*bb) < eps);
+        }
+
+        /* Returns true if a is perpindicular to b, i.e., Dot(a,b) = 0. */
+        template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>
+        static bool Perpindicular(Vector<P> a, Vector<Q> b, float eps = 0.00001) {
+            return (Starsurge::Abs(Vector<P>::Dot(a, b)) < eps);
         }
 
         template <size_t P, size_t Q, typename = std::enable_if_t<(P==Q||P==Dynamic||Q==Dynamic)>>

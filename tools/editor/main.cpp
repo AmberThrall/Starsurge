@@ -10,35 +10,19 @@ public:
 protected:
     // Broken: Cone-AABB?
     void OnInitialize() {
-        Vector3 p, p2;
-        Ray ray(Vector3(5,0,0), Vector3(-1,0,0));
-        Line line(Vector3(0,5,0), Vector3(0,0,0));
-        AABB aabb(Vector3(0,0,0), Vector3(2,2,2));
-        OBB obb(2, Vector3(0,0,0), Vector3(1,1,1));
-        Plane plane(Vector3(0,1,1), Vector3(0,1,0));
-        Sphere sphere(Vector3(0,1.5,0), 0.5);
-        Cylinder cylinder(0.5, 1, Vector3(0,0,2), Vector3(0,0,1));
-        Cone cone(Vector3(0,0,1), Vector3(0,0,1));
-        Quad quad(Vector3(0,0.5,0), Vector3(2,0.5,0), Vector3(2,0.5,2), Vector3(0,0.5,2));
-        Vector3 closest = obb.ClosestPoint(Vector3(0,2,0));
-        Matrix3 A = obb.GetOrientation();
-        Intersects(ray, obb, p);
-        Intersects(line, obb, p2);
-        Log("OBB: "+obb.ToString());
-        Log("Contains [0,0,1]? "+ToString(obb.Contains(Vector3(0,0,1))));
-        Log("Contains [0,2,0]? "+ToString(obb.Contains(Vector3(0,2,0))));
-        Log("Closest to [0,2,0]: "+closest.ToString());
-        Log("Contains "+closest.ToString()+"? "+ToString(obb.Contains(closest)));
-        Log("AA^T = "+(A*A.Transpose()).ToString());
-        Log("Intersects (Ray-OBB): "+p.ToString());
-        Log("Intersects (Line-OBB): "+p2.ToString());
-        Log("Intersects (AABB-OBB): "+ToString(Intersects(obb, aabb)));
-        Log("Intersects (Plane-OBB): "+ToString(Intersects(obb, plane)));
-        Log("Intersects (Sphere-OBB): "+ToString(Intersects(obb, sphere)));
-        Log("Intersects (Cylinder-OBB): "+ToString(Intersects(obb, cylinder)));
-        Log("Intersects (Cone-OBB): "+ToString(Intersects(obb, cone)));
-        Log("Intersects (Quad-OBB): "+ToString(Intersects(obb, quad)));
-        obbMesh = obb.CreateMesh();
+        Vector2 p, p2;
+        Line2D line(Vector2(0,0), Vector2(1600,900));
+        Line2D line2(Vector2(0,900), Vector2(1600,0));
+        Rect rect(Vector2(800,450)-Vector2(50,50), Vector2(800,450)+Vector2(50,50));
+        Intersects(line, line2, p);
+        Intersects(line, rect, p2);
+        Log("Line2D: "+line.ToString());
+        Log("Contains [1600,900]? "+ToString(line.Contains(Vector2(1600,900))));
+        Log("Closest to [0,900]: "+line.ClosestPoint(Vector2(0,900)).ToString());
+        Log("Point-slope form: y="+ToString(line.GetSlope())+"x + "+ToString(line.GetYIntercept()));
+        Log("Intersection (Line2D-Line2D): "+p.ToString());
+        Log("Intersection (Rect-Line2D): "+p2.ToString());
+
         // Initialize variables.
         firstUpdate = true;
 
@@ -68,7 +52,7 @@ protected:
         cube = new Entity("Cube");
         Material * cubeMaterial = new Material(AssetManager::Inst().GetShader("Builtin/Phong"));
         cube->AddComponent<Transform>(new Transform(Vector3(0,0,0), EulerAngles(0,0,0), Vector3(1,1,1)));
-        cube->AddComponent<MeshRenderer>(new MeshRenderer(&obbMesh, cubeMaterial));
+        cube->AddComponent<MeshRenderer>(new MeshRenderer(AssetManager::Inst().GetMesh("Builtin/Cube"), cubeMaterial));
         Scene::Inst().AddEntity(cube);
         selectedEntity = cube;
         cubeMaterial->GetUniform(0, "material.diffuse")->SetData(AssetManager::Inst().GetTexture("Builtin/Checker"));
@@ -96,7 +80,7 @@ protected:
         style.Colors[ImGuiCol_WindowBg].w = 1;
         style.WindowPadding = ImVec2(0,0);
         style.ItemSpacing = ImVec2(0,0);
-        ImGui::Begin("Frames", &my_tool_active, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize
+        ImGui::Begin("Frames", &gui_frames_active, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize
                                                 | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
                                                 | ImGuiWindowFlags_NoTitleBar);
             // Main menu
@@ -268,13 +252,11 @@ protected:
     }
 
 private:
-    bool my_tool_active;
-    ImVec4 my_color;
+    bool gui_frames_active;
     Entity * camera;
     Entity * cube;
     Grid * grid;
     Entity * selectedEntity;
-    Mesh obbMesh;
 
     // Gui Stuff
     bool firstUpdate;
