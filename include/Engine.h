@@ -36,6 +36,7 @@
 #include "Framebuffer.h"
 #include "Rect.h"
 #include "LinkedList.h"
+#include "BSTree.h"
 #include "Cylinder.h"
 #include "Cone.h"
 #include "Triangle.h"
@@ -43,3 +44,4 @@
 #include "OBB.h"
 #include "Line2D.h"
 #include "Circle.h"
+#include "Polygon.h"
