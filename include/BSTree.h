@@ -53,8 +53,10 @@ namespace Starsurge {
         BSTree<T,U> * Get(T key) {
             return Root()->_Get(key);
         }
-        BSTree<T,U> * Search(U data) {
-            return Root()->_Search(data);
+        std::vector<BSTree<T,U>*> Search(U data) {
+            std::vector<BSTree<T,U>*> matches;
+            Root()->_Search(data, matches);
+            return matches;
         }
         void Insert(T key, U data) {
             Root()->_Insert(key, data);
@@ -152,22 +154,17 @@ namespace Starsurge {
             }
         }
 
-        BSTree<T,U> * _Search(U data) {
+        void _Search(U data, std::vector<BSTree<T,U>*> & matches) {
             // Perform a preorder traversal.
             if (this->Data == data)
-                return this;
+                matches.push_back(this);
 
             if (HasLeftChild()) {
-                BSTree<T,U> * res = Left()->_Search(data);
-                if (res != NULL)
-                    return res;
+                Left()->_Search(data, matches);
             }
             if (HasRightChild()) {
-                BSTree<T,U> * res = Right()->_Search(data);
-                if (res != NULL)
-                    return res;
+                Right()->_Search(data, matches);
             }
-            return NULL;
         }
 
         void _Insert(T key, U data) {
