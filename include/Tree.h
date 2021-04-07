@@ -115,6 +115,19 @@ namespace Starsurge {
             }
             return root;
         }
+        bool IsAncestor(Tree<T> * node) {
+            if (node == NULL)
+                return false;
+
+            return node->IsDescendent(this);
+        }
+        bool IsDescendent(Tree<T> * node) {
+            if (node == NULL)
+                return false;
+            if (node == this)
+                return false;
+            return _IsDescendent(node);
+        }
         size_t NumChildren() const {
             return children.size();
         }
@@ -149,7 +162,7 @@ namespace Starsurge {
         }
 
         void _Length(unsigned int & len) {
-            // Perform an inorder traversal.
+            // Perform a preorder traversal.
             len += 1;
             for (size_t i = 0; i < NumChildren(); ++i) {
                 Child(i)->_Length(len);
@@ -171,6 +184,18 @@ namespace Starsurge {
                 Child(i)->_ToDOT(dot, print);
                 dot += "\tnode"+ToString((int)this)+" -- node"+ToString((int)Child(i))+";\n";
             }
+        }
+
+        bool _IsDescendent(Tree<T> * node) {
+            // Perform a preorder traversal.
+            if (node == this)
+                return true;
+            for (size_t i = 0; i < NumChildren(); ++i) {
+                if (Child(i)->_IsDescendent(node)) {
+                    return true;
+                }
+            }
+            return false;
         }
     };
 }

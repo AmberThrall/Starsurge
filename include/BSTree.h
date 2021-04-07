@@ -101,6 +101,19 @@ namespace Starsurge {
             return dot;
         }
 
+        bool IsAncestor(Tree<T> * node) {
+            if (node == NULL)
+                return false;
+
+            return node->IsDescendent(this);
+        }
+        bool IsDescendent(Tree<T> * node) {
+            if (node == NULL)
+                return false;
+            if (node == this)
+                return false;
+            return _IsDescendent(node);
+        }
         bool HasLeftChild() const {
             return (this->left != NULL);
         }
@@ -286,113 +299,15 @@ namespace Starsurge {
                 dot += "\tnode"+ToString((int)this)+" -- node"+ToString((int)this->right)+";\n";
             }
         }
+
+        bool _IsDescendent(BSTree<T,U> * node) {
+            // Perform a preorder traversal.
+            if (node == this)
+                return true;
+            if (Left()->_IsDescendent(node) || Right()->_IsDescendent(node)) {
+                return true;
+            }
+            return false;
+        }
     };
-
-    /*template<typename T>
-    class BSTree {
-    public:
-        BSTree() {
-            this->root = NULL;
-            this->compare = [](T a,T b) { return a < b; };
-        }
-        BSTree(T data) {
-            this->root = new BSTreeNode(data);
-            this->compare = [](T a,T b) { return a < b; };
-        }
-        BSTree(T data, std::function<bool(T,T)> test) {
-            this->root = new BSTreeNode(data);
-            this->compare = test;
-        }
-        BSTree(BSTreeNode<T> * root) {
-            this->root = root;
-            this->compare = [](T a,T b) { return a < b; };
-        }
-        BSTree(BSTreeNode<T> * root, std::function<bool(T,T)> test) {
-            this->root = root;
-            this->compare = test;
-        }
-        BSTree(const BSTree<T>& copy) {
-            this->compare = copy.compare;
-            Insert(copy.GetRoot());
-        }
-
-        BSTreeNode<T> * Search(T data) {
-            return NULL;
-        }
-        void Insert(T data) {
-            BSTreeNode<T> ** walk = &this->root;
-            while ((*walk) != NULL) {
-                T walk_data = (*walk)->data;
-                if (walk_data == data) {
-                    return;
-                }
-                if (compare(data, walk_data)) {
-                    walk = &(*walk)->left;
-                }
-                else {
-                    walk = &(*walk)->right;
-                }
-            }
-            *walk = new BSTreeNode<T>(data);
-        }
-        void Insert(BSTreeNode<T> * subtree) {
-            if (subtree == NULL) {
-                return;
-            }
-
-        }
-        void Remove(T data) {
-            BSTreeNode<T> ** parent = NULL;
-            BSTreeNode<T> * walk = &this->root;
-            while (walk != NULL) {
-                T walk_data = walk->data;
-                if (walk_data == data) {
-                    if (walk->left != NULL && walk->right != NULL) {
-                        // Find the left-most child of walk->right.
-                        BSTreeNode<T> * successor = walk->right;
-                        while (successor->left != NULL) {
-                            successor = successor->left;
-                        }
-                        T data = successor->data;
-                        delete successor;
-                        return;
-                    }
-                    else if (walk->left != NULL) {
-                        *parent = walk->left;
-                    }
-                    else if (walk->right != NULL) {
-                        *parent = walk->right;
-                    }
-                    delete walk;
-                    return;
-                }
-                if (compare(data, walk_data)) {
-                    parent = &walk->left;
-                    walk = walk->left;
-                }
-                else {
-                    parent = &walk->right;
-                    walk = walk->right;
-                }
-            }
-        }
-        void ForEach(std::function<void(T)> callback) {
-
-        }
-
-        BSTreeNode<T> * GetRoot() {
-            return this->root;
-        }
-        std::string ToDOT() const {
-            std::string dot = "digraph bstree {\n";
-            if (this->root)
-                this->root->_ToDOT(dot);
-            dot += "}";
-            return dot;
-        }
-
-    private:
-        BSTreeNode<T> * root;
-        std::function<bool(T,T)> compare;
-    };*/
 }
