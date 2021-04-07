@@ -25,7 +25,7 @@ namespace Starsurge {
         }
 
         BSTree<T,U> * Subtree() {
-            BSTree<T,U> * ret = new BSTree<T,U>(GetKey(), GetData(), this->compare);
+            BSTree<T,U> * ret = new BSTree<T,U>(GetKey(), this->Data, this->compare);
 
             std::stack<BSTree<T,U>*> s;
             BSTree<T,U> * cur = this;
@@ -36,7 +36,7 @@ namespace Starsurge {
                 }
                 cur = s.top();
                 s.pop();
-                ret->Insert(cur->GetKey(), cur->GetData());
+                ret->Insert(cur->GetKey(), cur->Data);
                 cur = cur->Right();
             }
 
@@ -91,8 +91,12 @@ namespace Starsurge {
         }
 
         std::string ToDOT() {
-            std::string dot = "digraph bstree {\n";
-            Root()->_ToDOT(dot);
+            return ToDOT([](T t) { return ToString(t); });
+        }
+
+        std::string ToDOT(std::function<std::string(T)> print) {
+            std::string dot = "graph bstree {\n";
+            Root()->_ToDOT(dot, print);
             dot += "}";
             return dot;
         }
@@ -247,7 +251,7 @@ namespace Starsurge {
             // Perform an inorder traversal.
             if (HasLeftChild())
                 Left()->_ForEach(f);
-            f(GetKey(), GetData());
+            f(GetKey(), this->Data);
             if (HasRightChild())
                 Right()->_ForEach(f);
         }
@@ -271,15 +275,15 @@ namespace Starsurge {
                 Right()->_Height(curHeight+1, height);
         }
 
-        void _ToDOT(std::string & dot) {
-            dot += "\tnode"+ToString((int)this)+" [label=\""+ToString(this->key)+"\"];\n";
+        void _ToDOT(std::string & dot, std::function<std::string(T)> print) {
+            dot += "\tnode"+ToString((int)this)+" [label=\""+print(this->key)+"\"];\n";
             if (Left()) {
-                Left()->_ToDOT(dot);
-                dot += "\tnode"+ToString((int)this)+" -> node"+ToString((int)this->left)+";\n";
+                Left()->_ToDOT(dot, print);
+                dot += "\tnode"+ToString((int)this)+" -- node"+ToString((int)this->left)+";\n";
             }
             if (Right()) {
-                Right()->_ToDOT(dot);
-                dot += "\tnode"+ToString((int)this)+" -> node"+ToString((int)this->right)+";\n";
+                Right()->_ToDOT(dot, print);
+                dot += "\tnode"+ToString((int)this)+" -- node"+ToString((int)this->right)+";\n";
             }
         }
     };
