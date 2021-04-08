@@ -38,6 +38,7 @@
 #include "LinkedList.h"
 #include "Tree.h"
 #include "BSTree.h"
+#include "Graph.h"
 #include "Cylinder.h"
 #include "Cone.h"
 #include "Triangle.h"
